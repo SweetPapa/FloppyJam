@@ -10,5 +10,6 @@ typedef struct {
 } Game;
 void sfbs_game_init(Game*,const char*,GameMode); void sfbs_game_step(Game*,float,V2,bool,uint64_t);
 void sfbs_path_push(PathBuffer*,V2,uint64_t); bool sfbs_path_at(const PathBuffer*,uint64_t,V2*);
+float sfbs_segment_distance(V2,V2,V2);
 int sfbs_recovery(const Game*); void sfbs_force_damage(Game*);
 #endif

@@ -3,7 +3,7 @@
 #include "sim.h"
 #include "raylib.h"
 typedef struct { bool on; uint8_t stem,note,voice; float phase,env,freq; } SynthVoice;
-typedef struct { AudioStream stream; const Song *song; uint64_t clock; int next; SynthVoice voices[SFBS_VOICES]; float stem[4],lp,dcx,dcy; bool ready,paused; } AudioEngine;
-void sfbs_audio_open(AudioEngine*,const Song*); void sfbs_audio_close(AudioEngine*); void sfbs_audio_restart(AudioEngine*,const Song*); uint64_t sfbs_audio_clock(const AudioEngine*); void sfbs_audio_stem(AudioEngine*,int,bool); void sfbs_audio_damage(AudioEngine*);
+typedef struct { AudioStream stream; const Song *song; volatile uint64_t clock; int next; SynthVoice voices[SFBS_VOICES]; float stem[4]; volatile float stem_target[4],filter_target; float lp,dcx,dcy,filter; bool ready,paused; } AudioEngine;
+void sfbs_audio_open(AudioEngine*,const Song*); void sfbs_audio_close(AudioEngine*); void sfbs_audio_restart(AudioEngine*,const Song*); uint64_t sfbs_audio_clock(const AudioEngine*); void sfbs_audio_stem(AudioEngine*,int,bool); void sfbs_audio_damage(AudioEngine*); void sfbs_audio_pause(AudioEngine*,bool); void sfbs_audio_phase(AudioEngine*,Phase,bool);
 bool sfbs_audio_offline_check(const Song*,uint64_t,float*);
 #endif
