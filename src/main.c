@@ -1,5 +1,6 @@
 #include "audio.h"
 #include "i18n.h"
+#include "headless.h"
 #include "render.h"
 #include "save.h"
 #include <ctype.h>
@@ -15,7 +16,7 @@ static Game game;
 static AudioEngine audio;
 static SaveData save;
 static AppState state=ST_BOOT;
-static float boot_time,damage_audio_time;
+static float boot_time,damage_audio_time,camera_yaw,camera_pitch=-.18f;
 static bool debug,collision,gallery,exit_requested;
 static char entry[7];
 static int entry_len,entry_cursor;
@@ -23,18 +24,19 @@ static int entry_len,entry_cursor;
 static uint64_t entropy(void){return (uint64_t)time(0)^(uint64_t)(GetTime()*1000000.0);}
 static void apply_settings(void){SetMasterVolume(save.volume/100.0f);if((bool)save.fullscreen!=IsWindowFullscreen())ToggleFullscreen();}
 static void open_seed(void){memcpy(entry,save.seed,7);entry_len=6;entry_cursor=0;state=ST_SEED;}
-static void start_run(void){sfbs_game_init(&game,save.seed,(GameMode)save.mode);sfbs_audio_restart(&audio,&game.song);damage_audio_time=0;state=ST_PLAY;}
+static void start_run(void){sfbs_game_init(&game,save.seed,(GameMode)save.mode);sfbs_audio_restart(&audio,&game.song);damage_audio_time=0;camera_yaw=0;camera_pitch=-.18f;state=ST_PLAY;if(save.first_person)DisableCursor();else EnableCursor();}
 static bool confirm(void){return IsKeyPressed(KEY_ENTER)||IsKeyPressed(KEY_SPACE)||(IsGamepadAvailable(0)&&IsGamepadButtonPressed(0,GAMEPAD_BUTTON_RIGHT_FACE_DOWN));}
 static bool back(void){return IsKeyPressed(KEY_ESCAPE)||(IsGamepadAvailable(0)&&IsGamepadButtonPressed(0,GAMEPAD_BUTTON_RIGHT_FACE_RIGHT));}
 static bool pause_pressed(void){return IsKeyPressed(KEY_P)||(IsGamepadAvailable(0)&&IsGamepadButtonPressed(0,GAMEPAD_BUTTON_MIDDLE_RIGHT));}
 static void screen_begin(void){BeginTextureMode(target);ClearBackground(BLACK);}
 static void screen_end(void){EndTextureMode();BeginDrawing();ClearBackground(BLACK);float s=fminf(GetScreenWidth()/640.0f,GetScreenHeight()/360.0f);Rectangle src={0,0,640,-360},dst={(GetScreenWidth()-640*s)/2,(GetScreenHeight()-360*s)/2,640*s,360*s};DrawTexturePro(target.texture,src,dst,(Vector2){0,0},0,WHITE);EndDrawing();}
 static Language language(void){return(Language)save.language;}
-static void menu_text(const char*sub){Palette p=sfbs_palette(game.genome.palette);sfbs_center_text(sfbs_text(language(),TXT_TITLE),64,28,p.player);sfbs_center_text(sub,112,16,p.active);}
+static void menu_text(const char*sub){Palette p=sfbs_palette(game.genome.palette);DrawRectangle(56,42,528,92,ColorAlpha(p.bg,.78f));DrawRectangleLinesEx((Rectangle){56,42,528,92},1,ColorAlpha(p.active,.45f));sfbs_center_text(sfbs_text(language(),TXT_TITLE),64,28,p.player);sfbs_center_text(sub,112,16,p.active);}
 static void cycle_language(void){save.language=(save.language+1)%LANG_COUNT;sfbs_save_write("sfbs.sav",&save);}
 static void cycle_seed_char(int delta){int count=(int)strlen(seed_alpha),old=(int)(strchr(seed_alpha,entry[entry_cursor])-seed_alpha);old=(old+delta+count)%count;entry[entry_cursor]=seed_alpha[old];}
 
-int main(void){
+int main(int argc,char**argv){
+ if(argc>1&&(!strcmp(argv[1],"--headless-test")||!strcmp(argv[1],"--status-json"))){HeadlessStatus status=sfbs_headless_verify();sfbs_status_json(&status);return status.failures?1:0;}
  SetConfigFlags(FLAG_WINDOW_RESIZABLE|FLAG_VSYNC_HINT);InitWindow(1280,720,"Songs From Bad Sectors");SetTargetFPS(60);
  target=LoadRenderTexture(640,360);SetTextureFilter(target.texture,TEXTURE_FILTER_POINT);
  sfbs_save_load("sfbs.sav",&save);apply_settings();sfbs_game_init(&game,save.seed,(GameMode)save.mode);sfbs_audio_open(&audio,&game.song);
@@ -44,6 +46,7 @@ int main(void){
   if(IsKeyPressed(KEY_MINUS)&&save.volume>=5){save.volume-=5;SetMasterVolume(save.volume/100.0f);}
   if(IsKeyPressed(KEY_EQUAL)&&save.volume<=95){save.volume+=5;SetMasterVolume(save.volume/100.0f);}
   if(state!=ST_PLAY&&state!=ST_SEED&&(IsKeyPressed(KEY_L)||(IsGamepadAvailable(0)&&IsGamepadButtonPressed(0,GAMEPAD_BUTTON_RIGHT_FACE_UP))))cycle_language();
+  if(state!=ST_SEED&&(IsKeyPressed(KEY_V)||(IsGamepadAvailable(0)&&IsGamepadButtonPressed(0,GAMEPAD_BUTTON_RIGHT_THUMB)))){save.first_person=!save.first_person;sfbs_save_write("sfbs.sav",&save);if(state==ST_PLAY&&save.first_person)DisableCursor();else EnableCursor();}
 #ifdef SFBS_DEBUG
   if(IsKeyPressed(KEY_F1))debug=!debug;if(IsKeyPressed(KEY_F2))collision=!collision;if(IsKeyPressed(KEY_F3))game.freeze_echo=!game.freeze_echo;if(IsKeyPressed(KEY_F4))gallery=!gallery;
   if(IsKeyPressed(KEY_F5)){sfbs_force_damage(&game);sfbs_audio_damage(&audio);damage_audio_time=1.5f;}
@@ -70,31 +73,32 @@ int main(void){
     if(confirm()&&entry_len){sfbs_seed_normalize(entry,save.seed);state=ST_MODE;}else if(back())state=ST_TITLE;
    }break;
    case ST_PLAY:{
-    if(back()||pause_pressed()){sfbs_audio_pause(&audio,true);state=ST_PAUSE;break;}
+    if(back()||pause_pressed()){sfbs_audio_pause(&audio,true);EnableCursor();state=ST_PAUSE;break;}
     V2 in={(IsKeyDown(KEY_D)||IsKeyDown(KEY_RIGHT))-(IsKeyDown(KEY_A)||IsKeyDown(KEY_LEFT)),(IsKeyDown(KEY_S)||IsKeyDown(KEY_DOWN))-(IsKeyDown(KEY_W)||IsKeyDown(KEY_UP))};
     if(IsGamepadAvailable(0)){in.x+=GetGamepadAxisMovement(0,GAMEPAD_AXIS_LEFT_X);in.y+=GetGamepadAxisMovement(0,GAMEPAD_AXIS_LEFT_Y);}
+    if(save.first_person){Vector2 mouse=GetMouseDelta();float look=mouse.x*.0025f,tilt=-mouse.y*.0022f;if(IsGamepadAvailable(0)){look+=GetGamepadAxisMovement(0,GAMEPAD_AXIS_RIGHT_X)*.045f;tilt-=GetGamepadAxisMovement(0,GAMEPAD_AXIS_RIGHT_Y)*.035f;}camera_yaw+=look;if(camera_yaw>SFBS_PI)camera_yaw-=2*SFBS_PI;if(camera_yaw<-SFBS_PI)camera_yaw+=2*SFBS_PI;camera_pitch=sfbs_clampf(camera_pitch+tilt,-.72f,.18f);float strafe=in.x,forward=-in.y;in.x=strafe*cosf(camera_yaw)+forward*sinf(camera_yaw);in.y=-strafe*sinf(camera_yaw)+forward*cosf(camera_yaw);}
     bool pulse=IsKeyPressed(KEY_SPACE)||IsKeyPressed(KEY_Z)||IsKeyPressed(KEY_ENTER)||(IsGamepadAvailable(0)&&(IsGamepadButtonPressed(0,GAMEPAD_BUTTON_RIGHT_FACE_DOWN)||GetGamepadAxisMovement(0,GAMEPAD_AXIS_RIGHT_TRIGGER)>.5f));
     int integrity=game.integrity,recovered=game.recovered;sfbs_game_step(&game,dt,in,pulse,sfbs_audio_clock(&audio));
     Phase phase=(Phase)game.phrases[game.phrase_index].phase;sfbs_audio_phase(&audio,phase,false);
     if(game.integrity<integrity||game.recovered<recovered){damage_audio_time=1.5f;sfbs_audio_damage(&audio);}if(damage_audio_time>0){damage_audio_time-=dt;sfbs_audio_damage(&audio);}
-    if(game.ended){sfbs_audio_phase(&audio,PH_FINAL,!game.won);save.tutorial=1;sfbs_save_write("sfbs.sav",&save);state=ST_RESULTS;}
+    if(game.ended){sfbs_audio_phase(&audio,PH_FINAL,!game.won);save.tutorial=1;sfbs_save_write("sfbs.sav",&save);EnableCursor();state=ST_RESULTS;}
    }break;
    case ST_PAUSE:
-    if(confirm()||back()||pause_pressed()){sfbs_audio_pause(&audio,false);state=ST_PLAY;}else if(IsKeyPressed(KEY_R))start_run();
+    if(confirm()||back()||pause_pressed()){sfbs_audio_pause(&audio,false);state=ST_PLAY;if(save.first_person)DisableCursor();}else if(IsKeyPressed(KEY_R))start_run();
     break;
    case ST_RESULTS:
     if(IsKeyPressed(KEY_R)||confirm())start_run();else if(IsKeyPressed(KEY_N)){sfbs_random_seed(entropy(),save.seed);start_run();}else if(IsKeyPressed(KEY_M)){sfbs_audio_pause(&audio,true);state=ST_MODE;}else if(IsKeyPressed(KEY_S)){sfbs_audio_pause(&audio,true);open_seed();}else if(back()){sfbs_audio_pause(&audio,true);state=ST_TITLE;}
     break;
    case ST_CREDITS:if(confirm()||back())state=ST_TITLE;break;
   }
-  screen_begin();Palette p=sfbs_palette(game.genome.palette);
+  screen_begin();Palette p=sfbs_palette(game.genome.palette);if(state!=ST_PLAY&&state!=ST_PAUSE&&state!=ST_RESULTS&&state!=ST_BOOT)sfbs_render_backdrop(&game,camera_yaw);
   if(state==ST_PLAY||state==ST_PAUSE||state==ST_RESULTS){
-   sfbs_render_game(&game,sfbs_transport(sfbs_audio_clock(&audio),game.genome.bpm),debug,collision);
+   sfbs_render_game(&game,sfbs_transport(sfbs_audio_clock(&audio),game.genome.bpm),debug,collision,save.first_person,camera_yaw,camera_pitch,sfbs_text(language(),save.first_person?TXT_VIEW_FIRST:TXT_VIEW_OVERHEAD));
    if(state==ST_PLAY&&!save.tutorial){if(game.phrase_index==0)sfbs_center_text(sfbs_text(language(),TXT_TUTORIAL_MOVE),315,11,p.player);else if(game.phrase_index==1)sfbs_center_text(sfbs_text(language(),TXT_TUTORIAL_PULSE),315,11,p.active);else if(game.phrase_index==2){sfbs_center_text(sfbs_text(language(),TXT_TUTORIAL_ECHO_1),307,11,p.edge);sfbs_center_text(sfbs_text(language(),TXT_TUTORIAL_ECHO_2),321,10,p.edge);}}
    if(state==ST_PAUSE){DrawRectangle(0,0,640,360,ColorAlpha(BLACK,.65f));sfbs_center_text(sfbs_text(language(),TXT_PAUSED),145,28,p.player);sfbs_center_text(sfbs_text(language(),TXT_PAUSE_HELP),190,13,p.active);}
    else if(state==ST_RESULTS){DrawRectangle(0,0,640,360,ColorAlpha(p.bg,.78f));sfbs_center_text(sfbs_text(language(),game.won?TXT_TRACK_RECOVERED:TXT_SIGNAL_LOST),80,27,p.player);char x[80];snprintf(x,sizeof x,"%s  /  %s  /  %d%%",game.seed,sfbs_mode_name(game.mode),sfbs_recovery(&game));sfbs_center_text(x,130,18,p.active);sfbs_center_text(sfbs_result_text(language(),sfbs_recovery(&game)),160,14,p.stable);sfbs_center_text(sfbs_text(language(),TXT_RESULTS_HELP),220,13,p.player);}
   }else if(state==ST_BOOT){sfbs_center_text("A:\\> READ TRACK01.DAT",120,15,p.stable);sfbs_center_text(boot_time<.8f?"SCANNING...":boot_time<1.7f?"BAD SECTORS DETECTED":"SIGNAL FOUND",155,16,p.active);}
-  else if(state==ST_TITLE){menu_text(save.seed);sfbs_center_text(sfbs_text(language(),TXT_TITLE_ACTIONS),180,15,p.player);sfbs_center_text(sfbs_text(language(),TXT_CONTROLS),250,12,p.stable);char settings[96];snprintf(settings,sizeof settings,"%s   %s   VOL %d   F11",sfbs_text(language(),TXT_LANGUAGE),sfbs_language_name(language()),save.volume);sfbs_center_text(settings,282,10,p.accent);}
+  else if(state==ST_TITLE){menu_text(save.seed);DrawRectangle(70,158,500,151,ColorAlpha(p.bg,.74f));sfbs_center_text(sfbs_text(language(),TXT_TITLE_ACTIONS),180,15,p.player);sfbs_center_text(sfbs_text(language(),TXT_CONTROLS),230,12,p.stable);sfbs_center_text(sfbs_text(language(),TXT_VIEW_HELP),251,10,p.stable);char settings[128];snprintf(settings,sizeof settings,"%s   %s   /   %s   /   VOL %d   /   F11",sfbs_text(language(),TXT_LANGUAGE),sfbs_language_name(language()),sfbs_text(language(),save.first_person?TXT_VIEW_FIRST:TXT_VIEW_OVERHEAD),save.volume);sfbs_center_text(settings,282,10,p.accent);}
   else if(state==ST_MODE){menu_text(sfbs_text(language(),TXT_SELECT_MODE));sfbs_center_text(sfbs_mode_name((GameMode)save.mode),143,27,p.active);TextId d1=save.mode==MODE_BLOOM?TXT_MODE_BLOOM_1:save.mode==MODE_FLOW?TXT_MODE_FLOW_1:TXT_MODE_PULSE_1,d2=(TextId)(d1+1);sfbs_center_text(sfbs_text(language(),d1),180,11,p.stable);sfbs_center_text(sfbs_text(language(),d2),195,10,p.stable);sfbs_center_text(sfbs_text(language(),TXT_ECHO_1),225,11,p.edge);sfbs_center_text(sfbs_text(language(),TXT_ECHO_2),240,10,p.edge);sfbs_center_text(sfbs_text(language(),TXT_MODE_HELP),278,12,p.player);sfbs_center_text(sfbs_language_name(language()),305,9,p.accent);}
   else if(state==ST_SEED){menu_text(sfbs_text(language(),TXT_SEED_TITLE));sfbs_center_text(entry_len?entry:"______",160,34,p.active);if(entry_len==6)DrawRectangle(320-MeasureText(entry,34)/2+entry_cursor*MeasureText("A",34),198,MeasureText("A",34),2,p.accent);sfbs_center_text(sfbs_text(language(),TXT_SEED_HELP),225,11,p.player);}
   else{menu_text(sfbs_text(language(),TXT_CREDITS));sfbs_center_text(sfbs_text(language(),TXT_DESIGNED),150,13,p.active);sfbs_center_text(sfbs_text(language(),TXT_BUILT),178,12,p.stable);sfbs_center_text(sfbs_text(language(),TXT_SOURCE_LICENSE),200,12,p.stable);}

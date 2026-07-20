@@ -16,11 +16,13 @@ Please report the first failed numbered item with the seed and mode.
    the selected language remains after relaunch.
 3. Seed entry ignores `0`, `O`, `1`, `I`, and `L`; random seed and six-slot entry work.
 4. Bloom completes without early game-over; Flow has three integrity; Pulse has two.
-5. WASD/arrows and gamepad stick/D-pad move smoothly; Space/Z/Enter, south button,
+5. First-person mouse/right-stick look is smooth and movement follows the viewed
+   direction. WASD/arrows and gamepad stick/D-pad move; Space/Z/Enter, south button,
    and right trigger Pulse. Pulse never fails and feels stronger near the beat.
 6. In a new profile, the short movement, Pulse, and echo tutorial prompts appear.
 7. Nodes telegraph, become collectible without exact timing, and match audible rhythm.
-   The complete outer disk must remain visible at both the top and bottom of the window.
+   Press V or right-stick click and verify the elevated 3D overview shows the complete
+   outer disk at both the top and bottom of the window, then return to first person.
 8. The dark ribbon clearly follows the prior player route and contact cannot rapidly
    remove multiple integrity points.
 9. Music begins with pad, then adds percussion, bass, and full lead as the run grows.
@@ -35,8 +37,9 @@ Please report the first failed numbered item with the seed and mode.
 15. Complete one run muted and verify corruption and node states remain understandable.
 16. Verify the mode screen explains that the dark echo repeats the old player path,
     and that a first run repeats this warning before the echo becomes dangerous.
-17. Verify particles, trails, beat rings, outer sector ticks, decorative curves, and
-    Final Read bloom remain attractive without hiding nodes or the corruption ribbon.
+17. Verify the 3D node pillars, floating particles, player trails, sector ticks,
+    physical corruption ribbon, world-space sweep, and vertical Final Read bloom
+    remain attractive without hiding gameplay information.
 
 Hardware release checks still required separately: Windows 10 x64, Windows 11 x64,
 integrated graphics, XInput controller, focus loss, and a clean directory with no DLLs.
