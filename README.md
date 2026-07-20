@@ -1,9 +1,10 @@
 # Songs From Bad Sectors
 
-Songs From Bad Sectors is a two-to-three-minute audiovisual arcade game written
-in C99. Every six-character seed generates a song, circular arena, rhythm
-patterns, color palette, and corruption path. All graphics and audio are created
-at runtime; the game ships with no recorded music or texture assets.
+Songs From Bad Sectors is a two-to-three-minute immersive 3D audiovisual arcade
+game written entirely in C99. Every six-character seed generates a song, disk
+world, rhythm patterns, color palette, and corruption path. Explore the disk in
+first person or switch to an elevated 3D overview. All geometry, effects, and
+audio are created at runtime; the game ships with no recorded music or textures.
 
 ## Quick start on macOS
 
@@ -113,6 +114,7 @@ every run. Mode only changes pressure and forgiveness.
 | Volume | Minus / Equals | — |
 | Toggle fullscreen | F11 | — |
 | Change language | L on menus | North face button on menus |
+| Change 3D view | V | Right-stick click |
 | Exit from title | Q or Escape | East face button |
 
 On the seed screen, keyboard input ignores ambiguous `0`, `O`, `1`, `I`, and
@@ -121,6 +123,11 @@ On the seed screen, keyboard input ignores ambiguous `0`, `O`, `1`, `I`, and
 The interface supports English, Spanish, French, and German. Press L on the
 title, mode, pause, results, or credits screen to cycle languages. The gamepad
 north face button does the same. The selected language is saved automatically.
+
+Gameplay starts in first person on the surface of the disk. Move the mouse or
+right stick to look around; movement is relative to the direction you face.
+Press V or click the right stick to switch instantly to the elevated 3D overview.
+The selected camera mode is saved.
 
 ## Menus and replay
 
@@ -172,6 +179,25 @@ cmake --build build -j
 ctest --test-dir build --output-on-failure
 ./build/sfbs_validate 100000
 ```
+
+Run the complete 56-bar simulation in Bloom, Flow, and Pulse without opening a
+window or audio device, and emit the strict machine-readable status object:
+
+```sh
+./build/sfbs_status
+```
+
+The playable executable exposes the same early-exit mode when raylib is built:
+
+```sh
+./build-game/SongsFromBadSectors --headless-test
+./build-game/SongsFromBadSectors --status-json
+```
+
+Each command writes exactly one JSON object to stdout and returns nonzero when a
+mechanically testable requirement fails. The report includes build state, check
+and failure counts, deterministic digest, completed modes, feature flags, and
+the remaining device-specific review boundaries.
 
 When raylib is available, configure with `SFBS_BUILD_GAME=ON` to include the
 offline runtime-audio integration test. The operator playthrough checklist is
