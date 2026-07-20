@@ -1,4 +1,5 @@
 #include "audio.h"
+#include "i18n.h"
 #include "render.h"
 #include "save.h"
 #include <ctype.h>
@@ -28,7 +29,9 @@ static bool back(void){return IsKeyPressed(KEY_ESCAPE)||(IsGamepadAvailable(0)&&
 static bool pause_pressed(void){return IsKeyPressed(KEY_P)||(IsGamepadAvailable(0)&&IsGamepadButtonPressed(0,GAMEPAD_BUTTON_MIDDLE_RIGHT));}
 static void screen_begin(void){BeginTextureMode(target);ClearBackground(BLACK);}
 static void screen_end(void){EndTextureMode();BeginDrawing();ClearBackground(BLACK);float s=fminf(GetScreenWidth()/640.0f,GetScreenHeight()/360.0f);Rectangle src={0,0,640,-360},dst={(GetScreenWidth()-640*s)/2,(GetScreenHeight()-360*s)/2,640*s,360*s};DrawTexturePro(target.texture,src,dst,(Vector2){0,0},0,WHITE);EndDrawing();}
-static void menu_text(const char*sub){Palette p=sfbs_palette(game.genome.palette);sfbs_center_text("SONGS FROM BAD SECTORS",64,28,p.player);sfbs_center_text(sub,112,16,p.active);}
+static Language language(void){return(Language)save.language;}
+static void menu_text(const char*sub){Palette p=sfbs_palette(game.genome.palette);sfbs_center_text(sfbs_text(language(),TXT_TITLE),64,28,p.player);sfbs_center_text(sub,112,16,p.active);}
+static void cycle_language(void){save.language=(save.language+1)%LANG_COUNT;sfbs_save_write("sfbs.sav",&save);}
 static void cycle_seed_char(int delta){int count=(int)strlen(seed_alpha),old=(int)(strchr(seed_alpha,entry[entry_cursor])-seed_alpha);old=(old+delta+count)%count;entry[entry_cursor]=seed_alpha[old];}
 
 int main(void){
@@ -40,6 +43,7 @@ int main(void){
   if(IsKeyPressed(KEY_F11)){save.fullscreen=!save.fullscreen;ToggleFullscreen();sfbs_save_write("sfbs.sav",&save);}
   if(IsKeyPressed(KEY_MINUS)&&save.volume>=5){save.volume-=5;SetMasterVolume(save.volume/100.0f);}
   if(IsKeyPressed(KEY_EQUAL)&&save.volume<=95){save.volume+=5;SetMasterVolume(save.volume/100.0f);}
+  if(state!=ST_PLAY&&state!=ST_SEED&&(IsKeyPressed(KEY_L)||(IsGamepadAvailable(0)&&IsGamepadButtonPressed(0,GAMEPAD_BUTTON_RIGHT_FACE_UP))))cycle_language();
 #ifdef SFBS_DEBUG
   if(IsKeyPressed(KEY_F1))debug=!debug;if(IsKeyPressed(KEY_F2))collision=!collision;if(IsKeyPressed(KEY_F3))game.freeze_echo=!game.freeze_echo;if(IsKeyPressed(KEY_F4))gallery=!gallery;
   if(IsKeyPressed(KEY_F5)){sfbs_force_damage(&game);sfbs_audio_damage(&audio);damage_audio_time=1.5f;}
@@ -86,14 +90,14 @@ int main(void){
   screen_begin();Palette p=sfbs_palette(game.genome.palette);
   if(state==ST_PLAY||state==ST_PAUSE||state==ST_RESULTS){
    sfbs_render_game(&game,sfbs_transport(sfbs_audio_clock(&audio),game.genome.bpm),debug,collision);
-   if(state==ST_PLAY&&!save.tutorial){if(game.phrase_index==0)sfbs_center_text("MOVE WITH WASD / ARROWS",315,11,p.player);else if(game.phrase_index==1)sfbs_center_text("SPACE / Z TO PULSE",315,11,p.active);else if(game.phrase_index==2)sfbs_center_text("YOUR OLD PATH BECOMES THE ECHO",315,11,p.edge);}
-   if(state==ST_PAUSE){DrawRectangle(0,0,640,360,ColorAlpha(BLACK,.65f));sfbs_center_text("READ PAUSED",145,28,p.player);sfbs_center_text("ENTER RESUME   R RESTART",190,13,p.active);}
-   else if(state==ST_RESULTS){DrawRectangle(0,0,640,360,ColorAlpha(p.bg,.78f));sfbs_center_text(game.won?"TRACK RECOVERED":"SIGNAL LOST",80,27,p.player);char x[80];snprintf(x,sizeof x,"%s  /  %s  /  %d%%",game.seed,sfbs_mode_name(game.mode),sfbs_recovery(&game));sfbs_center_text(x,130,18,p.active);sfbs_center_text(sfbs_result_label(sfbs_recovery(&game)),160,14,p.stable);sfbs_center_text("R REPLAY   N NEW   M MODE   S SEED",220,13,p.player);}
+   if(state==ST_PLAY&&!save.tutorial){if(game.phrase_index==0)sfbs_center_text(sfbs_text(language(),TXT_TUTORIAL_MOVE),315,11,p.player);else if(game.phrase_index==1)sfbs_center_text(sfbs_text(language(),TXT_TUTORIAL_PULSE),315,11,p.active);else if(game.phrase_index==2){sfbs_center_text(sfbs_text(language(),TXT_TUTORIAL_ECHO_1),307,11,p.edge);sfbs_center_text(sfbs_text(language(),TXT_TUTORIAL_ECHO_2),321,10,p.edge);}}
+   if(state==ST_PAUSE){DrawRectangle(0,0,640,360,ColorAlpha(BLACK,.65f));sfbs_center_text(sfbs_text(language(),TXT_PAUSED),145,28,p.player);sfbs_center_text(sfbs_text(language(),TXT_PAUSE_HELP),190,13,p.active);}
+   else if(state==ST_RESULTS){DrawRectangle(0,0,640,360,ColorAlpha(p.bg,.78f));sfbs_center_text(sfbs_text(language(),game.won?TXT_TRACK_RECOVERED:TXT_SIGNAL_LOST),80,27,p.player);char x[80];snprintf(x,sizeof x,"%s  /  %s  /  %d%%",game.seed,sfbs_mode_name(game.mode),sfbs_recovery(&game));sfbs_center_text(x,130,18,p.active);sfbs_center_text(sfbs_result_text(language(),sfbs_recovery(&game)),160,14,p.stable);sfbs_center_text(sfbs_text(language(),TXT_RESULTS_HELP),220,13,p.player);}
   }else if(state==ST_BOOT){sfbs_center_text("A:\\> READ TRACK01.DAT",120,15,p.stable);sfbs_center_text(boot_time<.8f?"SCANNING...":boot_time<1.7f?"BAD SECTORS DETECTED":"SIGNAL FOUND",155,16,p.active);}
-  else if(state==ST_TITLE){menu_text(save.seed);sfbs_center_text("ENTER PLAY   S SEED   C CREDITS   Q EXIT",180,15,p.player);sfbs_center_text("WASD / ARROWS MOVE     SPACE PULSE",250,12,p.stable);char settings[64];snprintf(settings,sizeof settings,"MODE %s   VOLUME %d   F11 FULLSCREEN",sfbs_mode_name((GameMode)save.mode),save.volume);sfbs_center_text(settings,282,10,p.accent);}
-  else if(state==ST_MODE){menu_text("SELECT PRESSURE");sfbs_center_text(sfbs_mode_name((GameMode)save.mode),165,30,p.active);sfbs_center_text("LEFT / RIGHT     ENTER BEGIN",225,13,p.player);}
-  else if(state==ST_SEED){menu_text("ENTER SIX-CHARACTER SEED");sfbs_center_text(entry_len?entry:"______",160,34,p.active);if(entry_len==6)DrawRectangle(320-MeasureText(entry,34)/2+entry_cursor*MeasureText("A",34),198,MeasureText("A",34),2,p.accent);sfbs_center_text("TYPE OR D-PAD CYCLE   R RANDOM   ENTER ACCEPT",225,11,p.player);}
-  else{menu_text("CREDITS");sfbs_center_text("DESIGNED FROM REQ_DESIGN.MD",150,13,p.active);sfbs_center_text("BUILT WITH RAYLIB 6.0 (ZLIB LICENSE)",178,12,p.stable);sfbs_center_text("SOURCE LICENSE: GPL-3.0",200,12,p.stable);}
+  else if(state==ST_TITLE){menu_text(save.seed);sfbs_center_text(sfbs_text(language(),TXT_TITLE_ACTIONS),180,15,p.player);sfbs_center_text(sfbs_text(language(),TXT_CONTROLS),250,12,p.stable);char settings[96];snprintf(settings,sizeof settings,"%s   %s   VOL %d   F11",sfbs_text(language(),TXT_LANGUAGE),sfbs_language_name(language()),save.volume);sfbs_center_text(settings,282,10,p.accent);}
+  else if(state==ST_MODE){menu_text(sfbs_text(language(),TXT_SELECT_MODE));sfbs_center_text(sfbs_mode_name((GameMode)save.mode),143,27,p.active);TextId d1=save.mode==MODE_BLOOM?TXT_MODE_BLOOM_1:save.mode==MODE_FLOW?TXT_MODE_FLOW_1:TXT_MODE_PULSE_1,d2=(TextId)(d1+1);sfbs_center_text(sfbs_text(language(),d1),180,11,p.stable);sfbs_center_text(sfbs_text(language(),d2),195,10,p.stable);sfbs_center_text(sfbs_text(language(),TXT_ECHO_1),225,11,p.edge);sfbs_center_text(sfbs_text(language(),TXT_ECHO_2),240,10,p.edge);sfbs_center_text(sfbs_text(language(),TXT_MODE_HELP),278,12,p.player);sfbs_center_text(sfbs_language_name(language()),305,9,p.accent);}
+  else if(state==ST_SEED){menu_text(sfbs_text(language(),TXT_SEED_TITLE));sfbs_center_text(entry_len?entry:"______",160,34,p.active);if(entry_len==6)DrawRectangle(320-MeasureText(entry,34)/2+entry_cursor*MeasureText("A",34),198,MeasureText("A",34),2,p.accent);sfbs_center_text(sfbs_text(language(),TXT_SEED_HELP),225,11,p.player);}
+  else{menu_text(sfbs_text(language(),TXT_CREDITS));sfbs_center_text(sfbs_text(language(),TXT_DESIGNED),150,13,p.active);sfbs_center_text(sfbs_text(language(),TXT_BUILT),178,12,p.stable);sfbs_center_text(sfbs_text(language(),TXT_SOURCE_LICENSE),200,12,p.stable);}
   if(gallery)for(int i=0;i<8;i++){Palette q=sfbs_palette(i);DrawRectangle(10+i*78,310,70,20,q.stable);}screen_end();
  }
  sfbs_save_write("sfbs.sav",&save);sfbs_audio_close(&audio);UnloadRenderTexture(target);CloseWindow();return 0;
