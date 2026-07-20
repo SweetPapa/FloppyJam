@@ -12,16 +12,20 @@ Please report the first failed numbered item with the seed and mode.
 
 1. Boot reaches the title in under three seconds and can be skipped.
 2. Title shows seed, mode, volume, controls, credits, fullscreen, and exit choices.
+   Press L and verify English, Spanish, French, and German cycle immediately and
+   the selected language remains after relaunch.
 3. Seed entry ignores `0`, `O`, `1`, `I`, and `L`; random seed and six-slot entry work.
 4. Bloom completes without early game-over; Flow has three integrity; Pulse has two.
 5. WASD/arrows and gamepad stick/D-pad move smoothly; Space/Z/Enter, south button,
    and right trigger Pulse. Pulse never fails and feels stronger near the beat.
 6. In a new profile, the short movement, Pulse, and echo tutorial prompts appear.
 7. Nodes telegraph, become collectible without exact timing, and match audible rhythm.
+   The complete outer disk must remain visible at both the top and bottom of the window.
 8. The dark ribbon clearly follows the prior player route and contact cannot rapidly
    remove multiple integrity points.
 9. Music begins with pad, then adds percussion, bass, and full lead as the run grows.
-   A hit temporarily dulls the mix without clicks; audio and sweep remain aligned.
+   Listen for stereo placement and short ambience delays. A hit temporarily dulls
+   the mix without clicks; audio and sweep remain aligned.
 10. Escape/P pauses both play and transport. Resume does not jump or desynchronize.
 11. Failure leaves a sparse pad resolution. Completion reaches a distinct Final Read.
 12. Results show seed, mode, recovery, and correct result label. Replay, new seed,
@@ -29,6 +33,10 @@ Please report the first failed numbered item with the seed and mode.
 13. Volume and F11 fullscreen changes persist after relaunch. Save failure is nonfatal.
 14. Complete one run at 60 Hz and one at high refresh with no visible timing change.
 15. Complete one run muted and verify corruption and node states remain understandable.
+16. Verify the mode screen explains that the dark echo repeats the old player path,
+    and that a first run repeats this warning before the echo becomes dangerous.
+17. Verify particles, trails, beat rings, outer sector ticks, decorative curves, and
+    Final Read bloom remain attractive without hiding nodes or the corruption ribbon.
 
 Hardware release checks still required separately: Windows 10 x64, Windows 11 x64,
 integrated graphics, XInput controller, focus loss, and a clean directory with no DLLs.
