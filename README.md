@@ -1,48 +1,197 @@
 # Songs From Bad Sectors
 
-A deterministic audiovisual arcade game in C99. A six-character seed creates a
-56-bar song, Euclidean disk arena, palette, and delayed-path corruption hazard.
-No textures or recorded audio are used.
+Songs From Bad Sectors is a two-to-three-minute audiovisual arcade game written
+in C99. Every six-character seed generates a song, circular arena, rhythm
+patterns, color palette, and corruption path. All graphics and audio are created
+at runtime; the game ships with no recorded music or texture assets.
 
-## Build and test
+## Quick start on macOS
 
-raylib 6.0 must be installed or supplied through its CMake package. The core and
-all headless tooling intentionally build without raylib:
+Install the build tools and raylib 6.0 with Homebrew:
+
+```sh
+brew install cmake raylib
+```
+
+From the repository root, configure and build the playable game:
+
+```sh
+cmake -S . -B build-game \
+  -DSFBS_BUILD_GAME=ON \
+  -DCMAKE_BUILD_TYPE=Release \
+  -DCMAKE_PREFIX_PATH="$(brew --prefix raylib)"
+cmake --build build-game -j
+```
+
+Launch it with:
+
+```sh
+./build-game/SongsFromBadSectors
+```
+
+The first CMake command only needs to be repeated when build options or
+dependencies change. After editing source files, rebuild and play with:
+
+```sh
+cmake --build build-game -j
+./build-game/SongsFromBadSectors
+```
+
+If CMake says that raylib was not found, verify `brew list raylib` reports 6.0
+and keep the `CMAKE_PREFIX_PATH` option shown above.
+
+## How to play
+
+You are the bright read head inside a damaged disk. Glowing sectors around the
+three rings are recoverable pieces of the generated song. Move through them to
+restore the track before the 56-bar read finishes.
+
+Your movement is recorded. After a short delay, the dark corruption ribbon
+retraces that old route and makes it dangerous. The main decision is therefore
+not simply which bright sector to collect, but where to travel without boxing
+your future self into the returning echo.
+
+The run develops in stages:
+
+1. The opening phrases introduce movement and sector recovery without damage.
+2. Percussion enters and the dark echo begins following your previous route.
+3. Bass and denser ring patterns create more routing choices.
+4. The lead and full visual bloom arrive late in the track.
+5. Final Read provides one last recovery pattern and resolves the song.
+
+Recovery is the only score. Each recovered sector adds its weighted value to
+the percentage in the upper-left corner. A sector darkened by corruption loses
+its value until repaired again. The result screen rates the final percentage
+from Signal Fragment through No Bad Sectors.
+
+### Pulse
+
+Pulse is the single action button and always works. It:
+
+- gives the read head a burst of speed in the held direction;
+- uses current movement direction when no direction is held;
+- collects or repairs sectors in a larger radius;
+- grants a brief moment of protection from the corruption ribbon.
+
+Pulsing near a musical beat produces a stronger burst and larger repair radius,
+but there are no misses or timing grades. Off-beat Pulse is still useful. The
+small arc around the player shows its cooldown.
+
+### Damage and integrity
+
+Touching the dark ribbon corrupts a recently recovered sector, dulls the music,
+pushes the player away, and removes integrity in Flow or Pulse. The small arcs
+around the center show remaining integrity. A short invulnerability window
+prevents one contact from dealing repeated damage.
+
+Bloom has no early game-over. Flow begins with three integrity. Pulse begins
+with two. A failed run still resolves musically and shows the recovery result.
+
+### Modes
+
+- **Bloom:** Relaxed mode. No early failure, a longer echo delay, a narrower
+  ribbon, and a stronger Pulse. Use this to learn the game or enjoy the song.
+- **Flow:** Default mode. Three integrity and the intended balance of recovery
+  and route planning.
+- **Pulse:** Challenge mode. Two integrity, a shorter delay, wider ribbon,
+  denser late patterns, and slightly faster movement.
+
+The same seed generates the same song, palette, phrases, and node layout in
+every run. Mode only changes pressure and forgiveness.
+
+## Controls
+
+| Action | Keyboard | Gamepad |
+|---|---|---|
+| Move | WASD or Arrow Keys | Left stick or D-pad |
+| Pulse | Space, Z, or Enter | South face button or right trigger |
+| Confirm | Enter or Space | South face button |
+| Back | Escape | East face button |
+| Pause/resume | Escape or P | Menu/Start |
+| Restart from pause/results | R | Use the on-screen result action |
+| Random seed on seed screen | R | Cycle the six slots with D-pad |
+| Volume | Minus / Equals | — |
+| Toggle fullscreen | F11 | — |
+| Exit from title | Q or Escape | East face button |
+
+On the seed screen, keyboard input ignores ambiguous `0`, `O`, `1`, `I`, and
+`L`. With a gamepad, left/right selects a slot and up/down cycles its character.
+
+## Menus and replay
+
+From the title screen:
+
+- Enter starts mode selection.
+- S opens seed entry.
+- C opens credits.
+- Q or Escape exits.
+
+The results screen supports R or Enter to replay the same seed, N for a new
+random seed, M to change mode, S to enter a seed, and Escape to return to title.
+The last seed, selected mode, volume, fullscreen preference, and tutorial state
+are stored in `sfbs.sav`. A missing or unwritable save never prevents play.
+
+## Debug build and controls
+
+Development builds enable diagnostic controls by default:
+
+```sh
+cmake -S . -B build-debug \
+  -DSFBS_BUILD_GAME=ON \
+  -DSFBS_DEBUG_TOOLS=ON \
+  -DCMAKE_BUILD_TYPE=Debug \
+  -DCMAKE_PREFIX_PATH="$(brew --prefix raylib)"
+cmake --build build-debug -j
+./build-debug/SongsFromBadSectors
+```
+
+- F1: transport and game-state overlay
+- F2: collision-width view
+- F3: freeze corruption
+- F4: palette gallery strip
+- F5: force damage
+- F6: recover all currently visible sectors
+- F7: jump forward four bars
+- F8: regenerate and start a new seed
+- 1–4: toggle pad, percussion, bass, and lead
+
+These controls are compiled out when `SFBS_DEBUG_TOOLS=OFF`.
+
+## Automated tests
+
+The deterministic core builds without raylib:
 
 ```sh
 cmake -S . -B build -DSFBS_BUILD_GAME=OFF
-cmake --build build
+cmake --build build -j
 ctest --test-dir build --output-on-failure
 ./build/sfbs_validate 100000
 ```
 
-For the game, configure with `-DSFBS_BUILD_GAME=ON`. Controls are WASD/arrows or
-gamepad stick/D-pad, Space/Z/Enter or south button to Pulse, Escape/P to pause,
-and R to restart. Debug builds expose F1 overlay, F2 collision view, F3 echo
-freeze, F4 gallery, F5 damage, F6 full recovery, F7 phase jump, F8 regenerate,
-and number keys for stem muting.
+When raylib is available, configure with `SFBS_BUILD_GAME=ON` to include the
+offline runtime-audio integration test. The operator playthrough checklist is
+in `E2E_TEST.md`.
 
 ## Windows release
 
-Use a pinned static raylib 6.0 build with MinGW-w64 and configure CMake with the
-matching toolchain. Recommended release flags begin with `-Os -flto
--ffunction-sections -fdata-sections` and linker garbage collection. Stage only:
+The contest submission target is a statically linked Windows x64 executable.
+Use pinned raylib 6.0 and MinGW-w64 with the appropriate CMake toolchain. The
+final staging directory should contain only:
 
 ```text
 SongsFromBadSectors.exe
 README.txt
 ```
 
-Then enforce the extracted-byte limit:
+Check the exact extracted size before packaging:
 
 ```sh
 cmake -DSTAGE=path/to/stage -P scripts/check_size.cmake
 ```
 
-The checker fails over 1,474,560 bytes and warns over 1,350,000 bytes. A final
-release still requires clean Windows 10/11, GPU, audio-device, and XInput tests.
-
-The operator playthrough checklist is in `E2E_TEST.md`.
+The checker fails above 1,474,560 bytes and warns above the 1,350,000-byte
+safety target. Final release approval requires clean Windows 10 and Windows 11,
+GPU, audio-device, and XInput testing.
 
 ## License notice
 
