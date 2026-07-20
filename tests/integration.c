@@ -1,5 +1,6 @@
 #include "sim.h"
 #include "save.h"
+#include "i18n.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -16,9 +17,9 @@ int main(void){
  for(int i=0;i<SFBS_PHRASES;i++)CHECK(seen[i]);
 
  const char *path="/tmp/sfbs-integration-save.bin";SaveData out,in;
- sfbs_save_defaults(&out);memcpy(out.seed,"TRACK7",7);out.mode=MODE_PULSE;out.volume=37;out.fullscreen=1;out.tutorial=1;
+ sfbs_save_defaults(&out);memcpy(out.seed,"TRACK7",7);out.mode=MODE_PULSE;out.volume=37;out.fullscreen=1;out.tutorial=1;out.language=LANG_FR;
  CHECK(sfbs_save_write(path,&out));CHECK(sfbs_save_load(path,&in));CHECK(sfbs_save_valid(&in));
- CHECK(!memcmp(out.seed,in.seed,7)&&in.mode==MODE_PULSE&&in.volume==37&&in.fullscreen&&in.tutorial);
+ CHECK(!memcmp(out.seed,in.seed,7)&&in.mode==MODE_PULSE&&in.volume==37&&in.fullscreen&&in.tutorial&&in.language==LANG_FR);
  CHECK(remove(path)==0);
  printf("integration passed: phrases=%d total_weight=%d recovery=%d%%\n",SFBS_PHRASES,g.total,sfbs_recovery(&g));return 0;
 }
