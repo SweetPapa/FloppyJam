@@ -34,12 +34,19 @@ typedef struct Vector2{float x,y;}Vector2;typedef struct Rectangle{float x,y,wid
 #define KEY_F6 295
 #define KEY_F7 296
 #define KEY_F8 297
+#define KEY_F11 300
+#define KEY_EQUAL 61
+#define KEY_MINUS 45
+#define KEY_Q 81
 #define GAMEPAD_BUTTON_RIGHT_FACE_DOWN 7
 #define GAMEPAD_BUTTON_LEFT_FACE_LEFT 13
 #define GAMEPAD_BUTTON_LEFT_FACE_RIGHT 14
+#define GAMEPAD_BUTTON_LEFT_FACE_UP 11
+#define GAMEPAD_BUTTON_LEFT_FACE_DOWN 12
 #define GAMEPAD_AXIS_LEFT_X 0
 #define GAMEPAD_AXIS_LEFT_Y 1
-void InitWindow(int,int,const char*);void CloseWindow(void);bool WindowShouldClose(void);void SetConfigFlags(unsigned int);void SetTargetFPS(int);int GetScreenWidth(void);int GetScreenHeight(void);float GetFrameTime(void);bool IsKeyPressed(int);bool IsKeyDown(int);int GetCharPressed(void);bool IsGamepadAvailable(int);bool IsGamepadButtonPressed(int,int);float GetGamepadAxisMovement(int,int);
+#define GAMEPAD_AXIS_RIGHT_TRIGGER 5
+void InitWindow(int,int,const char*);void CloseWindow(void);bool WindowShouldClose(void);void SetConfigFlags(unsigned int);void SetTargetFPS(int);int GetScreenWidth(void);int GetScreenHeight(void);float GetFrameTime(void);double GetTime(void);bool IsKeyPressed(int);bool IsKeyDown(int);int GetCharPressed(void);bool IsGamepadAvailable(int);bool IsGamepadButtonPressed(int,int);float GetGamepadAxisMovement(int,int);void ToggleFullscreen(void);bool IsWindowFullscreen(void);void SetMasterVolume(float);
 RenderTexture2D LoadRenderTexture(int,int);void UnloadRenderTexture(RenderTexture2D);void SetTextureFilter(Texture2D,int);void BeginTextureMode(RenderTexture2D);void EndTextureMode(void);void BeginDrawing(void);void EndDrawing(void);void ClearBackground(Color);void DrawTexturePro(Texture2D,Rectangle,Rectangle,Vector2,float,Color);void DrawText(const char*,int,int,int,Color);int MeasureText(const char*,int);void DrawRectangle(int,int,int,int,Color);void DrawCircleLines(int,int,float,Color);void DrawLineEx(Vector2,Vector2,float,Color);void DrawCircleV(Vector2,float,Color);void DrawPoly(Vector2,int,float,float,Color);void DrawLine(int,int,int,int,Color);void DrawRing(Vector2,float,float,float,float,int,Color);Color ColorAlpha(Color,float);
-void InitAudioDevice(void);void CloseAudioDevice(void);void SetAudioStreamBufferSizeDefault(int);AudioStream LoadAudioStream(unsigned int,unsigned int,unsigned int);void UnloadAudioStream(AudioStream);void SetAudioStreamCallback(AudioStream,void(*)(void*,unsigned int));void PlayAudioStream(AudioStream);void StopAudioStream(AudioStream);
+void InitAudioDevice(void);void CloseAudioDevice(void);void SetAudioStreamBufferSizeDefault(int);AudioStream LoadAudioStream(unsigned int,unsigned int,unsigned int);void UnloadAudioStream(AudioStream);void SetAudioStreamCallback(AudioStream,void(*)(void*,unsigned int));void PlayAudioStream(AudioStream);void StopAudioStream(AudioStream);void PauseAudioStream(AudioStream);void ResumeAudioStream(AudioStream);
 #endif

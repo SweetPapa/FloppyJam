@@ -3,11 +3,12 @@
 #include <math.h>
 #include <ctype.h>
 static const char alpha[]="23456789ABCDEFGHJKMNPQRSTUVWXYZ";
+#define ALPHA_COUNT ((int)(sizeof alpha-1))
 uint64_t sfbs_hash(const char *s){ uint64_t h=1469598103934665603ULL; while(*s){h^=(unsigned char)*s++;h*=1099511628211ULL;} h^=h>>30;h*=0xbf58476d1ce4e5b9ULL;h^=h>>27;h*=0x94d049bb133111ebULL;return h^(h>>31); }
 uint64_t sfbs_rng(Rng *r){ uint64_t z=(r->s+=0x9e3779b97f4a7c15ULL);z=(z^(z>>30))*0xbf58476d1ce4e5b9ULL;z=(z^(z>>27))*0x94d049bb133111ebULL;return z^(z>>31); }
 float sfbs_randf(Rng *r){return (float)(sfbs_rng(r)>>40)*(1.0f/16777216.0f);}
-void sfbs_seed_normalize(const char *in,char out[7]){int n=0;memset(out,0,7);while(*in&&n<6){char c=(char)toupper((unsigned char)*in++);if(strchr(alpha,c))out[n++]=c;}uint64_t h=sfbs_hash(out);while(n<6){int i=n;out[n++]=alpha[(h>>(i*5))&31];}out[6]=0;}
-void sfbs_random_seed(uint64_t e,char out[7]){Rng r={e^0xa51f07d390ULL};for(int i=0;i<6;i++)out[i]=alpha[sfbs_rng(&r)&31];out[6]=0;}
+void sfbs_seed_normalize(const char *in,char out[7]){int n=0;memset(out,0,7);while(*in&&n<6){char c=(char)toupper((unsigned char)*in++);if(strchr(alpha,c))out[n++]=c;}uint64_t h=sfbs_hash(out);Rng r={h};while(n<6)out[n++]=alpha[sfbs_rng(&r)%ALPHA_COUNT];out[6]=0;}
+void sfbs_random_seed(uint64_t e,char out[7]){Rng r={e^0xa51f07d390ULL};for(int i=0;i<6;i++)out[i]=alpha[sfbs_rng(&r)%ALPHA_COUNT];out[6]=0;}
 Genome sfbs_genome(const char seed[7]){Genome g={0};g.master=sfbs_hash(seed);Rng r={g.master};g.music_seed=sfbs_rng(&r);g.layout_seed=sfbs_rng(&r);g.gameplay_seed=sfbs_rng(&r);g.visual_seed=sfbs_rng(&r);static const int bpms[]={84,88,92,96,100,104,108,112};Rng m={g.music_seed};g.bpm=bpms[sfbs_rng(&m)&7];g.root=45+(int)(sfbs_rng(&m)%12);g.scale=(int)(sfbs_rng(&m)%5);g.progression=(int)(sfbs_rng(&m)%8);Rng v={g.visual_seed};g.palette=(int)(sfbs_rng(&v)%8);g.primary_steps=(int[]){8,12,16}[sfbs_rng(&m)%3];g.swing=sfbs_randf(&m)*.12f;g.warmth=.65f+sfbs_randf(&m)*.3f;g.symmetry=.65f+sfbs_randf(&v)*.35f;return g;}
 Pattern sfbs_euclid(int k,int n,int rot){Pattern p={0};if(n<1)n=1;if(n>16)n=16;if(k<1)k=1;if(k>=n)k=n-1;rot=((rot%n)+n)%n;for(int i=0;i<n;i++)if(((i+1)*k)/n!=(i*k)/n)p.bits|=(uint16_t)(1u<<((i+rot)%n));p.steps=(uint8_t)n;p.pulses=(uint8_t)k;p.rotation=(uint8_t)rot;return p;}
 int sfbs_popcount(uint16_t x){int n=0;while(x){x&=(uint16_t)(x-1);n++;}return n;}

@@ -42,6 +42,8 @@ cmake -DSTAGE=path/to/stage -P scripts/check_size.cmake
 The checker fails over 1,474,560 bytes and warns over 1,350,000 bytes. A final
 release still requires clean Windows 10/11, GPU, audio-device, and XInput tests.
 
+The operator playthrough checklist is in `E2E_TEST.md`.
+
 ## License notice
 
 Project source is GPL-3.0; see `LICENSE`. Built releases use raylib, Copyright
