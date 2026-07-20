@@ -25,6 +25,7 @@ static void open_seed(void){memcpy(entry,save.seed,7);entry_len=6;entry_cursor=0
 static void start_run(void){sfbs_game_init(&game,save.seed,(GameMode)save.mode);sfbs_audio_restart(&audio,&game.song);damage_audio_time=0;state=ST_PLAY;}
 static bool confirm(void){return IsKeyPressed(KEY_ENTER)||IsKeyPressed(KEY_SPACE)||(IsGamepadAvailable(0)&&IsGamepadButtonPressed(0,GAMEPAD_BUTTON_RIGHT_FACE_DOWN));}
 static bool back(void){return IsKeyPressed(KEY_ESCAPE)||(IsGamepadAvailable(0)&&IsGamepadButtonPressed(0,GAMEPAD_BUTTON_RIGHT_FACE_RIGHT));}
+static bool pause_pressed(void){return IsKeyPressed(KEY_P)||(IsGamepadAvailable(0)&&IsGamepadButtonPressed(0,GAMEPAD_BUTTON_MIDDLE_RIGHT));}
 static void screen_begin(void){BeginTextureMode(target);ClearBackground(BLACK);}
 static void screen_end(void){EndTextureMode();BeginDrawing();ClearBackground(BLACK);float s=fminf(GetScreenWidth()/640.0f,GetScreenHeight()/360.0f);Rectangle src={0,0,640,-360},dst={(GetScreenWidth()-640*s)/2,(GetScreenHeight()-360*s)/2,640*s,360*s};DrawTexturePro(target.texture,src,dst,(Vector2){0,0},0,WHITE);EndDrawing();}
 static void menu_text(const char*sub){Palette p=sfbs_palette(game.genome.palette);sfbs_center_text("SONGS FROM BAD SECTORS",64,28,p.player);sfbs_center_text(sub,112,16,p.active);}
@@ -65,7 +66,7 @@ int main(void){
     if(confirm()&&entry_len){sfbs_seed_normalize(entry,save.seed);state=ST_MODE;}else if(back())state=ST_TITLE;
    }break;
    case ST_PLAY:{
-    if(back()||IsKeyPressed(KEY_P)){sfbs_audio_pause(&audio,true);state=ST_PAUSE;break;}
+    if(back()||pause_pressed()){sfbs_audio_pause(&audio,true);state=ST_PAUSE;break;}
     V2 in={(IsKeyDown(KEY_D)||IsKeyDown(KEY_RIGHT))-(IsKeyDown(KEY_A)||IsKeyDown(KEY_LEFT)),(IsKeyDown(KEY_S)||IsKeyDown(KEY_DOWN))-(IsKeyDown(KEY_W)||IsKeyDown(KEY_UP))};
     if(IsGamepadAvailable(0)){in.x+=GetGamepadAxisMovement(0,GAMEPAD_AXIS_LEFT_X);in.y+=GetGamepadAxisMovement(0,GAMEPAD_AXIS_LEFT_Y);}
     bool pulse=IsKeyPressed(KEY_SPACE)||IsKeyPressed(KEY_Z)||IsKeyPressed(KEY_ENTER)||(IsGamepadAvailable(0)&&(IsGamepadButtonPressed(0,GAMEPAD_BUTTON_RIGHT_FACE_DOWN)||GetGamepadAxisMovement(0,GAMEPAD_AXIS_RIGHT_TRIGGER)>.5f));
@@ -75,7 +76,7 @@ int main(void){
     if(game.ended){sfbs_audio_phase(&audio,PH_FINAL,!game.won);save.tutorial=1;sfbs_save_write("sfbs.sav",&save);state=ST_RESULTS;}
    }break;
    case ST_PAUSE:
-    if(confirm()||back()||IsKeyPressed(KEY_P)){sfbs_audio_pause(&audio,false);state=ST_PLAY;}else if(IsKeyPressed(KEY_R))start_run();
+    if(confirm()||back()||pause_pressed()){sfbs_audio_pause(&audio,false);state=ST_PLAY;}else if(IsKeyPressed(KEY_R))start_run();
     break;
    case ST_RESULTS:
     if(IsKeyPressed(KEY_R)||confirm())start_run();else if(IsKeyPressed(KEY_N)){sfbs_random_seed(entropy(),save.seed);start_run();}else if(IsKeyPressed(KEY_M)){sfbs_audio_pause(&audio,true);state=ST_MODE;}else if(IsKeyPressed(KEY_S)){sfbs_audio_pause(&audio,true);open_seed();}else if(back()){sfbs_audio_pause(&audio,true);state=ST_TITLE;}
