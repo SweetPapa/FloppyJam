@@ -42,6 +42,8 @@ source tree; platform acceptance items still require the documented Windows test
 - [x] Determinism snapshots and 100,000-seed structural fuzz harness
 - [x] Developer overlay, stem toggles, phase jump, freeze echo, collision view,
       forced damage/recovery, regeneration, genome print and gallery mode
+- [x] Headless control harness for scripted input, all modes, pause/resume,
+      success/failure results, replay, seed changes, and deterministic transitions
 - [x] Save validation/failure-safe persistence for seed, mode, volume, fullscreen/tutorial
 - [x] Exact extracted-size gate with 1,350,000 warning and 1,474,560 hard failure
 - [x] CMake debug/release builds and Windows static-link guidance
@@ -56,4 +58,3 @@ interactive implementation. FR-001–004 and FR-060–062 are build/release prop
 the scripts enforce package structure and size, while clean-machine verification is
 necessarily a release QA action. NFR-001–010 are covered structurally and by the test
 harness; perceptual and hardware-specific portions remain in the three QA items above.
-

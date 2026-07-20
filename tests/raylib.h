@@ -38,10 +38,15 @@ typedef struct Vector2{float x,y;}Vector2;typedef struct Vector3{float x,y,z;}Ve
 #define KEY_F6 295
 #define KEY_F7 296
 #define KEY_F8 297
+#define KEY_F9 298
 #define KEY_F11 300
 #define KEY_EQUAL 61
 #define KEY_MINUS 45
 #define KEY_Q 81
+#define KEY_LEFT_BRACKET 91
+#define KEY_RIGHT_BRACKET 93
+#define KEY_SEMICOLON 59
+#define KEY_APOSTROPHE 39
 #define GAMEPAD_BUTTON_RIGHT_FACE_DOWN 7
 #define GAMEPAD_BUTTON_RIGHT_FACE_UP 5
 #define GAMEPAD_BUTTON_RIGHT_FACE_RIGHT 6
@@ -56,7 +61,7 @@ typedef struct Vector2{float x,y;}Vector2;typedef struct Vector3{float x,y,z;}Ve
 #define GAMEPAD_AXIS_RIGHT_X 2
 #define GAMEPAD_AXIS_RIGHT_Y 3
 #define GAMEPAD_AXIS_RIGHT_TRIGGER 5
-void InitWindow(int,int,const char*);void CloseWindow(void);bool WindowShouldClose(void);void SetConfigFlags(unsigned int);void SetTargetFPS(int);int GetScreenWidth(void);int GetScreenHeight(void);float GetFrameTime(void);double GetTime(void);bool IsKeyPressed(int);bool IsKeyDown(int);int GetCharPressed(void);bool IsGamepadAvailable(int);bool IsGamepadButtonPressed(int,int);float GetGamepadAxisMovement(int,int);Vector2 GetMouseDelta(void);void DisableCursor(void);void EnableCursor(void);void ToggleFullscreen(void);bool IsWindowFullscreen(void);void SetMasterVolume(float);
+void InitWindow(int,int,const char*);void CloseWindow(void);bool WindowShouldClose(void);bool IsWindowFocused(void);void SetConfigFlags(unsigned int);void SetTargetFPS(int);int GetScreenWidth(void);int GetScreenHeight(void);float GetFrameTime(void);double GetTime(void);bool IsKeyPressed(int);bool IsKeyDown(int);int GetCharPressed(void);bool IsGamepadAvailable(int);bool IsGamepadButtonPressed(int,int);float GetGamepadAxisMovement(int,int);Vector2 GetMouseDelta(void);void DisableCursor(void);void EnableCursor(void);void ToggleFullscreen(void);bool IsWindowFullscreen(void);void SetMasterVolume(float);
 RenderTexture2D LoadRenderTexture(int,int);void UnloadRenderTexture(RenderTexture2D);void SetTextureFilter(Texture2D,int);void BeginTextureMode(RenderTexture2D);void EndTextureMode(void);void BeginDrawing(void);void EndDrawing(void);void ClearBackground(Color);void BeginBlendMode(int);void EndBlendMode(void);void BeginMode3D(Camera3D);void EndMode3D(void);void DrawTexturePro(Texture2D,Rectangle,Rectangle,Vector2,float,Color);void DrawText(const char*,int,int,int,Color);int MeasureText(const char*,int);void DrawRectangle(int,int,int,int,Color);void DrawRectangleLinesEx(Rectangle,float,Color);void DrawRectangleGradientV(int,int,int,int,Color,Color);void DrawCircle(int,int,float,Color);void DrawCircleLines(int,int,float,Color);void DrawLineEx(Vector2,Vector2,float,Color);void DrawCircleV(Vector2,float,Color);void DrawPoly(Vector2,int,float,float,Color);void DrawLine(int,int,int,int,Color);void DrawRing(Vector2,float,float,float,float,int,Color);void DrawLine3D(Vector3,Vector3,Color);void DrawCircle3D(Vector3,float,Vector3,float,Color);void DrawCylinderEx(Vector3,Vector3,float,float,int,Color);void DrawCylinderWiresEx(Vector3,Vector3,float,float,int,Color);void DrawSphere(Vector3,float,Color);void DrawSphereWires(Vector3,float,int,int,Color);Color ColorAlpha(Color,float);
 void InitAudioDevice(void);void CloseAudioDevice(void);void SetAudioStreamBufferSizeDefault(int);AudioStream LoadAudioStream(unsigned int,unsigned int,unsigned int);void UnloadAudioStream(AudioStream);void SetAudioStreamCallback(AudioStream,void(*)(void*,unsigned int));void PlayAudioStream(AudioStream);void StopAudioStream(AudioStream);void PauseAudioStream(AudioStream);void ResumeAudioStream(AudioStream);
 #endif
