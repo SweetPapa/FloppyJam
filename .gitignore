@@ -1,0 +1,7 @@
+/build/
+/build-*/
+/stage/
+*.sav
+*.wav
+*.zip
+*.exe
