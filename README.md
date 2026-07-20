@@ -124,10 +124,16 @@ The interface supports English, Spanish, French, and German. Press L on the
 title, mode, pause, results, or credits screen to cycle languages. The gamepad
 north face button does the same. The selected language is saved automatically.
 
-Gameplay starts in first person on the surface of the disk. Move the mouse or
-right stick to look around; movement is relative to the direction you face.
-Press V or click the right stick to switch instantly to the elevated 3D overview.
-The selected camera mode is saved.
+Gameplay starts in the fixed, north-up 3D arcade view. Movement is directly
+screen-aligned: up always moves toward the top of the disk. A target beacon and
+the upper-right radar point toward the nearest recoverable sector; the dark radar
+marker and `ECHO` readout show the pursuing corruption path. The lower-left HUD
+shows when Pulse is ready.
+
+Press V or click the right stick to switch to first person. In first person,
+move the mouse or right stick to look around and movement follows the direction
+you face. Press V again whenever you need the clearer full-disk view. The selected
+camera mode is saved.
 
 ## Menus and replay
 
@@ -192,12 +198,19 @@ The playable executable exposes the same early-exit mode when raylib is built:
 ```sh
 ./build-game/SongsFromBadSectors --headless-test
 ./build-game/SongsFromBadSectors --status-json
+./build-game/SongsFromBadSectors --control-test
 ```
 
 Each command writes exactly one JSON object to stdout and returns nonzero when a
 mechanically testable requirement fails. The report includes build state, check
 and failure counts, deterministic digest, completed modes, feature flags, and
 the remaining device-specific review boundaries.
+
+`--control-test` runs the scripted control harness. It switches through Bloom,
+Flow, and Pulse; drives deterministic movement and Pulse input; verifies pause
+and resume, complete results, early failure, Bloom survival, same-seed restart,
+new-seed play, and title return; and emits its own strict JSON result. The same
+harness is also available without raylib as `./build/sfbs_control_harness`.
 
 When raylib is available, configure with `SFBS_BUILD_GAME=ON` to include the
 offline runtime-audio integration test. The operator playthrough checklist is
