@@ -39,6 +39,7 @@ typedef struct Vector2{float x,y;}Vector2;typedef struct Rectangle{float x,y,wid
 #define KEY_MINUS 45
 #define KEY_Q 81
 #define GAMEPAD_BUTTON_RIGHT_FACE_DOWN 7
+#define GAMEPAD_BUTTON_MIDDLE_RIGHT 6
 #define GAMEPAD_BUTTON_LEFT_FACE_LEFT 13
 #define GAMEPAD_BUTTON_LEFT_FACE_RIGHT 14
 #define GAMEPAD_BUTTON_LEFT_FACE_UP 11
