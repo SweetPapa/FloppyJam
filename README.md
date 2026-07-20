@@ -112,10 +112,15 @@ every run. Mode only changes pressure and forgiveness.
 | Random seed on seed screen | R | Cycle the six slots with D-pad |
 | Volume | Minus / Equals | — |
 | Toggle fullscreen | F11 | — |
+| Change language | L on menus | North face button on menus |
 | Exit from title | Q or Escape | East face button |
 
 On the seed screen, keyboard input ignores ambiguous `0`, `O`, `1`, `I`, and
 `L`. With a gamepad, left/right selects a slot and up/down cycles its character.
+
+The interface supports English, Spanish, French, and German. Press L on the
+title, mode, pause, results, or credits screen to cycle languages. The gamepad
+north face button does the same. The selected language is saved automatically.
 
 ## Menus and replay
 
