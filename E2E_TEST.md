@@ -16,15 +16,17 @@ Please report the first failed numbered item with the seed and mode.
    the selected language remains after relaunch.
 3. Seed entry ignores `0`, `O`, `1`, `I`, and `L`; random seed and six-slot entry work.
 4. Bloom completes without early game-over; Flow has three integrity; Pulse has two.
-5. First-person mouse/right-stick look is smooth and movement follows the viewed
-   direction. WASD/arrows and gamepad stick/D-pad move; Space/Z/Enter, south button,
-   and right trigger Pulse. Pulse never fails and feels stronger near the beat.
+5. The default 3D arcade view is fixed and north-up: up input always moves toward
+   the top of the screen. Sticks do not drift. In first person, mouse/right-stick
+   look is smooth and movement follows the viewed direction at both 60 and 144 Hz.
+   Space/Z/Enter, south button, and right trigger Pulse in either view.
 6. In a new profile, the short movement, Pulse, and echo tutorial prompts appear.
 7. Nodes telegraph, become collectible without exact timing, and match audible rhythm.
    Press V or right-stick click and verify the elevated 3D overview shows the complete
    outer disk at both the top and bottom of the window, then return to first person.
 8. The dark ribbon clearly follows the prior player route and contact cannot rapidly
-   remove multiple integrity points.
+   remove multiple integrity points. Its large worm head and dark radar marker make
+   its current position obvious.
 9. Music begins with pad, then adds percussion, bass, and full lead as the run grows.
    Listen for stereo placement and short ambience delays. A hit temporarily dulls
    the mix without clicks; audio and sweep remain aligned.
@@ -40,6 +42,8 @@ Please report the first failed numbered item with the seed and mode.
 17. Verify the 3D node pillars, floating particles, player trails, sector ticks,
     physical corruption ribbon, world-space sweep, and vertical Final Read bloom
     remain attractive without hiding gameplay information.
+18. Verify the target beacon, target distance, radar, Echo delay, and Pulse readiness
+    make it possible to understand the next action without reading the README.
 
 Hardware release checks still required separately: Windows 10 x64, Windows 11 x64,
 integrated graphics, XInput controller, focus loss, and a clean directory with no DLLs.
