@@ -1,0 +1,9 @@
+#include "music.h"
+#include <string.h>
+#include <stdlib.h>
+static const int scales[5][7]={{0,2,4,7,9,12,14},{0,3,5,7,10,12,15},{0,2,4,5,7,9,11},{0,2,3,5,7,9,10},{0,2,4,5,7,9,10}};
+static const int prog[8][4]={{0,7,9,5},{0,4,5,5},{0,9,2,7},{0,5,0,7},{0,8,3,10},{0,5,9,7},{0,5,0,5},{0,5,0,5}};
+static void add(Song*s,uint64_t tick,int stem,int voice,int note,int vel,uint32_t len,int bpm){if(s->count>=SFBS_EVENTS)return;MusicEvent*e=&s->events[s->count++];*e=(MusicEvent){sfbs_tick_sample(tick,bpm),tick,(uint8_t)stem,(uint8_t)voice,(uint8_t)note,(uint8_t)vel,len};}
+static int event_cmp(const void*a,const void*b){const MusicEvent*x=a,*y=b;return x->sample<y->sample?-1:x->sample>y->sample?1:0;}
+void sfbs_song_generate(const Genome*g,const Phrase*p,Song*s){memset(s,0,sizeof *s);Rng r={g->music_seed};for(int bar=0;bar<SFBS_BARS;bar++){int pi=bar/4, chord=prog[g->progression][bar%4], root=g->root+chord;uint64_t bt=(uint64_t)bar*4*SFBS_PPQN;for(int v=0;v<3;v++)add(s,bt,0,0,root+12+scales[g->scale][v*2],42,4*SFBS_PPQN,g->bpm);Pattern q=p[pi].pattern;for(int step=0;step<q.steps;step++)if(q.bits&(1u<<step)){uint64_t tick=bt+(uint64_t)step*4*SFBS_PPQN/q.steps;int degree=(step+(int)(sfbs_rng(&r)%3))%7;add(s,tick,3,2,root+24+scales[g->scale][degree],46+(step%3)*6,SFBS_PPQN/2,g->bpm);if(pi>=3&&step%2==0)add(s,tick,2,1,root-12+(step%4?7:0),58,SFBS_PPQN,g->bpm);if(pi>=1)add(s,tick,1,step%4?4:3,step%4?72:36,50,SFBS_PPQN/6,g->bpm);}for(int beat=0;beat<4;beat++){uint64_t t=bt+beat*SFBS_PPQN;if(pi>=3)add(s,t,1,3,36,54,SFBS_PPQN/5,g->bpm);if(pi>=3)add(s,t+SFBS_PPQN/2,1,5,80,30,SFBS_PPQN/8,g->bpm);}}qsort(s->events,(size_t)s->count,sizeof s->events[0],event_cmp);}
+bool sfbs_song_valid(const Song*s){if(s->count<1||s->count>SFBS_EVENTS)return false;uint64_t last=0;int mask=0;for(int i=0;i<s->count;i++){const MusicEvent*e=&s->events[i];if(i&&e->sample<last)return false;if(e->note<20||e->note>110)return false;last=e->sample;mask|=1<<e->stem;}return (mask&15)==15;}
