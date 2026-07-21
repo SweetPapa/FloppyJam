@@ -3,10 +3,17 @@
 
 #include <math.h>
 
+static float angle_delta(float from, float to)
+{
+    float d=fmodf(to-from+PI,PI*2)-PI;
+    return d<-PI?d+PI*2:d;
+}
+
 void pb_camera_init(PbFollowCamera *c, Vector3 target)
 {
     *c = (PbFollowCamera){0};
-    c->target = target; c->yaw = .65f; c->pitch = .48f; c->distance = 10;
+    c->target = target; c->yaw = 0; c->pitch = .48f; c->distance = 10;
+    c->obstruction_distance=c->distance;
     c->view.up = (Vector3){0,1,0}; c->view.fovy = 55; c->view.projection = CAMERA_PERSPECTIVE;
 }
 
@@ -18,9 +25,20 @@ void pb_camera_update(PbFollowCamera *c, Vector3 player, Vector3 velocity,
     Vector3 ray_direction;
     float allowed;
     float response = 1-expf(-8*dt);
+    float speed=sqrtf(velocity.x*velocity.x+velocity.z*velocity.z);
     int i;
-    c->yaw += in.camera_x*1.8f*dt;
-    c->pitch = Clamp(c->pitch-in.camera_y*1.2f*dt,.18f,.85f);
+    if(fabsf(in.camera_x)>.02f||fabsf(in.camera_y)>.02f) {
+        c->yaw += in.camera_x*1.8f*dt;
+        c->pitch = Clamp(c->pitch-in.camera_y*1.2f*dt,.20f,.78f);
+        c->manual_timer=1.1f;
+    } else {
+        c->manual_timer=fmaxf(0,c->manual_timer-dt);
+        c->pitch+=(.46f-c->pitch)*(1-expf(-2.2f*dt));
+        if(c->manual_timer<=0&&speed>1.2f) {
+            float desired=atan2f(-velocity.x,-velocity.z);
+            c->yaw+=angle_delta(c->yaw,desired)*(1-expf(-2.8f*dt));
+        }
+    }
     c->target = Vector3Lerp(c->target,look,response);
     c->view.target = c->target;
     desired = (Vector3){c->target.x+sinf(c->yaw)*cosf(c->pitch)*c->distance,
@@ -32,5 +50,7 @@ void pb_camera_update(PbFollowCamera *c, Vector3 player, Vector3 velocity,
         RayCollision hit = GetRayCollisionBox((Ray){c->target,ray_direction},world->items[i].box);
         if (hit.hit && hit.distance < allowed) allowed = fmaxf(1.2f,hit.distance-.3f);
     }
-    c->view.position = Vector3Add(c->target,Vector3Scale(ray_direction,allowed));
+    c->obstruction_distance+=(allowed-c->obstruction_distance)*
+        (1-expf(-(allowed<c->obstruction_distance?18.0f:4.0f)*dt));
+    c->view.position = Vector3Add(c->target,Vector3Scale(ray_direction,c->obstruction_distance));
 }
