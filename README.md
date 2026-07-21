@@ -52,7 +52,8 @@ retraces that old route and makes it dangerous. The main decision is therefore
 not simply which bright sector to collect, but where to travel without boxing
 your future self into the returning echo.
 
-The run develops in stages:
+The run develops in stages (the rhythm section now begins building during the
+first Signal phrase, so the arrangement changes well before the midpoint):
 
 1. The opening phrases introduce movement and sector recovery without damage.
 2. Percussion enters and the dark echo begins following your previous route.
@@ -104,7 +105,8 @@ every run. Mode only changes pressure and forgiveness.
 
 | Action | Keyboard | Gamepad |
 |---|---|---|
-| Move | WASD or Arrow Keys | Left stick or D-pad |
+| Move (overview) | WASD or Arrow Keys | Left stick or D-pad |
+| Drive / turn (first person) | W/S forward/back, A/D turn | Left stick forward/back and turn |
 | Pulse | Space, Z, or Enter | South face button or right trigger |
 | Confirm | Enter or Space | South face button |
 | Back | Escape | East face button |
@@ -120,9 +122,11 @@ every run. Mode only changes pressure and forgiveness.
 On the seed screen, keyboard input ignores ambiguous `0`, `O`, `1`, `I`, and
 `L`. With a gamepad, left/right selects a slot and up/down cycles its character.
 
-The interface supports English, Spanish, French, and German. Press L on the
-title, mode, pause, results, or credits screen to cycle languages. The gamepad
-north face button does the same. The selected language is saved automatically.
+The interface supports English, Spanish, French, German, Korean, Japanese, and
+Chinese. Korean, Japanese, and Chinese use ASCII romanization so every glyph is
+available in the game's embedded, asset-free font. Press L on the title, mode,
+pause, results, or credits screen to cycle languages. The gamepad north face
+button does the same. The selected language is saved automatically.
 
 Gameplay starts in the fixed, north-up 3D arcade view. Movement is directly
 screen-aligned: up always moves toward the top of the disk. A target beacon and
@@ -131,9 +135,10 @@ marker and `ECHO` readout show the pursuing corruption path. The lower-left HUD
 shows when Pulse is ready.
 
 Press V or click the right stick to switch to first person. In first person,
-move the mouse or right stick to look around and movement follows the direction
-you face. Press V again whenever you need the clearer full-disk view. The selected
-camera mode is saved.
+W/S or the left stick moves forward and backward; A/D or left-stick left/right
+turns the camera in the same direction. The mouse or right stick also looks
+around. There is no left/right strafing in this view. Press V again whenever you
+need the clearer full-disk view. The selected camera mode is saved.
 
 ## Menus and replay
 
@@ -169,7 +174,7 @@ cmake --build build-debug -j
 - F4: palette gallery strip
 - F5: force damage
 - F6: recover all currently visible sectors
-- F7: jump forward four bars
+- F7: jump to the next arrangement phase
 - F8: regenerate and start a new seed
 - 1–4: toggle pad, percussion, bass, and lead
 
@@ -198,6 +203,7 @@ The playable executable exposes the same early-exit mode when raylib is built:
 ```sh
 ./build-game/SongsFromBadSectors --headless-test
 ./build-game/SongsFromBadSectors --status-json
+./build-game/SongsFromBadSectors --validate
 ./build-game/SongsFromBadSectors --control-test
 ```
 
@@ -231,6 +237,14 @@ Check the exact extracted size before packaging:
 
 ```sh
 cmake -DSTAGE=path/to/stage -P scripts/check_size.cmake
+```
+
+Or create a clean two-file stage, enforce the size gate, and produce the archive
+in one command:
+
+```sh
+cmake -DEXECUTABLE=build-release/SongsFromBadSectors.exe \
+  -DOUTPUT=dist -P scripts/package.cmake
 ```
 
 The checker fails above 1,474,560 bytes and warns above the 1,350,000-byte
