@@ -295,11 +295,13 @@ int main(void)
         else if(mode==PB_MODE_OPTIONS) pb_ui_options(menu_selection,&save,controller_prompts);
         else if(mode==PB_MODE_RESULTS) pb_ui_results(&level,&gameplay,menu_selection,controller_prompts);
 #if defined(POLYBLOOM_DEBUG)
-        DrawFPS(GetScreenWidth() - 100, 20);
-        DrawText(TextFormat("PASS 2  %s  VEL %.1f %.1f %.1f  PARTICLES %d  F1 FREECAM %s",
-                            pb_player_state_name(player.state), player.velocity.x, player.velocity.y,
-                            player.velocity.z, particles.active, free_camera ? "ON" : "OFF"),
-                 36, GetScreenHeight() - 42, 18, DARKGRAY);
+        if(mode==PB_MODE_PLAYING||mode==PB_MODE_LEVEL_COMPLETE) {
+            DrawFPS(GetScreenWidth() - 100, 20);
+            DrawText(TextFormat("%s  VEL %.1f %.1f %.1f  P:%d  F1 FREECAM %s",
+                                pb_player_state_name(player.state),player.velocity.x,player.velocity.y,
+                                player.velocity.z,particles.active,free_camera?"ON":"OFF"),
+                     36,GetScreenHeight()-42,16,DARKGRAY);
+        }
 #endif
         EndDrawing();
     }
