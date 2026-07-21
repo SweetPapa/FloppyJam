@@ -173,7 +173,7 @@ int main(void)
             if(input.restart_down) restart_hold+=dt; else restart_hold=0;
             if(restart_hold>=.5f) { int id=level.level_id; start_level(id,&level,&collision,&gameplay,&player,&follow,&particles,reduced_effects);
                 accumulator=simulation_time=elapsed=restart_hold=0; intro_timer=0; mode=PB_MODE_LEVEL_INTRO; }
-            if(input.camera_recenter) follow.yaw=0;
+            if(input.camera_recenter) { follow.yaw=atan2f(-player.facing.x,-player.facing.z); follow.manual_timer=0; }
         } else restart_hold=0;
 
         if(mode==PB_MODE_LEVEL_INTRO) { intro_timer+=dt; if(intro_timer>=1.5f||(action&&intro_timer>.1f)) mode=PB_MODE_PLAYING; }
@@ -287,6 +287,10 @@ int main(void)
             DrawText(TextFormat("%s   GLINTS %02d/30   SEEDS %d/3",pb_level_section_name(&level),level.glint_count,level.seed_count),36,32,18,DARKPURPLE);
             DrawText(TextFormat("HEALTH %s%s%s   TIME %.2f",gameplay.health>0?"*":"",gameplay.health>1?"*":"",gameplay.health>2?"*":"",
                                 pb_gameplay_result_ms(&gameplay)/1000.0f),36,58,18,DARKPURPLE);
+            if(mode==PB_MODE_PLAYING&&level.section==PB_SECTION_AWAKENING&&gameplay.run_time<8)
+                DrawText(controller_prompts?"LEFT STICK / D-PAD MOVE   RIGHT STICK LOOK   A JUMP   X BURST":
+                                            "WASD / ARROWS MOVE   MOUSE LOOK   SPACE JUMP   SHIFT BURST",
+                         36,86,16,(Color){75,57,102,230});
         }
         if(mode==PB_MODE_TITLE) pb_ui_title(menu_selection,controller_prompts);
         else if(mode==PB_MODE_LEVEL_SELECT) pb_ui_level_select(menu_selection,&save,controller_prompts);

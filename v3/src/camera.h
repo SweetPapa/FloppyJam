@@ -11,6 +11,8 @@ typedef struct PbFollowCamera {
     float yaw;
     float pitch;
     float distance;
+    float obstruction_distance;
+    float manual_timer;
 } PbFollowCamera;
 
 void pb_camera_init(PbFollowCamera *camera, Vector3 target);

@@ -191,6 +191,14 @@ void pb_level_draw(PbLevel *l, PbRenderer *r, float elapsed, bool reduced)
         if(p.type==LEVEL_FALLING&&l->falling_timer[i]>0&&l->falling_timer[i]<.8f&&
            fmodf(l->falling_timer[i],.2f)<.1f) piece_color=(Color){255,95,170,255};
         pb_draw_mesh(&r->meshes,PB_MESH_CUBE,pos,(Vector3){0,1,0},0,size,piece_color);
+        if(p.type!=LEVEL_BOUNCE) {
+            Color top={(unsigned char)fminf(255,piece_color.r+32),
+                       (unsigned char)fminf(255,piece_color.g+32),
+                       (unsigned char)fminf(255,piece_color.b+28),255};
+            pb_draw_mesh(&r->meshes,PB_MESH_CUBE,
+                         (Vector3){pos.x,pos.y+size.y*.5f+.025f,pos.z},(Vector3){0,1,0},0,
+                         (Vector3){size.x*.94f,.05f,size.z*.94f},top);
+        }
     }
     for(i=0;i<PB_LEVEL_GLINTS;++i) if(!l->glints[i].collected) {
         Vector3 p=l->glints[i].position; p.y+=sinf(elapsed*4+i)*.12f;

@@ -76,7 +76,7 @@ add_custom_command(TARGET polybloom POST_BUILD
 include(CTest)
 if(BUILD_TESTING)
   add_executable(polybloom_controller_test EXCLUDE_FROM_ALL
-    tests/controller_test.c src/collision.c src/player.c)
+    tests/controller_test.c src/collision.c src/player.c src/camera.c)
   target_include_directories(polybloom_controller_test PRIVATE src ${RAYLIB_INCLUDE_DIR})
   target_link_libraries(polybloom_controller_test PRIVATE
     $<IF:$<BOOL:${RAYLIB_STATIC_LIBRARY}>,${RAYLIB_STATIC_LIBRARY},raylib>)

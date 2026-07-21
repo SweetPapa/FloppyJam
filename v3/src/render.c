@@ -81,9 +81,15 @@ void pb_draw_world(PbRenderer *r, const PbParticles *particles, Vector3 player,
 {
     int i;
     int decor_count=reduced?8:18;
-    Color mint = style?(Color){31,73,118,255}:(Color){89,190,158,255};
-    pb_draw_mesh(&r->meshes, PB_MESH_CUBE, (Vector3){0,-0.25f,0}, (Vector3){0,1,0}, 0,
-                 (Vector3){40,0.5f,40}, mint);
+    Color mint = style?(Color){20,24,62,255}:(Color){73,168,211,255};
+    pb_draw_mesh(&r->meshes,PB_MESH_CUBE,(Vector3){0,-1.35f,-38},(Vector3){0,1,0},0,
+                 (Vector3){90,.12f,180},mint);
+    if(!style) for(i=0;i<(reduced?7:16);++i) {
+        float z=-4-i*7.0f+fmodf(elapsed*(.3f+(i%3)*.08f),7.0f);
+        float x=((i*11)%31)-15.0f;
+        pb_draw_mesh(&r->meshes,PB_MESH_CUBE,(Vector3){x,-1.25f,z},(Vector3){0,1,0},0,
+                     (Vector3){5.5f,.025f,.12f},(Color){151,224,238,175});
+    }
     for (i = 0; i < decor_count; ++i) {
         float x = (float)((i*7)%17) - 8.0f;
         float z = (float)((i*11)%19) - 9.0f;

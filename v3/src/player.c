@@ -45,7 +45,10 @@ void pb_player_update(PbPlayer *p, PbCollisionWorld *world, PbInput in, float ya
             p->velocity.x = approach(p->velocity.x,wish.x*target_speed,accel*dt);
             p->velocity.z = approach(p->velocity.z,wish.z*target_speed,accel*dt);
         }
-        if (wish_len > .1f) p->facing = Vector3Normalize(wish);
+        if (wish_len > .1f) {
+            Vector3 target_facing=Vector3Normalize(wish);
+            p->facing=Vector3Normalize(Vector3Lerp(p->facing,target_facing,fminf(1,14*dt)));
+        }
         if (p->jump_buffer > 0 && p->coyote > 0) {
             p->velocity.y = 10.5f; p->grounded = false; p->coyote = 0; p->jump_buffer = 0;
         }

@@ -27,3 +27,13 @@ cmake --build build-debug
 The post-build check reports extracted package size and fails if the executable
 exceeds 1,474,560 bytes. The build prefers a static raylib archive so the result
 does not depend on a separately packaged raylib library.
+
+## Controls
+
+- Move: WASD, arrow keys, controller left stick, or D-pad
+- Camera: automatic follow; mouse or right stick temporarily orbits
+- Jump / Glide: Space or controller A
+- Burst: Left Shift, J, or controller X
+- Recenter camera: R or right shoulder
+- Pause: Escape or Start
+- Restart: hold Backspace or both shoulder buttons for 0.5 seconds
