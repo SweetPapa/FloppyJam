@@ -12,13 +12,14 @@ Please report the first failed numbered item with the seed and mode.
 
 1. Boot reaches the title in under three seconds and can be skipped.
 2. Title shows seed, mode, volume, controls, credits, fullscreen, and exit choices.
-   Press L and verify English, Spanish, French, and German cycle immediately and
-   the selected language remains after relaunch.
+   Press L and verify English, Spanish, French, German, Korean, Japanese, and
+   Chinese cycle immediately and the selected language remains after relaunch.
 3. Seed entry ignores `0`, `O`, `1`, `I`, and `L`; random seed and six-slot entry work.
 4. Bloom completes without early game-over; Flow has three integrity; Pulse has two.
 5. The default 3D arcade view is fixed and north-up: up input always moves toward
    the top of the screen. Sticks do not drift. In first person, mouse/right-stick
-   look is smooth and movement follows the viewed direction at both 60 and 144 Hz.
+   look is smooth; W/S drives forward/back and A/D turns left/right without
+   inversion at both 60 and 144 Hz.
    Space/Z/Enter, south button, and right trigger Pulse in either view.
 6. In a new profile, the short movement, Pulse, and echo tutorial prompts appear.
 7. Nodes telegraph, become collectible without exact timing, and match audible rhythm.
