@@ -30,8 +30,9 @@ PbInput pb_platform_input(void)
     bool pad = IsGamepadAvailable(0);
     input.move_x = keyboard_x;
     input.move_y = keyboard_y;
-    input.camera_x = mouse_delta.x*.16f;
-    input.camera_y = mouse_delta.y*.16f;
+    input.camera_x = mouse_delta.x;
+    input.camera_y = mouse_delta.y;
+    input.camera_pointer = fabsf(mouse_delta.x)>.01f||fabsf(mouse_delta.y)>.01f;
     input.jump_pressed = IsKeyPressed(KEY_SPACE);
     input.jump_down = IsKeyDown(KEY_SPACE);
     input.burst_pressed = IsKeyPressed(KEY_LEFT_SHIFT) || IsKeyPressed(KEY_J);
@@ -43,17 +44,23 @@ PbInput pb_platform_input(void)
     if (pad) {
         float x = GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X);
         float y = -GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_Y);
-        if (fabsf(x) > 0.15f || fabsf(y) > 0.15f) {
-            input.move_x = x;
-            input.move_y = y;
+        float magnitude=sqrtf(x*x+y*y);
+        if (magnitude > 0.18f) {
+            float scaled=fminf(1,(magnitude-.18f)/.82f)/magnitude;
+            input.move_x = x*scaled;
+            input.move_y = y*scaled;
             input.controller_active = true;
         }
         if (IsGamepadButtonDown(0,GAMEPAD_BUTTON_LEFT_FACE_RIGHT)) input.move_x=1;
         if (IsGamepadButtonDown(0,GAMEPAD_BUTTON_LEFT_FACE_LEFT)) input.move_x=-1;
         if (IsGamepadButtonDown(0,GAMEPAD_BUTTON_LEFT_FACE_UP)) input.move_y=1;
         if (IsGamepadButtonDown(0,GAMEPAD_BUTTON_LEFT_FACE_DOWN)) input.move_y=-1;
-        input.camera_x += GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_X);
-        input.camera_y -= GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_Y);
+        if(!input.camera_pointer) {
+            input.camera_x = GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_X);
+            input.camera_y = -GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_Y);
+            if(fabsf(input.camera_x)<.12f) input.camera_x=0;
+            if(fabsf(input.camera_y)<.12f) input.camera_y=0;
+        }
         input.jump_pressed |= IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN);
         input.jump_down |= IsGamepadButtonDown(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN);
         input.burst_pressed |= IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_LEFT);
