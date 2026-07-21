@@ -8,6 +8,7 @@ typedef struct PbInput {
     float move_y;
     float camera_x;
     float camera_y;
+    bool camera_pointer;
     bool jump_pressed;
     bool jump_down;
     bool burst_pressed;
