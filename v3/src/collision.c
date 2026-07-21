@@ -83,7 +83,9 @@ int pb_collision_move(PbCollisionWorld *w, Vector3 *p, Vector3 *v,
         bool xz = p->x+radius>b.min.x && p->x-radius<b.max.x &&
                   p->z+radius>b.min.z && p->z-radius<b.max.z;
         if (!xz) continue;
-        if (v->y <= 0 && old.y-hh >= b.max.y-.08f && p->y-hh <= b.max.y) {
+        /* Ground recovery also accepts a shallow initial overlap. This keeps
+           authored respawns and moving-platform seams from dropping a capsule. */
+        if (v->y <= 0 && old.y > b.max.y && old.y-hh >= b.max.y-.25f && p->y-hh <= b.max.y) {
             p->y = b.max.y+hh; v->y = 0; *grounded = true; ground = i;
         } else if (v->y > 0 && old.y+hh <= b.min.y && p->y+hh >= b.min.y) {
             p->y = b.min.y-hh; v->y = 0;

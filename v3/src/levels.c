@@ -92,7 +92,7 @@ void pb_level_petalgarden_init(PbLevel *l, PbCollisionWorld *world)
     l->seeds[2].position = (Vector3){-5,6,-66};
     l->checkpoint = (Vector3){-2,2.2f,-36};
     l->checkpoints[0]=l->checkpoint; l->checkpoint_count=1;
-    l->respawn = (Vector3){0,1,3};
+    l->respawn = (Vector3){0,1.15f,3};
     l->gate = (Vector3){0,2,-124};
 }
 
@@ -120,7 +120,7 @@ void pb_level_prismrush_init(PbLevel *l, PbCollisionWorld *world)
     l->checkpoints[0]=(Vector3){0,-1.8f,-49};
     l->checkpoints[1]=(Vector3){0,-2.8f,-90};
     l->checkpoint_count=2; l->checkpoint=l->checkpoints[0];
-    l->respawn=(Vector3){0,1,5}; l->gate=(Vector3){0,-1.8f,-147};
+    l->respawn=(Vector3){0,1.15f,5}; l->gate=(Vector3){0,-1.8f,-147};
 }
 
 void pb_level_update(PbLevel *l, PbCollisionWorld *world, Vector3 p, float dt)
