@@ -1,0 +1,5 @@
+*.o
+gauntlet
+gauntlet.scores
+gauntlet.cfg
+compile_flags.txt
