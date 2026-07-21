@@ -21,6 +21,7 @@ source tree; platform acceptance items still require the documented Windows test
 - [x] Inertial fixed-step movement, soft circular boundary and always-valid Pulse
 - [x] Continuous Gaussian beat resonance and mode-specific cooldown/impulse
 - [x] Musical-time path buffer, delayed beat-stepped echo, ribbon collision and i-frames
+- [x] Echo head and collision position quantized to quarter-note boundaries
 - [x] Bloom/Flow/Pulse pressure, integrity, recent-node corruption and route pushback
 - [x] Final Read combines earlier patterns; success/failure state resolves musically
 
@@ -39,6 +40,7 @@ source tree; platform acceptance items still require the documented Windows test
 
 - [x] Plain modular C99; fixed capacities; no gameplay allocation after initialization
 - [x] Headless tests: seed, RNG independence, Euclid, transport, recovery, echo wrap
+- [x] Thirty-minute transport arithmetic soak and beat-quantized echo checks
 - [x] Determinism snapshots and 100,000-seed structural fuzz harness
 - [x] Developer overlay, stem toggles, phase jump, freeze echo, collision view,
       forced damage/recovery, regeneration, genome print and gallery mode
@@ -46,6 +48,7 @@ source tree; platform acceptance items still require the documented Windows test
       success/failure results, replay, seed changes, and deterministic transitions
 - [x] Save validation/failure-safe persistence for seed, mode, volume, fullscreen/tutorial
 - [x] Exact extracted-size gate with 1,350,000 warning and 1,474,560 hard failure
+- [x] Two-file staging and archive script that runs the size gate before packaging
 - [x] CMake debug/release builds and Windows static-link guidance
 - [ ] Validate final executable on clean Windows 10 and Windows 11 machines (FR-001/062)
 - [ ] Record 30-minute physical audio-device soak and representative GPU/gamepad review
