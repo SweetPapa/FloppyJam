@@ -5,7 +5,12 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
-option(POLYBLOOM_RELEASE "Build the size-focused submission configuration" OFF)
+# A plain configure must produce the contest-sized executable. Developers can
+# explicitly opt out with -DPOLYBLOOM_RELEASE=OFF for assertions/overlays.
+option(POLYBLOOM_RELEASE "Build the size-focused submission configuration" ON)
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  set(CMAKE_BUILD_TYPE MinSizeRel CACHE STRING "Build type" FORCE)
+endif()
 
 add_executable(polybloom
   src/main.c
@@ -67,3 +72,17 @@ add_custom_command(TARGET polybloom POST_BUILD
     -DFAIL_ON_OVERSIZE=${POLYBLOOM_RELEASE}
     -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/SizeReport.cmake
   VERBATIM)
+
+include(CTest)
+if(BUILD_TESTING)
+  add_executable(polybloom_controller_test EXCLUDE_FROM_ALL
+    tests/controller_test.c src/collision.c src/player.c)
+  target_include_directories(polybloom_controller_test PRIVATE src ${RAYLIB_INCLUDE_DIR})
+  target_link_libraries(polybloom_controller_test PRIVATE
+    $<IF:$<BOOL:${RAYLIB_STATIC_LIBRARY}>,${RAYLIB_STATIC_LIBRARY},raylib>)
+  if(APPLE)
+    target_link_libraries(polybloom_controller_test PRIVATE
+      "-framework IOKit" "-framework Cocoa" "-framework OpenGL")
+  endif()
+  add_test(NAME controller_grounding COMMAND polybloom_controller_test)
+endif()
