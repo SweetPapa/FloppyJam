@@ -1,5 +1,6 @@
 #include "collision.h"
 #include "player.h"
+#include "camera.h"
 
 #include <math.h>
 #include <stdio.h>
@@ -32,6 +33,21 @@ int main(void)
     if(!player.grounded||fabsf(player.position.y-1.15f)>.01f) {
         fprintf(stderr,"jump landing failed: y=%f grounded=%d\n",player.position.y,player.grounded);
         return 1;
+    }
+    input=(PbInput){0}; input.move_y=1;
+    for(i=0;i<60;++i) pb_player_update(&player,&world,input,0,1.0f/120.0f);
+    if(player.position.z>-.8f||fabsf(player.position.x)>.05f) {
+        fprintf(stderr,"forward directional input failed: x=%f z=%f\n",player.position.x,player.position.z);
+        return 1;
+    }
+    {
+        PbFollowCamera camera;
+        pb_camera_init(&camera,player.position); camera.yaw=1.5f;
+        for(i=0;i<240;++i) pb_camera_update(&camera,player.position,(Vector3){0,0,-8},&world,(PbInput){0},1.0f/120.0f);
+        if(fabsf(camera.yaw)>.08f) {
+            fprintf(stderr,"automatic camera follow failed: yaw=%f\n",camera.yaw);
+            return 1;
+        }
     }
     return 0;
 }
