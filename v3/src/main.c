@@ -74,6 +74,7 @@ int main(void)
     bool reduced_effects = false;
     bool controller_prompts = false;
     bool should_exit = false;
+    bool mouse_captured = false;
     PbGameMode mode=PB_MODE_TITLE;
     PbGameMode options_return=PB_MODE_TITLE;
     int menu_selection=0;
@@ -101,6 +102,7 @@ int main(void)
 
     while (pb_platform_running()) {
         PbInput input = pb_platform_input();
+        PbGameMode frame_mode=mode;
         float dt = fminf(pb_platform_frame_time(), 0.05f);
         float length = sqrtf(input.move_x*input.move_x + input.move_y*input.move_y);
         Camera3D draw_camera;
@@ -118,8 +120,6 @@ int main(void)
         else if(input.move_x||input.move_y||input.camera_x||input.camera_y||action||back) controller_prompts=false;
         elapsed += dt;
         accumulator = fminf(accumulator+dt,.15f);
-        jump_latched |= input.jump_pressed;
-        burst_latched |= input.burst_pressed;
         particle_clock += dt;
         if(mode==PB_MODE_TITLE) {
             if(nav_up) menu_selection=(menu_selection+2)%3;
@@ -173,7 +173,7 @@ int main(void)
             if(input.restart_down) restart_hold+=dt; else restart_hold=0;
             if(restart_hold>=.5f) { int id=level.level_id; start_level(id,&level,&collision,&gameplay,&player,&follow,&particles,reduced_effects);
                 accumulator=simulation_time=elapsed=restart_hold=0; intro_timer=0; mode=PB_MODE_LEVEL_INTRO; }
-            if(input.camera_recenter) { follow.yaw=atan2f(-player.facing.x,-player.facing.z); follow.manual_timer=0; }
+            if(input.camera_recenter) { follow.yaw=atan2f(-player.facing.x,-player.facing.z); follow.manual_timer=1; }
         } else restart_hold=0;
 
         if(mode==PB_MODE_LEVEL_INTRO) { intro_timer+=dt; if(intro_timer>=1.5f||(action&&intro_timer>.1f)) mode=PB_MODE_PLAYING; }
@@ -189,19 +189,29 @@ int main(void)
         input.camera_y*=.5f+save.camera_sensitivity/50.0f;
         if(save.option_flags&1) input.camera_y=-input.camera_y;
         pb_audio_set_chase(level.chase_active);
+        {
+            bool should_capture=(mode==PB_MODE_PLAYING||mode==PB_MODE_LEVEL_COMPLETE)&&IsWindowFocused();
+            if(should_capture&&!mouse_captured) { DisableCursor(); mouse_captured=true;
+                input.camera_x=input.camera_y=0; input.camera_pointer=false; }
+            else if(!should_capture&&mouse_captured) { EnableCursor(); mouse_captured=false; }
+        }
 #if defined(POLYBLOOM_DEBUG)
         if (IsKeyPressed(KEY_F1)) {
             free_camera = !free_camera;
-            if (free_camera) DisableCursor(); else EnableCursor();
         }
 #endif
         if (length > 1.0f) length = 1.0f;
-        if (free_camera) {
-            UpdateCamera(&follow.view, CAMERA_FREE);
-        } else {
-            if(level.chase_active) follow.yaw+=(0-follow.yaw)*fminf(dt*2.5f,1);
-            pb_camera_update(&follow,player.position,player.velocity,&collision,input,dt);
+        if(mode==PB_MODE_PLAYING||mode==PB_MODE_LEVEL_COMPLETE) {
+            if (free_camera) UpdateCamera(&follow.view,CAMERA_FREE);
+            else {
+                if(level.chase_active) follow.yaw+=(0-follow.yaw)*fminf(dt*2.5f,1);
+                pb_camera_update(&follow,player.position,player.velocity,&collision,input,dt);
+            }
         }
+        if(frame_mode==PB_MODE_PLAYING&&mode==PB_MODE_PLAYING) {
+            jump_latched|=input.jump_pressed;
+            burst_latched|=input.burst_pressed;
+        } else { jump_latched=false; burst_latched=false; }
         if(mode!=PB_MODE_PLAYING&&mode!=PB_MODE_LEVEL_COMPLETE) accumulator=0;
         while (accumulator >= fixed_dt) {
             input.jump_pressed = jump_latched;
@@ -309,7 +319,7 @@ int main(void)
 #endif
         EndDrawing();
     }
-    if (free_camera) EnableCursor();
+    if (mouse_captured||free_camera) EnableCursor();
     pb_renderer_close(&renderer);
     pb_audio_close();
     pb_platform_close();

@@ -25,19 +25,19 @@ void pb_camera_update(PbFollowCamera *c, Vector3 player, Vector3 velocity,
     Vector3 ray_direction;
     float allowed;
     float response = 1-expf(-8*dt);
-    float speed=sqrtf(velocity.x*velocity.x+velocity.z*velocity.z);
     int i;
     if(fabsf(in.camera_x)>.02f||fabsf(in.camera_y)>.02f) {
-        c->yaw += in.camera_x*1.8f*dt;
-        c->pitch = Clamp(c->pitch-in.camera_y*1.2f*dt,.20f,.78f);
-        c->manual_timer=1.1f;
+        float look_scale=in.camera_pointer?.0038f:2.35f*dt;
+        c->yaw += in.camera_x*look_scale;
+        c->pitch = Clamp(c->pitch-in.camera_y*look_scale*.72f,.20f,.78f);
+        c->manual_timer=1.8f;
     } else {
         c->manual_timer=fmaxf(0,c->manual_timer-dt);
         c->pitch+=(.46f-c->pitch)*(1-expf(-2.2f*dt));
-        if(c->manual_timer<=0&&speed>1.2f) {
-            float desired=atan2f(-velocity.x,-velocity.z);
-            c->yaw+=angle_delta(c->yaw,desired)*(1-expf(-2.8f*dt));
-        }
+        /* Both authored courses advance toward -Z. Returning to their forward
+           framing avoids camera/input feedback loops while retaining orbit. */
+        if(c->manual_timer<=0)
+            c->yaw+=angle_delta(c->yaw,0)*(1-expf(-.72f*dt));
     }
     c->target = Vector3Lerp(c->target,look,response);
     c->view.target = c->target;

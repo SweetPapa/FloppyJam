@@ -3,11 +3,6 @@
 
 #include <math.h>
 
-static float approach(float value, float target, float amount)
-{
-    return value < target ? fminf(value+amount,target) : fmaxf(value-amount,target);
-}
-
 void pb_player_init(PbPlayer *p, Vector3 position)
 {
     *p = (PbPlayer){0};
@@ -41,9 +36,14 @@ void pb_player_update(PbPlayer *p, PbCollisionWorld *world, PbInput in, float ya
             p->burst_timer = .28f; p->burst_cooldown = .45f;
         } else {
             float target_speed = (!p->grounded && in.jump_down && p->velocity.y < 0) ? 10.3f : 8.5f;
+            Vector3 horizontal={p->velocity.x,0,p->velocity.z};
+            Vector3 target=Vector3Scale(wish,target_speed);
+            Vector3 change=Vector3Subtract(target,horizontal);
+            float change_length=Vector3Length(change);
             accel = p->grounded ? (wish_len > .05f ? 42 : 55) : 20;
-            p->velocity.x = approach(p->velocity.x,wish.x*target_speed,accel*dt);
-            p->velocity.z = approach(p->velocity.z,wish.z*target_speed,accel*dt);
+            if(change_length>accel*dt) change=Vector3Scale(change,accel*dt/change_length);
+            horizontal=Vector3Add(horizontal,change);
+            p->velocity.x=horizontal.x; p->velocity.z=horizontal.z;
         }
         if (wish_len > .1f) {
             Vector3 target_facing=Vector3Normalize(wish);

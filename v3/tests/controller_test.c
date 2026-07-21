@@ -43,10 +43,21 @@ int main(void)
     {
         PbFollowCamera camera;
         pb_camera_init(&camera,player.position); camera.yaw=1.5f;
-        for(i=0;i<240;++i) pb_camera_update(&camera,player.position,(Vector3){0,0,-8},&world,(PbInput){0},1.0f/120.0f);
+        for(i=0;i<720;++i) pb_camera_update(&camera,player.position,(Vector3){0,0,-8},&world,(PbInput){0},1.0f/120.0f);
         if(fabsf(camera.yaw)>.08f) {
             fprintf(stderr,"automatic camera follow failed: yaw=%f\n",camera.yaw);
             return 1;
+        }
+        {
+            PbFollowCamera slow_frame,fast_frame;
+            PbInput pointer={0}; pointer.camera_x=100; pointer.camera_pointer=true;
+            pb_camera_init(&slow_frame,player.position); pb_camera_init(&fast_frame,player.position);
+            pb_camera_update(&slow_frame,player.position,(Vector3){0},&world,pointer,1.0f/30.0f);
+            pb_camera_update(&fast_frame,player.position,(Vector3){0},&world,pointer,1.0f/240.0f);
+            if(fabsf(slow_frame.yaw-fast_frame.yaw)>.0001f) {
+                fprintf(stderr,"mouse look depends on frame rate: %f vs %f\n",slow_frame.yaw,fast_frame.yaw);
+                return 1;
+            }
         }
     }
     return 0;
