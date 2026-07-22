@@ -26,13 +26,12 @@ PbInput pb_platform_input(void)
                        (float)(IsKeyDown(KEY_A)||IsKeyDown(KEY_LEFT));
     float keyboard_y = (float)(IsKeyDown(KEY_W)||IsKeyDown(KEY_UP)) -
                        (float)(IsKeyDown(KEY_S)||IsKeyDown(KEY_DOWN));
-    Vector2 mouse_delta = GetMouseDelta();
     bool pad = IsGamepadAvailable(0);
     input.move_x = keyboard_x;
     input.move_y = keyboard_y;
-    input.camera_x = mouse_delta.x;
-    input.camera_y = mouse_delta.y;
-    input.camera_pointer = fabsf(mouse_delta.x)>.01f||fabsf(mouse_delta.y)>.01f;
+    input.camera_x = 0;
+    input.camera_y = 0;
+    input.camera_pointer = false;
     input.jump_pressed = IsKeyPressed(KEY_SPACE);
     input.jump_down = IsKeyDown(KEY_SPACE);
     input.burst_pressed = IsKeyPressed(KEY_LEFT_SHIFT) || IsKeyPressed(KEY_J);
