@@ -54,6 +54,32 @@ static const PbCameraZone cascade_zones[] = {
     {-100,100,-1160,-900,PB_SECTION_CLIMB,12}, {-120,120,-1520,-1160,PB_SECTION_RUNOFF,14}
 };
 
+static const PbLevelPiece foundry_pieces[] = {
+    PIECE(0,5,4,12,1,14,LEVEL_SOLID,0), PIECE(-3,6,-7,5,1,6,LEVEL_SOLID,1),
+    PIECE(3,7,-14,5,1,6,LEVEL_MOVING,2), PIECE(0,8,-22,4,1,5,LEVEL_BOUNCE,3),
+    PIECE(-5,9,-30,3,1,7,LEVEL_SOLID,1), PIECE(0,10,-38,3,1,7,LEVEL_FALLING,2),
+    PIECE(5,9,-46,3,1,7,LEVEL_SOLID,1), PIECE(0,7,-54,11,1,7,LEVEL_SOLID,0),
+    PIECE(-4,8,-63,3,1,6,LEVEL_MOVING,3), PIECE(3,9,-70,3,1,6,LEVEL_MOVING,3),
+    PIECE(0,10,-78,4,1,5,LEVEL_BOUNCE,2), PIECE(0,12,-86,7,1,8,LEVEL_SOLID,1),
+    PIECE(-5,10,-95,3,1,7,LEVEL_SOLID,0), PIECE(0,8,-103,3,1,7,LEVEL_FALLING,2),
+    PIECE(5,6,-111,3,1,7,LEVEL_SOLID,0), PIECE(0,5,-120,12,1,10,LEVEL_SOLID,3)
+};
+
+static const PbLevelPiece crown_pieces[] = {
+    PIECE(0,7,4,12,1,14,LEVEL_SOLID,0), PIECE(0,8,-8,5,1,7,LEVEL_SOLID,1),
+    PIECE(-4,9,-17,4,1,7,LEVEL_MOVING,2), PIECE(4,10,-26,4,1,7,LEVEL_MOVING,2),
+    PIECE(0,11,-35,4,1,6,LEVEL_BOUNCE,3), PIECE(-4,12,-44,3,1,7,LEVEL_FALLING,1),
+    PIECE(4,12,-53,3,1,7,LEVEL_FALLING,1), PIECE(0,10,-62,8,1,8,LEVEL_SOLID,0),
+    PIECE(0,8,-73,7,1,8,LEVEL_SOLID,1), PIECE(0,7,-88,24,1,24,LEVEL_SOLID,3),
+    PIECE(0,7,-105,10,1,8,LEVEL_SOLID,2)
+};
+
+static const PbCameraZone extra_zones[] = {
+    {-140,140,-120,100,PB_SECTION_AWAKENING,12}, {-140,140,-300,-120,PB_SECTION_ORCHARD,13},
+    {-140,140,-520,-300,PB_SECTION_RINGWATER,14}, {-160,160,-760,-520,PB_SECTION_GROVE,15},
+    {-160,160,-980,-760,PB_SECTION_CLIMB,14}, {-180,180,-1300,-980,PB_SECTION_RUNOFF,16}
+};
+
 static Color palette(int id)
 {
     static const Color colors[] = {{92,190,158,255},{126,211,185,255},{255,195,81,255},{178,151,217,255}};
@@ -125,6 +151,51 @@ void pb_level_prismrush_init(PbLevel *l, PbCollisionWorld *world)
     l->respawn=(Vector3){0,CASCADE_Y+1.15f,5}; l->gate=(Vector3){0,CASCADE_Y-1.8f,-147};
 }
 
+static void init_extra(PbLevel *l, PbCollisionWorld *world, int level_id,
+                       const PbLevelPiece *pieces, int count, float end_z)
+{
+    int i;
+    *l=(PbLevel){0}; l->level_id=level_id;
+    pb_collision_clear(world); l->piece_count=count;
+    for(i=0;i<count;++i) {
+        PbLevelPiece p=pieces[i];
+        PbColliderType type=p.type==LEVEL_BOUNCE?PB_COLLIDER_BOUNCE:p.type==LEVEL_MOVING?PB_COLLIDER_MOVING:PB_COLLIDER_SOLID;
+        l->pieces[i]=p;
+        pb_collision_add_box(world,(Vector3){p.px/Q,p.py/Q,p.pz/Q},
+                             (Vector3){p.sx/Q,p.sy/Q,p.sz/Q},type,i*.61f);
+    }
+    l->camera_zone_count=(int)(sizeof(extra_zones)/sizeof(extra_zones[0]));
+    for(i=0;i<l->camera_zone_count;++i) l->camera_zones[i]=extra_zones[i];
+    for(i=0;i<PB_LEVEL_GLINTS;++i) {
+        float t=i/29.0f;
+        l->glints[i].position=(Vector3){sinf(t*16)*3,7.0f+sinf(t*5)*2.2f,2-t*(-end_z+2)};
+    }
+    l->seeds[0].position=(Vector3){-4,10,end_z*.25f};
+    l->seeds[1].position=(Vector3){4,12,end_z*.56f};
+    l->seeds[2].position=(Vector3){0,14,end_z*.78f};
+    l->checkpoints[0]=(Vector3){0,8,end_z*.48f};
+    l->checkpoints[1]=(Vector3){0,8,end_z*.76f}; l->checkpoint_count=2;
+    l->checkpoint=l->checkpoints[0]; l->respawn=(Vector3){0,6.15f,5};
+    l->gate=(Vector3){0,8,end_z};
+}
+
+void pb_level_foundry_init(PbLevel *l, PbCollisionWorld *world)
+{
+    init_extra(l,world,PB_LEVEL_FOUNDRY,foundry_pieces,
+               (int)(sizeof(foundry_pieces)/sizeof(foundry_pieces[0])),-123);
+    l->checkpoints[0]=(Vector3){0,8.15f,-54};
+    l->checkpoints[1]=(Vector3){0,13.15f,-86};
+}
+
+void pb_level_crown_init(PbLevel *l, PbCollisionWorld *world)
+{
+    init_extra(l,world,PB_LEVEL_CROWN,crown_pieces,
+               (int)(sizeof(crown_pieces)/sizeof(crown_pieces[0])),-106);
+    l->respawn=(Vector3){0,8.15f,5}; l->gate=(Vector3){0,8.2f,-106}; l->gate_locked=true;
+    l->checkpoints[0]=(Vector3){0,12.15f,-35};
+    l->checkpoints[1]=(Vector3){0,9.15f,-74};
+}
+
 void pb_level_update(PbLevel *l, PbCollisionWorld *world, Vector3 p, float dt)
 {
     int i;
@@ -139,14 +210,15 @@ void pb_level_update(PbLevel *l, PbCollisionWorld *world, Vector3 p, float dt)
     for(i=0;i<l->checkpoint_count;++i) if(Vector3Distance(p,l->checkpoints[i])<2.5f) {
         l->checkpoint_active=true; l->checkpoint=l->checkpoints[i]; l->respawn=l->checkpoints[i];
     }
-    if (Vector3Distance(p,l->gate)<2.3f) l->complete=true;
+    if (!l->gate_locked&&Vector3Distance(p,l->gate)<2.3f) l->complete=true;
     for (i = 0; i < l->camera_zone_count; ++i) {
         PbCameraZone z=l->camera_zones[i];
         if (p.x>=z.min_x/Q && p.x<=z.max_x/Q && p.z>=z.min_z/Q && p.z<=z.max_z/Q) l->section=z.section;
     }
-    if(l->level_id==PB_LEVEL_CASCADE) {
+    if(l->level_id!=PB_LEVEL_GARDEN) {
         for(i=0;i<l->piece_count;++i) if(l->pieces[i].type==LEVEL_FALLING) {
-            Vector3 center={(l->pieces[i].px/Q),l->pieces[i].py/Q+CASCADE_Y,l->pieces[i].pz/Q};
+            float offset=l->level_id==PB_LEVEL_CASCADE?CASCADE_Y:0;
+            Vector3 center={(l->pieces[i].px/Q),l->pieces[i].py/Q+offset,l->pieces[i].pz/Q};
             if(l->falling_timer[i]<=0&&Vector3Distance(p,center)<2.5f) l->falling_timer[i]=.001f;
             if(l->falling_timer[i]>0) {
                 l->falling_timer[i]+=dt;
@@ -161,6 +233,8 @@ void pb_level_update(PbLevel *l, PbCollisionWorld *world, Vector3 p, float dt)
                 }
             }
         }
+    }
+    if(l->level_id==PB_LEVEL_CASCADE) {
         if(!l->chase_escaped&&!l->chase_active&&p.z<-50) { l->chase_active=true; l->shatterwake_z=p.z+10; }
         if(l->chase_active) {
             l->shatterwake_z-=6.5f*dt;
@@ -187,7 +261,12 @@ void pb_level_draw(PbLevel *l, PbRenderer *r, float elapsed, bool reduced)
         PbLevelPiece p=l->pieces[i];
         Vector3 pos={p.px/Q,p.py/Q+(l->level_id==PB_LEVEL_CASCADE?CASCADE_Y:0),p.pz/Q};
         Vector3 size={p.sx/Q,p.sy/Q,p.sz/Q};
-        Color piece_color=l->level_id==PB_LEVEL_CASCADE?(Color[]){(Color){53,157,196,255},(Color){91,202,226,255},(Color){242,117,181,255},(Color){153,225,184,255}}[p.color&3]:palette(p.color);
+        static const Color cascade_palette[]={{53,157,196,255},{91,202,226,255},{242,117,181,255},{153,225,184,255}};
+        static const Color foundry_palette[]={{91,68,142,255},{247,137,76,255},{255,205,78,255},{92,213,192,255}};
+        static const Color crown_palette[]={{77,110,177,255},{164,214,239,255},{244,114,178,255},{193,172,242,255}};
+        Color piece_color=l->level_id==PB_LEVEL_CASCADE?cascade_palette[p.color&3]:
+                          l->level_id==PB_LEVEL_FOUNDRY?foundry_palette[p.color&3]:
+                          l->level_id==PB_LEVEL_CROWN?crown_palette[p.color&3]:palette(p.color);
         if(p.type==LEVEL_MOVING) pos.y+=sinf(elapsed*1.6f+i*.7f)*.8f;
         if(p.type==LEVEL_FALLING&&l->falling_timer[i]>.8f) pos.y-=fminf(12,(l->falling_timer[i]-.8f)*18);
         if(p.type==LEVEL_FALLING&&l->falling_timer[i]>0&&l->falling_timer[i]<.8f&&
@@ -214,7 +293,8 @@ void pb_level_draw(PbLevel *l, PbRenderer *r, float elapsed, bool reduced)
     {
         float bloom=1+fminf(l->completion_time,1.5f)*.35f;
         pb_draw_mesh(&r->meshes,PB_MESH_RING,l->gate,(Vector3){1,0,0},90+elapsed*12,
-                     (Vector3){4.4f*bloom,4.4f*bloom,4.4f*bloom},(Color){255,154,123,255});
+                     (Vector3){4.4f*bloom,4.4f*bloom,4.4f*bloom},
+                     l->gate_locked?(Color){128,60,145,255}:(Color){255,154,123,255});
         for(i=0;i<l->seed_count;++i)
             pb_draw_mesh(&r->meshes,PB_MESH_RING,l->gate,(Vector3){1,0,0},90+elapsed*(18+i*7),
                          (Vector3){5.2f+i*.8f,5.2f+i*.8f,5.2f+i*.8f},(Color){255,211,84,210});
@@ -236,5 +316,8 @@ const char *pb_level_section_name(const PbLevel *l)
 {
     static const char *garden[]={"AWAKENING TERRACE","PRISM ORCHARD","RINGWATER GAP","TURNING GROVE","SUNPETAL CLIMB","GARDEN RUNOFF"};
     static const char *cascade[]={"CASCADE ENTRY","SPLIT FALLS","FALLING STEPS","SHATTERWAKE CHASE","CORKSCREW CANOPY","FINAL RUSH"};
-    return l->level_id==PB_LEVEL_CASCADE?cascade[l->section]:garden[l->section];
+    static const char *foundry[]={"EMBER DOCK","GEAR GARDEN","MOLTEN LIFTS","SPARKWORKS","AURORA STACK","FORGE FLIGHT"};
+    static const char *crown[]={"CROWN APPROACH","FROZEN TEETH","SKY BRIDGE","ROYAL ASCENT","THRONE RUN","PRISM SOVEREIGN"};
+    return l->level_id==PB_LEVEL_CASCADE?cascade[l->section]:l->level_id==PB_LEVEL_FOUNDRY?foundry[l->section]:
+           l->level_id==PB_LEVEL_CROWN?crown[l->section]:garden[l->section];
 }

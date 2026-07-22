@@ -52,6 +52,11 @@ typedef struct PbGameplay {
     bool result_recorded;
     Vector3 effect_position;
     uint8_t effect_type;
+    Vector3 boss_position;
+    int boss_health;
+    float boss_hit_cooldown;
+    float boss_phase;
+    bool boss_active;
 } PbGameplay;
 
 enum { PB_EFFECT_NONE, PB_EFFECT_BREAK, PB_EFFECT_DEFEAT, PB_EFFECT_DAMAGE };

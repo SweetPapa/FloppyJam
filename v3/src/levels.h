@@ -19,7 +19,9 @@ typedef enum PbSectionId {
     PB_SECTION_RUNOFF
 } PbSectionId;
 
-typedef enum PbLevelId { PB_LEVEL_GARDEN, PB_LEVEL_CASCADE } PbLevelId;
+typedef enum PbLevelId {
+    PB_LEVEL_GARDEN, PB_LEVEL_CASCADE, PB_LEVEL_FOUNDRY, PB_LEVEL_CROWN
+} PbLevelId;
 
 typedef struct PbLevelPiece {
     int16_t px, py, pz;
@@ -63,10 +65,13 @@ typedef struct PbLevel {
     bool chase_escaped;
     bool chase_hit;
     float completion_time;
+    bool gate_locked;
 } PbLevel;
 
 void pb_level_petalgarden_init(PbLevel *level, PbCollisionWorld *collision);
 void pb_level_prismrush_init(PbLevel *level, PbCollisionWorld *collision);
+void pb_level_foundry_init(PbLevel *level, PbCollisionWorld *collision);
+void pb_level_crown_init(PbLevel *level, PbCollisionWorld *collision);
 void pb_level_update(PbLevel *level, PbCollisionWorld *collision, Vector3 player, float dt);
 void pb_level_draw(PbLevel *level, PbRenderer *renderer, float elapsed, bool reduced);
 float pb_level_camera_distance(const PbLevel *level, Vector3 player);
