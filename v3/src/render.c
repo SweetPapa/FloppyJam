@@ -92,7 +92,7 @@ void pb_draw_world(PbRenderer *r, const PbParticles *particles, Vector3 player,
         float z = (float)((i*11)%19) - 9.0f;
         float sway = sinf(elapsed + i)*0.08f;
         if(style) {
-            pb_draw_mesh(&r->meshes,PB_MESH_WEDGE,(Vector3){x,1.2f+sway,z},(Vector3){0,1,0},i*37+elapsed*12,
+            pb_draw_mesh(&r->meshes,PB_MESH_WEDGE,(Vector3){x,10.2f+sway,z},(Vector3){0,1,0},i*37+elapsed*12,
                          (Vector3){.8f,2.8f,.8f},i&1?(Color){45,186,221,255}:(Color){179,70,190,255});
         } else {
             int p;
@@ -112,15 +112,20 @@ void pb_draw_world(PbRenderer *r, const PbParticles *particles, Vector3 player,
         pb_draw_mesh(&r->meshes,PB_MESH_SPHERE,cloud,(Vector3){0,1,0},0,
                      (Vector3){4,1.4f,1.8f},style?(Color){91,75,151,180}:(Color){255,249,225,190});
     }
-    if(style) for(i=0;i<(reduced?32:88);++i) {
+    if(style) {
+        float storm=.5f+.5f*sinf(elapsed*.30f+sinf(elapsed*.09f)*1.8f);
+        int snow_count=reduced?(28+(int)(storm*52)):(90+(int)(storm*250));
+        float wind=1.0f+storm*3.4f;
+        for(i=0;i<snow_count;++i) {
         float x=player.x+(float)((i*47)%101)/4.0f-12.5f;
         float z=player.z+(float)((i*71)%109)/4.0f-17.0f;
-        float fall=fmodf((float)((i*31)%97)/7.0f-elapsed*(1.8f+(i%5)*.12f),15.0f);
+        float fall=fmodf((float)((i*31)%97)/7.0f-elapsed*(1.8f+storm*2.2f+(i%5)*.12f),15.0f);
         float y=player.y+(fall<0?fall+15:fall)-3.0f;
-        float drift=sinf(elapsed*.7f+i)*.35f;
+        float drift=sinf(elapsed*.7f+i)*.35f+fmodf(elapsed*wind+i*.17f,5.0f)-2.5f;
         pb_draw_mesh(&r->meshes,PB_MESH_SPHERE,(Vector3){x+drift,y,z},(Vector3){0,1,0},0,
-                     (Vector3){.07f+(i%3)*.025f,.07f+(i%3)*.025f,.07f+(i%3)*.025f},
+                     (Vector3){.07f+(i%3)*.025f,.07f+(i%3)*.025f,.07f+(i%3)*.025f+storm*.08f},
                      i&1?(Color){225,244,255,220}:(Color){176,220,255,210});
+        }
     }
     pb_draw_blob_shadow(player, .65f, player.y);
     pb_particles_draw(particles);
