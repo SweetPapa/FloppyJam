@@ -13,11 +13,11 @@ static const char *world_vs =
 static const char *world_fs =
     "#version 330\n"
     "in vec3 n; in vec3 wp; in vec4 vc; out vec4 color;\n"
-    "uniform vec3 viewPos; uniform vec3 fogColor; uniform float fogNear; uniform float fogFar; uniform vec4 colDiffuse;\n"
+    "uniform vec3 viewPos; uniform vec3 fogColor; uniform float fogNear; uniform float fogFar; uniform float fogStrength; uniform vec4 colDiffuse;\n"
     "void main(){ vec3 l=normalize(vec3(-.4,.85,-.3)); float d=max(dot(n,l),0);"
     "float hemi=.48+.20*n.y; float rim=pow(1-max(dot(normalize(viewPos-wp),n),0),3)*.22;"
     "vec3 c=vc.rgb*colDiffuse.rgb*(hemi+d*.55)+rim*vec3(1,.8,1);"
-    "float f=smoothstep(fogNear,fogFar,distance(viewPos,wp)); color=vec4(mix(c,fogColor,f),vc.a*colDiffuse.a); }";
+    "float f=smoothstep(fogNear,fogFar,distance(viewPos,wp))*fogStrength; color=vec4(mix(c,fogColor,f),vc.a*colDiffuse.a); }";
 
 void pb_renderer_open(PbRenderer *renderer)
 {
@@ -27,6 +27,7 @@ void pb_renderer_open(PbRenderer *renderer)
     renderer->fog_color_location = GetShaderLocation(renderer->world_shader, "fogColor");
     renderer->fog_near_location = GetShaderLocation(renderer->world_shader, "fogNear");
     renderer->fog_far_location = GetShaderLocation(renderer->world_shader, "fogFar");
+    renderer->fog_strength_location = GetShaderLocation(renderer->world_shader, "fogStrength");
     renderer->view_location = GetShaderLocation(renderer->world_shader, "viewPos");
     renderer->world_shader.locs[SHADER_LOC_VECTOR_VIEW] = renderer->view_location;
     pb_meshes_load(&renderer->meshes);
@@ -41,13 +42,14 @@ void pb_renderer_close(PbRenderer *renderer)
 }
 
 void pb_renderer_begin(PbRenderer *renderer, Camera3D camera, Color clear,
-                       float fog_near, float fog_far)
+                       float fog_near, float fog_far, float fog_strength)
 {
     float fog[3] = {clear.r/255.0f, clear.g/255.0f, clear.b/255.0f};
     float view[3] = {camera.position.x, camera.position.y, camera.position.z};
     SetShaderValue(renderer->world_shader, renderer->fog_color_location, fog, SHADER_UNIFORM_VEC3);
     SetShaderValue(renderer->world_shader,renderer->fog_near_location,&fog_near,SHADER_UNIFORM_FLOAT);
     SetShaderValue(renderer->world_shader,renderer->fog_far_location,&fog_far,SHADER_UNIFORM_FLOAT);
+    SetShaderValue(renderer->world_shader,renderer->fog_strength_location,&fog_strength,SHADER_UNIFORM_FLOAT);
     SetShaderValue(renderer->world_shader, renderer->view_location, view, SHADER_UNIFORM_VEC3);
     BeginTextureMode(renderer->target);
     ClearBackground(clear);
