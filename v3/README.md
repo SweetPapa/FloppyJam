@@ -31,7 +31,7 @@ does not depend on a separately packaged raylib library.
 ## Controls
 
 - Move: WASD, arrow keys, controller left stick, or D-pad
-- Camera: automatic follow; mouse or right stick temporarily orbits
+- Camera: automatic follow; controller right stick temporarily orbits
 - Jump / Glide: Space or controller A
 - Burst: Left Shift, J, or controller X
 - Recenter camera: R or right shoulder

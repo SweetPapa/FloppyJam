@@ -95,7 +95,6 @@ int main(void)
     bool reduced_effects = false;
     bool controller_prompts = false;
     bool should_exit = false;
-    bool mouse_captured = false;
     PbGameMode mode=PB_MODE_TITLE;
     PbGameMode options_return=PB_MODE_TITLE;
     int menu_selection=0;
@@ -210,12 +209,6 @@ int main(void)
         input.camera_y*=.5f+save.camera_sensitivity/50.0f;
         if(save.option_flags&1) input.camera_y=-input.camera_y;
         pb_audio_set_chase(level.chase_active);
-        {
-            bool should_capture=(mode==PB_MODE_PLAYING||mode==PB_MODE_LEVEL_COMPLETE)&&IsWindowFocused();
-            if(should_capture&&!mouse_captured) { DisableCursor(); mouse_captured=true;
-                input.camera_x=input.camera_y=0; input.camera_pointer=false; }
-            else if(!should_capture&&mouse_captured) { EnableCursor(); mouse_captured=false; }
-        }
 #if defined(POLYBLOOM_DEBUG)
         if (IsKeyPressed(KEY_F1)) {
             free_camera = !free_camera;
@@ -309,10 +302,7 @@ int main(void)
         if (should_exit) break;
 
         pb_renderer_begin(&renderer,draw_camera,
-                          level.level_id==PB_LEVEL_CASCADE?(Color){47,31,86,255}:(Color){255,240,207,255},
-                          level.level_id==PB_LEVEL_CASCADE?90.0f:38.0f,
-                          level.level_id==PB_LEVEL_CASCADE?240.0f:95.0f,
-                          level.level_id==PB_LEVEL_CASCADE?.38f:.72f);
+                          level.level_id==PB_LEVEL_CASCADE?(Color){47,31,86,255}:(Color){255,240,207,255});
         pb_draw_world(&renderer, &particles, draw_position, elapsed,level.level_id,reduced_effects);
         pb_level_draw(&level,&renderer,simulation_time,reduced_effects);
         pb_gameplay_draw(&gameplay,&renderer,simulation_time);
@@ -324,7 +314,7 @@ int main(void)
                                 pb_gameplay_result_ms(&gameplay)/1000.0f),36,58,18,DARKPURPLE);
             if(mode==PB_MODE_PLAYING&&level.section==PB_SECTION_AWAKENING&&gameplay.run_time<8)
                 DrawText(controller_prompts?"LEFT STICK / D-PAD MOVE   RIGHT STICK LOOK   A JUMP   X BURST":
-                                            "WASD / ARROWS MOVE   MOUSE LOOK   SPACE JUMP   SHIFT BURST",
+                                            "WASD / ARROWS MOVE   AUTO CAMERA   SPACE JUMP   SHIFT BURST",
                          36,86,16,(Color){75,57,102,230});
         }
         if(mode==PB_MODE_TITLE) pb_ui_title(menu_selection,controller_prompts);
@@ -344,7 +334,7 @@ int main(void)
 #endif
         EndDrawing();
     }
-    if (mouse_captured||free_camera) EnableCursor();
+    if (free_camera) EnableCursor();
     pb_renderer_close(&renderer);
     pb_audio_close();
     pb_platform_close();

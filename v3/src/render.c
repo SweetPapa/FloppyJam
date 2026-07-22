@@ -13,21 +13,17 @@ static const char *world_vs =
 static const char *world_fs =
     "#version 330\n"
     "in vec3 n; in vec3 wp; in vec4 vc; out vec4 color;\n"
-    "uniform vec3 viewPos; uniform vec3 fogColor; uniform float fogNear; uniform float fogFar; uniform float fogStrength; uniform vec4 colDiffuse;\n"
+    "uniform vec3 viewPos; uniform vec4 colDiffuse;\n"
     "void main(){ vec3 l=normalize(vec3(-.4,.85,-.3)); float d=max(dot(n,l),0);"
     "float hemi=.48+.20*n.y; float rim=pow(1-max(dot(normalize(viewPos-wp),n),0),3)*.22;"
     "vec3 c=vc.rgb*colDiffuse.rgb*(hemi+d*.55)+rim*vec3(1,.8,1);"
-    "float f=smoothstep(fogNear,fogFar,distance(viewPos,wp))*fogStrength; color=vec4(mix(c,fogColor,f),vc.a*colDiffuse.a); }";
+    "color=vec4(c,vc.a*colDiffuse.a); }";
 
 void pb_renderer_open(PbRenderer *renderer)
 {
     renderer->target = LoadRenderTexture(640, 360);
     SetTextureFilter(renderer->target.texture, TEXTURE_FILTER_BILINEAR);
     renderer->world_shader = LoadShaderFromMemory(world_vs, world_fs);
-    renderer->fog_color_location = GetShaderLocation(renderer->world_shader, "fogColor");
-    renderer->fog_near_location = GetShaderLocation(renderer->world_shader, "fogNear");
-    renderer->fog_far_location = GetShaderLocation(renderer->world_shader, "fogFar");
-    renderer->fog_strength_location = GetShaderLocation(renderer->world_shader, "fogStrength");
     renderer->view_location = GetShaderLocation(renderer->world_shader, "viewPos");
     renderer->world_shader.locs[SHADER_LOC_VECTOR_VIEW] = renderer->view_location;
     pb_meshes_load(&renderer->meshes);
@@ -41,15 +37,9 @@ void pb_renderer_close(PbRenderer *renderer)
     UnloadRenderTexture(renderer->target);
 }
 
-void pb_renderer_begin(PbRenderer *renderer, Camera3D camera, Color clear,
-                       float fog_near, float fog_far, float fog_strength)
+void pb_renderer_begin(PbRenderer *renderer, Camera3D camera, Color clear)
 {
-    float fog[3] = {clear.r/255.0f, clear.g/255.0f, clear.b/255.0f};
     float view[3] = {camera.position.x, camera.position.y, camera.position.z};
-    SetShaderValue(renderer->world_shader, renderer->fog_color_location, fog, SHADER_UNIFORM_VEC3);
-    SetShaderValue(renderer->world_shader,renderer->fog_near_location,&fog_near,SHADER_UNIFORM_FLOAT);
-    SetShaderValue(renderer->world_shader,renderer->fog_far_location,&fog_far,SHADER_UNIFORM_FLOAT);
-    SetShaderValue(renderer->world_shader,renderer->fog_strength_location,&fog_strength,SHADER_UNIFORM_FLOAT);
     SetShaderValue(renderer->world_shader, renderer->view_location, view, SHADER_UNIFORM_VEC3);
     BeginTextureMode(renderer->target);
     ClearBackground(clear);
@@ -121,6 +111,16 @@ void pb_draw_world(PbRenderer *r, const PbParticles *particles, Vector3 player,
         Vector3 cloud={(float)((i*13)%23)-11,10+(i%3)*1.7f,-12-i*14.0f};
         pb_draw_mesh(&r->meshes,PB_MESH_SPHERE,cloud,(Vector3){0,1,0},0,
                      (Vector3){4,1.4f,1.8f},style?(Color){91,75,151,180}:(Color){255,249,225,190});
+    }
+    if(style) for(i=0;i<(reduced?32:88);++i) {
+        float x=player.x+(float)((i*47)%101)/4.0f-12.5f;
+        float z=player.z+(float)((i*71)%109)/4.0f-17.0f;
+        float fall=fmodf((float)((i*31)%97)/7.0f-elapsed*(1.8f+(i%5)*.12f),15.0f);
+        float y=player.y+(fall<0?fall+15:fall)-3.0f;
+        float drift=sinf(elapsed*.7f+i)*.35f;
+        pb_draw_mesh(&r->meshes,PB_MESH_SPHERE,(Vector3){x+drift,y,z},(Vector3){0,1,0},0,
+                     (Vector3){.07f+(i%3)*.025f,.07f+(i%3)*.025f,.07f+(i%3)*.025f},
+                     i&1?(Color){225,244,255,220}:(Color){176,220,255,210});
     }
     pb_draw_blob_shadow(player, .65f, player.y);
     pb_particles_draw(particles);
