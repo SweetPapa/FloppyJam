@@ -310,8 +310,9 @@ int main(void)
 
         pb_renderer_begin(&renderer,draw_camera,
                           level.level_id==PB_LEVEL_CASCADE?(Color){47,31,86,255}:(Color){255,240,207,255},
-                          level.level_id==PB_LEVEL_CASCADE?75.0f:38.0f,
-                          level.level_id==PB_LEVEL_CASCADE?175.0f:95.0f);
+                          level.level_id==PB_LEVEL_CASCADE?90.0f:38.0f,
+                          level.level_id==PB_LEVEL_CASCADE?240.0f:95.0f,
+                          level.level_id==PB_LEVEL_CASCADE?.38f:.72f);
         pb_draw_world(&renderer, &particles, draw_position, elapsed,level.level_id,reduced_effects);
         pb_level_draw(&level,&renderer,simulation_time,reduced_effects);
         pb_gameplay_draw(&gameplay,&renderer,simulation_time);
