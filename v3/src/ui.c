@@ -34,26 +34,28 @@ void pb_ui_title(int selection, bool controller)
 
 void pb_ui_level_select(int selection, const PbSaveData *save, bool controller)
 {
+    static const char *names[]={"PETALSTEP GARDENS","PRISMRUSH CASCADE","AURORA FOUNDRY","SOVEREIGN CROWN"};
+    static const Color colors[]={{105,205,165,255},{70,188,222,255},{241,137,75,255},{166,134,226,255}};
     int i;
-    panel(760,420);
-    DrawText("CHOOSE A BLOOM PATH",GetScreenWidth()/2-177,GetScreenHeight()/2-175,30,DARKPURPLE);
-    for(i=0;i<2;++i) {
-        int x=GetScreenWidth()/2-330+i*350;
-        const char *name=i?"PRISMRUSH CASCADE":"PETALSTEP GARDENS";
-        Color c=i?(Color){70,188,222,255}:(Color){105,205,165,255};
-        DrawRectangle(x,GetScreenHeight()/2-105,310,220,selection==i?c:Fade(c,.55f));
-        DrawText(name,x+155-MeasureText(name,21)/2,GetScreenHeight()/2-76,21,DARKPURPLE);
-        DrawText(TextFormat("BEST  %s",save->best_time_ms[i]?TextFormat("%.2f",save->best_time_ms[i]/1000.0f):"--"),x+24,GetScreenHeight()/2-18,18,DARKGRAY);
-        DrawText(TextFormat("GLINTS  %d/30",save->best_glints[i]),x+24,GetScreenHeight()/2+18,18,DARKGRAY);
-        DrawText(TextFormat("SEEDS   %d/3",(save->seed_masks[i]&1)+((save->seed_masks[i]>>1)&1)+((save->seed_masks[i]>>2)&1)),x+24,GetScreenHeight()/2+54,18,DARKGRAY);
-        if(save->flags&(1u<<i)) DrawText("COMPLETE",x+188,GetScreenHeight()/2+82,16,DARKPURPLE);
+    panel(800,590);
+    DrawText("CHOOSE A BLOOM PATH",GetScreenWidth()/2-177,GetScreenHeight()/2-265,30,DARKPURPLE);
+    for(i=0;i<4;++i) {
+        int x=GetScreenWidth()/2-365+(i%2)*375;
+        int y=GetScreenHeight()/2-210+(i/2)*235;
+        DrawRectangle(x,y,345,205,selection==i?colors[i]:Fade(colors[i],.55f));
+        DrawText(names[i],x+172-MeasureText(names[i],20)/2,y+22,20,DARKPURPLE);
+        DrawText(TextFormat("BEST  %s",save->best_time_ms[i]?TextFormat("%.2f",save->best_time_ms[i]/1000.0f):"--"),x+22,y+70,17,DARKGRAY);
+        DrawText(TextFormat("GLINTS %d/30   SEEDS %d/3",save->best_glints[i],
+                 (save->seed_masks[i]&1)+((save->seed_masks[i]>>1)&1)+((save->seed_masks[i]>>2)&1)),x+22,y+104,17,DARKGRAY);
+        if(save->flags&(1u<<i)) DrawText("COMPLETE",x+225,y+153,16,DARKPURPLE);
     }
     hint(controller);
 }
 
 void pb_ui_intro(const PbLevel *level, float timer)
 {
-    const char *name=level->level_id==PB_LEVEL_CASCADE?"PRISMRUSH CASCADE":"PETALSTEP GARDENS";
+    const char *name=level->level_id==PB_LEVEL_CASCADE?"PRISMRUSH CASCADE":level->level_id==PB_LEVEL_FOUNDRY?
+                     "AURORA FOUNDRY":level->level_id==PB_LEVEL_CROWN?"SOVEREIGN CROWN":"PETALSTEP GARDENS";
     float fade=timer<.3f?timer/.3f:timer>1.2f?(1.5f-timer)/.3f:1;
     DrawRectangle(0,GetScreenHeight()/2-48,GetScreenWidth(),96,Fade(BLACK,.45f*fade));
     DrawText(name,GetScreenWidth()/2-MeasureText(name,32)/2,GetScreenHeight()/2-18,32,Fade(WHITE,fade));
@@ -86,7 +88,8 @@ void pb_ui_options(int selection, const PbSaveData *s, bool controller)
 
 void pb_ui_results(const PbLevel *l, const PbGameplay *g, int selection, bool controller)
 {
-    const char *name=l->level_id==PB_LEVEL_CASCADE?"PRISMRUSH CASCADE":"PETALSTEP GARDENS";
+    const char *name=l->level_id==PB_LEVEL_CASCADE?"PRISMRUSH CASCADE":l->level_id==PB_LEVEL_FOUNDRY?
+                     "AURORA FOUNDRY":l->level_id==PB_LEVEL_CROWN?"SOVEREIGN CROWN":"PETALSTEP GARDENS";
     panel(620,520);
     DrawText("LEVEL COMPLETE",GetScreenWidth()/2-135,GetScreenHeight()/2-225,34,DARKPURPLE);
     DrawText(name,GetScreenWidth()/2-MeasureText(name,22)/2,GetScreenHeight()/2-172,22,DARKGRAY);

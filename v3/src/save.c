@@ -16,7 +16,7 @@ void pb_save_defaults(PbSaveData *save)
 {
     *save = (PbSaveData){0};
     save->magic = PB_SAVE_MAGIC;
-    save->version = 1;
+    save->version = 2;
     save->volume_master = save->volume_music = save->volume_sfx = 80;
     save->camera_sensitivity = 50;
     save->checksum = checksum(save);
@@ -29,7 +29,7 @@ bool pb_save_load(PbSaveData *save)
     if (!file) { pb_save_defaults(save); return false; }
     if (fread(&loaded,sizeof(loaded),1,file)!=1) { fclose(file); pb_save_defaults(save); return false; }
     fclose(file);
-    if (loaded.magic!=PB_SAVE_MAGIC || loaded.version!=1 || loaded.checksum!=checksum(&loaded)) {
+    if (loaded.magic!=PB_SAVE_MAGIC || loaded.version!=2 || loaded.checksum!=checksum(&loaded)) {
         pb_save_defaults(save); return false;
     }
     *save=loaded;
@@ -48,7 +48,7 @@ bool pb_save_write(PbSaveData *save)
 
 void pb_save_record(PbSaveData *save, int level, uint32_t time_ms, int glints, uint8_t seeds)
 {
-    if (level<0 || level>1) return;
+    if (level<0 || level>3) return;
     save->flags |= (uint16_t)(1u<<level);
     if (!save->best_time_ms[level] || time_ms<save->best_time_ms[level]) save->best_time_ms[level]=time_ms;
     if (glints>save->best_glints[level]) save->best_glints[level]=(uint8_t)glints;

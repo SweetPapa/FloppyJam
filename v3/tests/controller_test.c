@@ -1,6 +1,8 @@
 #include "collision.h"
 #include "player.h"
 #include "camera.h"
+#include "levels.h"
+#include "gameplay.h"
 
 #include <math.h>
 #include <stdio.h>
@@ -65,6 +67,30 @@ int main(void)
             pb_camera_update(&fast_frame,player.position,(Vector3){0},&world,pointer,1.0f/240.0f);
             if(fabsf(slow_frame.yaw-fast_frame.yaw)>.0001f) {
                 fprintf(stderr,"mouse look depends on frame rate: %f vs %f\n",slow_frame.yaw,fast_frame.yaw);
+                return 1;
+            }
+        }
+    }
+    {
+        PbLevel level;
+        pb_level_foundry_init(&level,&world);
+        pb_player_init(&player,level.respawn); input=(PbInput){0};
+        for(i=0;i<180;++i) { pb_collision_update(&world,i/120.0f); pb_player_update(&player,&world,input,0,1.0f/120.0f); }
+        if(!player.grounded) { fprintf(stderr,"Foundry spawn is not grounded\n"); return 1; }
+        pb_level_crown_init(&level,&world);
+        pb_player_init(&player,level.respawn);
+        for(i=0;i<180;++i) { pb_collision_update(&world,i/120.0f); pb_player_update(&player,&world,input,0,1.0f/120.0f); }
+        if(!player.grounded||!level.gate_locked) { fprintf(stderr,"Crown spawn/gate setup failed\n"); return 1; }
+        {
+            PbGameplay gameplay;
+            pb_gameplay_init(&gameplay,PB_LEVEL_CROWN);
+            for(i=0;i<5;++i) {
+                player.position=gameplay.boss_position; player.state=PB_PLAYER_BURST;
+                gameplay.boss_hit_cooldown=0;
+                pb_gameplay_update(&gameplay,&player,level.respawn,0,0);
+            }
+            if(gameplay.boss_active||gameplay.boss_health!=0) {
+                fprintf(stderr,"boss defeat sequence failed: health=%d\n",gameplay.boss_health);
                 return 1;
             }
         }
