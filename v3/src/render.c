@@ -78,7 +78,8 @@ void pb_draw_world(PbRenderer *r, const PbParticles *particles, Vector3 player,
 {
     int i;
     int decor_count=reduced?8:18;
-    Color mint = style?(Color){20,24,62,255}:(Color){73,168,211,255};
+    Color mint = style==1?(Color){20,24,62,255}:style==2?(Color){55,20,49,255}:
+                 style==3?(Color){18,25,66,255}:(Color){73,168,211,255};
     pb_draw_mesh(&r->meshes,PB_MESH_CUBE,(Vector3){0,-1.35f,-38},(Vector3){0,1,0},0,
                  (Vector3){90,.12f,180},mint);
     if(!style) for(i=0;i<(reduced?7:16);++i) {
@@ -92,8 +93,11 @@ void pb_draw_world(PbRenderer *r, const PbParticles *particles, Vector3 player,
         float z = (float)((i*11)%19) - 9.0f;
         float sway = sinf(elapsed + i)*0.08f;
         if(style) {
+            Color shard=style==2?(i&1?(Color){255,143,68,255}:(Color){255,207,81,255}):
+                        style==3?(i&1?(Color){135,209,242,255}:(Color){211,126,232,255}):
+                        (i&1?(Color){45,186,221,255}:(Color){179,70,190,255});
             pb_draw_mesh(&r->meshes,PB_MESH_WEDGE,(Vector3){x,10.2f+sway,z},(Vector3){0,1,0},i*37+elapsed*12,
-                         (Vector3){.8f,2.8f,.8f},i&1?(Color){45,186,221,255}:(Color){179,70,190,255});
+                         (Vector3){.8f,2.8f,.8f},shard);
         } else {
             int p;
             pb_draw_mesh(&r->meshes, PB_MESH_CYLINDER, (Vector3){x,0,z}, (Vector3){0,1,0}, 0,
@@ -110,9 +114,10 @@ void pb_draw_world(PbRenderer *r, const PbParticles *particles, Vector3 player,
     for(i=0;i<(reduced?3:7);++i) {
         Vector3 cloud={(float)((i*13)%23)-11,10+(i%3)*1.7f,-12-i*14.0f};
         pb_draw_mesh(&r->meshes,PB_MESH_SPHERE,cloud,(Vector3){0,1,0},0,
-                     (Vector3){4,1.4f,1.8f},style?(Color){91,75,151,180}:(Color){255,249,225,190});
+                     (Vector3){4,1.4f,1.8f},style==2?(Color){126,59,82,180}:
+                     style?(Color){91,75,151,180}:(Color){255,249,225,190});
     }
-    if(style) {
+    if(style==1||style==3) {
         float storm=.5f+.5f*sinf(elapsed*.30f+sinf(elapsed*.09f)*1.8f);
         int snow_count=reduced?(28+(int)(storm*52)):(90+(int)(storm*250));
         float wind=1.0f+storm*3.4f;

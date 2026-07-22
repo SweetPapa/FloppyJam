@@ -10,9 +10,9 @@ typedef struct PbSaveData {
     uint32_t magic;
     uint16_t version;
     uint16_t flags;
-    uint32_t best_time_ms[2];
-    uint8_t best_glints[2];
-    uint8_t seed_masks[2];
+    uint32_t best_time_ms[4];
+    uint8_t best_glints[4];
+    uint8_t seed_masks[4];
     uint8_t volume_master;
     uint8_t volume_music;
     uint8_t volume_sfx;
@@ -28,4 +28,3 @@ void pb_save_record(PbSaveData *save, int level, uint32_t time_ms,
                     int glints, uint8_t seed_mask);
 
 #endif
-
