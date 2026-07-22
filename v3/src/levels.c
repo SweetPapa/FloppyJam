@@ -4,6 +4,7 @@
 #include <math.h>
 
 #define Q 10.0f
+#define CASCADE_Y 10.0f
 #define PIECE(x,y,z,sx,sy,sz,t,c) {(x)*10,(y)*10,(z)*10,(sx)*10,(sy)*10,(sz)*10,t,c}
 
 enum { LEVEL_SOLID, LEVEL_BOUNCE, LEVEL_MOVING, LEVEL_FALLING };
@@ -106,21 +107,22 @@ void pb_level_prismrush_init(PbLevel *l, PbCollisionWorld *world)
         PbLevelPiece p=cascade_pieces[i];
         PbColliderType type=p.type==LEVEL_BOUNCE?PB_COLLIDER_BOUNCE:p.type==LEVEL_MOVING?PB_COLLIDER_MOVING:PB_COLLIDER_SOLID;
         l->pieces[i]=p;
-        pb_collision_add_box(world,(Vector3){p.px/Q,p.py/Q,p.pz/Q},(Vector3){p.sx/Q,p.sy/Q,p.sz/Q},type,i*.55f);
+        pb_collision_add_box(world,(Vector3){p.px/Q,p.py/Q+CASCADE_Y,p.pz/Q},
+                             (Vector3){p.sx/Q,p.sy/Q,p.sz/Q},type,i*.55f);
     }
     l->camera_zone_count=(int)(sizeof(cascade_zones)/sizeof(cascade_zones[0]));
     for(i=0;i<l->camera_zone_count;++i) l->camera_zones[i]=cascade_zones[i];
     for(i=0;i<PB_LEVEL_GLINTS;++i) {
         float t=i/29.0f, z=2-t*146;
-        l->glints[i].position=(Vector3){sinf(t*18)*3,-1.8f+sinf(t*8)*1.2f,z};
+        l->glints[i].position=(Vector3){sinf(t*18)*3,CASCADE_Y-1.8f+sinf(t*8)*1.2f,z};
     }
-    l->seeds[0].position=(Vector3){5,0,-20};
-    l->seeds[1].position=(Vector3){-4,-1,-72};
-    l->seeds[2].position=(Vector3){4,3,-110};
-    l->checkpoints[0]=(Vector3){0,-1.8f,-49};
-    l->checkpoints[1]=(Vector3){0,-2.8f,-90};
+    l->seeds[0].position=(Vector3){5,CASCADE_Y,-20};
+    l->seeds[1].position=(Vector3){-4,CASCADE_Y-1,-72};
+    l->seeds[2].position=(Vector3){4,CASCADE_Y+3,-110};
+    l->checkpoints[0]=(Vector3){0,CASCADE_Y-1.8f,-49};
+    l->checkpoints[1]=(Vector3){0,CASCADE_Y-2.8f,-90};
     l->checkpoint_count=2; l->checkpoint=l->checkpoints[0];
-    l->respawn=(Vector3){0,1.15f,5}; l->gate=(Vector3){0,-1.8f,-147};
+    l->respawn=(Vector3){0,CASCADE_Y+1.15f,5}; l->gate=(Vector3){0,CASCADE_Y-1.8f,-147};
 }
 
 void pb_level_update(PbLevel *l, PbCollisionWorld *world, Vector3 p, float dt)
@@ -144,7 +146,7 @@ void pb_level_update(PbLevel *l, PbCollisionWorld *world, Vector3 p, float dt)
     }
     if(l->level_id==PB_LEVEL_CASCADE) {
         for(i=0;i<l->piece_count;++i) if(l->pieces[i].type==LEVEL_FALLING) {
-            Vector3 center={(l->pieces[i].px/Q),l->pieces[i].py/Q,l->pieces[i].pz/Q};
+            Vector3 center={(l->pieces[i].px/Q),l->pieces[i].py/Q+CASCADE_Y,l->pieces[i].pz/Q};
             if(l->falling_timer[i]<=0&&Vector3Distance(p,center)<2.5f) l->falling_timer[i]=.001f;
             if(l->falling_timer[i]>0) {
                 l->falling_timer[i]+=dt;
@@ -183,7 +185,7 @@ void pb_level_draw(PbLevel *l, PbRenderer *r, float elapsed, bool reduced)
     int i;
     for(i=0;i<l->piece_count;++i) {
         PbLevelPiece p=l->pieces[i];
-        Vector3 pos={p.px/Q,p.py/Q,p.pz/Q};
+        Vector3 pos={p.px/Q,p.py/Q+(l->level_id==PB_LEVEL_CASCADE?CASCADE_Y:0),p.pz/Q};
         Vector3 size={p.sx/Q,p.sy/Q,p.sz/Q};
         Color piece_color=l->level_id==PB_LEVEL_CASCADE?(Color[]){(Color){53,157,196,255},(Color){91,202,226,255},(Color){242,117,181,255},(Color){153,225,184,255}}[p.color&3]:palette(p.color);
         if(p.type==LEVEL_MOVING) pos.y+=sinf(elapsed*1.6f+i*.7f)*.8f;
@@ -224,7 +226,7 @@ void pb_level_draw(PbLevel *l, PbRenderer *r, float elapsed, bool reduced)
         }
     }
     if(l->chase_active) for(i=0;i<(reduced?10:24);++i) {
-        Vector3 q={(float)((i*7)%11)-5,(float)((i*5)%7)-4,l->shatterwake_z+(i%3)*.4f};
+        Vector3 q={(float)((i*7)%11)-5,CASCADE_Y+(float)((i*5)%7)-4,l->shatterwake_z+(i%3)*.4f};
         pb_draw_mesh(&r->meshes,PB_MESH_WEDGE,q,(Vector3){0,1,0},elapsed*90+i*17,
                      (Vector3){1.2f,1.2f,1.2f},(Color){73,37,104,230});
     }

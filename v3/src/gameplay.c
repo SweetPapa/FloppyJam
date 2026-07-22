@@ -20,17 +20,17 @@ void pb_gameplay_init(PbGameplay *g, int level_id)
     *g=(PbGameplay){0};
     g->health=3;
     if(level_id==PB_LEVEL_CASCADE) {
-        add_object(g,PB_OBJECT_BRITTLE,(Vector3){0,1,-7});
-        add_object(g,PB_OBJECT_ROTATING_BAR,(Vector3){0,-1,-17});
-        add_object(g,PB_OBJECT_HEART,(Vector3){0,-2,-92});
-        add_object(g,PB_OBJECT_BURST_TARGET,(Vector3){-4,0,-98});
-        add_object(g,PB_OBJECT_BURST_TARGET,(Vector3){0,2,-104});
-        add_object(g,PB_OBJECT_BURST_TARGET,(Vector3){4,4,-110});
-        add_enemy(g,PB_ENEMY_ROLLFIN,(Vector3){-5,-1,-18},0);
-        add_enemy(g,PB_ENEMY_WISP,(Vector3){0,0,-41},1);
-        add_enemy(g,PB_ENEMY_WISP,(Vector3){0,1,-107},2);
-        add_enemy(g,PB_ENEMY_ROLLFIN,(Vector3){-2,-1,-136},3);
-        add_enemy(g,PB_ENEMY_ROLLFIN,(Vector3){2,-1,-140},4);
+        add_object(g,PB_OBJECT_BRITTLE,(Vector3){0,11,-7});
+        add_object(g,PB_OBJECT_ROTATING_BAR,(Vector3){0,9,-17});
+        add_object(g,PB_OBJECT_HEART,(Vector3){0,8,-92});
+        add_object(g,PB_OBJECT_BURST_TARGET,(Vector3){-4,10,-98});
+        add_object(g,PB_OBJECT_BURST_TARGET,(Vector3){0,12,-104});
+        add_object(g,PB_OBJECT_BURST_TARGET,(Vector3){4,14,-110});
+        add_enemy(g,PB_ENEMY_ROLLFIN,(Vector3){-5,9,-18},0);
+        add_enemy(g,PB_ENEMY_WISP,(Vector3){0,10,-41},1);
+        add_enemy(g,PB_ENEMY_WISP,(Vector3){0,11,-107},2);
+        add_enemy(g,PB_ENEMY_ROLLFIN,(Vector3){-2,9,-136},3);
+        add_enemy(g,PB_ENEMY_ROLLFIN,(Vector3){2,9,-140},4);
         return;
     }
     add_object(g,PB_OBJECT_BRITTLE,(Vector3){0,3,-15});
@@ -149,7 +149,7 @@ void pb_gameplay_draw(const PbGameplay *g, PbRenderer *r, float elapsed)
             float cycle=fmodf(elapsed+e->phase,2.4f);
             if(cycle>.7f&&cycle<1.7f) {
                 float width=(cycle-.7f)*7;
-                pb_draw_mesh(&r->meshes,PB_MESH_RING,(Vector3){e->position.x,5.55f,e->position.z},
+                pb_draw_mesh(&r->meshes,PB_MESH_RING,(Vector3){e->position.x,e->base.y-.45f,e->position.z},
                              (Vector3){1,0,0},90,(Vector3){width,width,width},(Color){232,105,220,180});
             }
         }
