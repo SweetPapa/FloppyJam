@@ -13,7 +13,15 @@
 #include "raymath.h"
 #include <math.h>
 
-static void draw_mote(PbRenderer *renderer, Vector3 p, const PbPlayer *player, float elapsed)
+static Vector3 mote_local(Vector3 origin, Vector3 local, float yaw, Vector3 lean_axis, float lean)
+{
+    local=Vector3RotateByAxisAngle(local,(Vector3){0,1,0},yaw);
+    local=Vector3RotateByAxisAngle(local,lean_axis,lean);
+    return Vector3Add(origin,local);
+}
+
+static void draw_mote(PbRenderer *renderer, Vector3 p, const PbPlayer *player,
+                      float elapsed, bool flow_aura)
 {
     Color body = (Color){245, 128, 142, 255};
     Color petal = (Color){255, 198, 91, 255};
@@ -21,30 +29,43 @@ static void draw_mote(PbRenderer *renderer, Vector3 p, const PbPlayer *player, f
     float speed = Vector3Length(player->velocity);
     float squash=player->grounded?1.0f+fminf(speed/60,.12f):.92f;
     float stretch=player->state==PB_PLAYER_BURST?1.45f:1;
+    float horizontal=sqrtf(player->velocity.x*player->velocity.x+player->velocity.z*player->velocity.z);
+    float yaw=atan2f(-player->facing.x,-player->facing.z);
+    Vector3 direction=horizontal>.1f?(Vector3){player->velocity.x/horizontal,0,player->velocity.z/horizontal}:player->facing;
+    Vector3 lean_axis={direction.z,0,-direction.x};
+    float lean=fminf(horizontal/8.5f,1)*.24f;
     int i;
-    pb_draw_mesh(&renderer->meshes, PB_MESH_SPHERE, p, (Vector3){0,1,0}, 0,
-                 (Vector3){1.3f*stretch,1.15f/squash,1.3f}, body);
+    pb_draw_mesh(&renderer->meshes,PB_MESH_SPHERE,p,lean_axis,lean*57.2958f,
+                 (Vector3){1.3f*stretch,1.15f/squash,1.3f},body);
     pb_draw_mesh(&renderer->meshes, PB_MESH_SPHERE,
-                 (Vector3){p.x-.23f,p.y+.18f,p.z-.55f}, (Vector3){0,1,0}, 0,
+                 mote_local(p,(Vector3){-.23f,.18f,-.55f},yaw,lean_axis,lean), (Vector3){0,1,0}, 0,
                  (Vector3){.24f,.3f,.18f}, WHITE);
     pb_draw_mesh(&renderer->meshes, PB_MESH_SPHERE,
-                 (Vector3){p.x+.23f,p.y+.18f,p.z-.55f}, (Vector3){0,1,0}, 0,
+                 mote_local(p,(Vector3){.23f,.18f,-.55f},yaw,lean_axis,lean), (Vector3){0,1,0}, 0,
                  (Vector3){.24f,.3f,.18f}, WHITE);
     for (i = 0; i < 5; ++i) {
         float a = (float)i*1.25663706f + (player->state==PB_PLAYER_GLIDING?elapsed*.9f:speed*0.03f);
-        Vector3 q = {p.x + cosf(a)*petal_open, p.y + sinf(a)*petal_open, p.z + 0.18f};
+        Vector3 q=mote_local(p,(Vector3){cosf(a)*petal_open,sinf(a)*petal_open,.18f},yaw,lean_axis,lean);
         pb_draw_mesh(&renderer->meshes, PB_MESH_PETAL, q, (Vector3){0,0,1},
                      a*57.2958f, (Vector3){1,1,1}, petal);
     }
-    pb_draw_mesh(&renderer->meshes, PB_MESH_WEDGE, (Vector3){p.x-.28f,p.y-.62f,p.z},
-                 (Vector3){0,1,0}, 0, (Vector3){.45f,.2f,.65f}, PURPLE);
-    pb_draw_mesh(&renderer->meshes, PB_MESH_WEDGE, (Vector3){p.x+.28f,p.y-.62f,p.z},
-                 (Vector3){0,1,0}, 0, (Vector3){.45f,.2f,.65f}, PURPLE);
+    pb_draw_mesh(&renderer->meshes, PB_MESH_WEDGE,mote_local(p,(Vector3){-.28f,-.62f,0},yaw,lean_axis,lean),
+                 (Vector3){0,1,0}, yaw*57.2958f, (Vector3){.45f,.2f,.65f}, PURPLE);
+    pb_draw_mesh(&renderer->meshes, PB_MESH_WEDGE,mote_local(p,(Vector3){.28f,-.62f,0},yaw,lean_axis,lean),
+                 (Vector3){0,1,0}, yaw*57.2958f, (Vector3){.45f,.2f,.65f}, PURPLE);
     for(i=1;i<=3;++i) {
         Vector3 tail={p.x-player->facing.x*(.55f+i*.28f),p.y+.1f+sinf(elapsed*6-i)*.08f,
                       p.z-player->facing.z*(.55f+i*.28f)};
         pb_draw_mesh(&renderer->meshes,PB_MESH_SPHERE,tail,(Vector3){0,1,0},0,
                      (Vector3){.2f,.12f,.2f},(Color){255,191,102,(unsigned char)(230-i*35)});
+    }
+    if(flow_aura&&horizontal>4) for(i=0;i<6;++i) {
+        float a=elapsed*2.4f+i*1.0472f;
+        Vector3 q={p.x+cosf(a)*(1.05f+horizontal*.035f),p.y+.15f+sinf(a*2)*.45f,
+                   p.z+sinf(a)*(1.05f+horizontal*.035f)};
+        Color glow=i&1?(Color){116,238,220,190}:(Color){255,169,105,190};
+        pb_draw_mesh(&renderer->meshes,PB_MESH_PETAL,q,(Vector3){0,1,0},-a*57.2958f,
+                     (Vector3){.45f,.45f,.45f},glow);
     }
 }
 
@@ -137,20 +158,20 @@ int main(void)
                 accumulator=simulation_time=elapsed=0; intro_timer=0; mode=PB_MODE_LEVEL_INTRO; pb_audio_sfx(PB_SFX_MENU_CONFIRM); }
             if(back) { mode=PB_MODE_TITLE; menu_selection=0; }
         } else if(mode==PB_MODE_OPTIONS) {
-            if(nav_up) menu_selection=(menu_selection+7)%8;
-            if(nav_down) menu_selection=(menu_selection+1)%8;
+            if(nav_up) menu_selection=(menu_selection+8)%9;
+            if(nav_down) menu_selection=(menu_selection+1)%9;
             if((nav_left||nav_right)&&menu_selection<4) {
                 int delta=nav_right?5:-5; uint8_t *value=menu_selection==0?&save.volume_master:
                     menu_selection==1?&save.volume_music:menu_selection==2?&save.volume_sfx:&save.camera_sensitivity;
                 int adjusted=Clamp(*value+delta,0,100); *value=(uint8_t)adjusted;
                 pb_audio_set_volume(save.volume_master,save.volume_music,save.volume_sfx);
             }
-            if(action&&(menu_selection>=4&&menu_selection<=6)) {
-                save.option_flags^=(uint8_t)(menu_selection==4?1:menu_selection==5?2:4);
+            if(action&&(menu_selection>=4&&menu_selection<=7)) {
+                save.option_flags^=(uint8_t)(1u<<(menu_selection-4));
                 reduced_effects=(save.option_flags&2)!=0; particles.reduced=reduced_effects;
                 if(menu_selection==6) ToggleBorderlessWindowed();
             }
-            if(back||(action&&menu_selection==7)) { pb_save_write(&save); mode=options_return; menu_selection=0; }
+            if(back||(action&&menu_selection==8)) { pb_save_write(&save); mode=options_return; menu_selection=0; }
         } else if(mode==PB_MODE_PAUSED) {
             if(nav_up) menu_selection=(menu_selection+3)%4;
             if(nav_down) menu_selection=(menu_selection+1)%4;
@@ -287,11 +308,14 @@ int main(void)
         pb_particles_update(&particles, dt);
         if (should_exit) break;
 
-        pb_renderer_begin(&renderer, draw_camera, level.level_id==PB_LEVEL_CASCADE?(Color){35,22,70,255}:(Color){255,240,207,255});
+        pb_renderer_begin(&renderer,draw_camera,
+                          level.level_id==PB_LEVEL_CASCADE?(Color){47,31,86,255}:(Color){255,240,207,255},
+                          level.level_id==PB_LEVEL_CASCADE?75.0f:38.0f,
+                          level.level_id==PB_LEVEL_CASCADE?175.0f:95.0f);
         pb_draw_world(&renderer, &particles, draw_position, elapsed,level.level_id,reduced_effects);
         pb_level_draw(&level,&renderer,simulation_time,reduced_effects);
         pb_gameplay_draw(&gameplay,&renderer,simulation_time);
-        draw_mote(&renderer, draw_position, &player,elapsed);
+        draw_mote(&renderer,draw_position,&player,elapsed,(save.option_flags&8)==0);
         pb_renderer_end(&renderer);
         if(mode==PB_MODE_PLAYING||mode==PB_MODE_LEVEL_COMPLETE) {
             DrawText(TextFormat("%s   GLINTS %02d/30   SEEDS %d/3",pb_level_section_name(&level),level.glint_count,level.seed_count),36,32,18,DARKPURPLE);
