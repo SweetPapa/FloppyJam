@@ -33,6 +33,23 @@ void pb_gameplay_init(PbGameplay *g, int level_id)
         add_enemy(g,PB_ENEMY_ROLLFIN,(Vector3){2,9,-140},4);
         return;
     }
+    if(level_id==PB_LEVEL_FOUNDRY) {
+        add_object(g,PB_OBJECT_ROTATING_BAR,(Vector3){0,9,-38});
+        add_object(g,PB_OBJECT_BRITTLE,(Vector3){0,11,-58});
+        add_object(g,PB_OBJECT_HEART,(Vector3){0,13,-87});
+        add_enemy(g,PB_ENEMY_WISP,(Vector3){-4,11,-31},0);
+        add_enemy(g,PB_ENEMY_ROLLFIN,(Vector3){3,10,-70},1);
+        add_enemy(g,PB_ENEMY_WISP,(Vector3){0,10,-104},2);
+        return;
+    }
+    if(level_id==PB_LEVEL_CROWN) {
+        add_object(g,PB_OBJECT_BRITTLE,(Vector3){0,10,-30});
+        add_object(g,PB_OBJECT_HEART,(Vector3){0,11,-65});
+        add_enemy(g,PB_ENEMY_ROLLFIN,(Vector3){-3,13,-45},0);
+        add_enemy(g,PB_ENEMY_WISP,(Vector3){3,12,-55},1);
+        g->boss_position=(Vector3){0,9.5f,-88}; g->boss_health=5; g->boss_active=true;
+        return;
+    }
     add_object(g,PB_OBJECT_BRITTLE,(Vector3){0,3,-15});
     add_object(g,PB_OBJECT_BRITTLE,(Vector3){-1,4,-18});
     add_object(g,PB_OBJECT_BURST_TARGET,(Vector3){1,7,-70});
@@ -100,6 +117,26 @@ void pb_gameplay_update(PbGameplay *g, PbPlayer *p, Vector3 respawn, float dt, f
             else hurt(g,p,e->position,respawn);
         }
     }
+    if(g->boss_active) {
+        float cycle;
+        float distance;
+        g->boss_phase+=dt; g->boss_hit_cooldown=fmaxf(0,g->boss_hit_cooldown-dt);
+        g->boss_position.x=sinf(g->boss_phase*.8f)*5.2f;
+        g->boss_position.y=9.5f+sinf(g->boss_phase*1.7f)*.8f;
+        distance=Vector3Distance(p->position,g->boss_position);
+        if(p->state==PB_PLAYER_BURST&&distance<2.5f&&g->boss_hit_cooldown<=0) {
+            g->boss_health--; g->boss_hit_cooldown=.7f; p->velocity.y=12; p->air_burst=true;
+            g->effect_type=PB_EFFECT_DEFEAT; g->effect_position=g->boss_position;
+            if(g->boss_health<=0) g->boss_active=false;
+        } else if(distance<1.8f) hurt(g,p,g->boss_position,respawn);
+        cycle=fmodf(g->boss_phase,3.2f);
+        if(cycle>.8f&&cycle<1.25f) {
+            float radius=(cycle-.8f)*20;
+            float planar=sqrtf((p->position.x-g->boss_position.x)*(p->position.x-g->boss_position.x)+
+                               (p->position.z-g->boss_position.z)*(p->position.z-g->boss_position.z));
+            if(fabsf(planar-radius)<.45f) hurt(g,p,g->boss_position,respawn);
+        }
+    }
 }
 
 void pb_gameplay_fall(PbGameplay *g, PbPlayer *p, Vector3 respawn)
@@ -152,6 +189,21 @@ void pb_gameplay_draw(const PbGameplay *g, PbRenderer *r, float elapsed)
                 pb_draw_mesh(&r->meshes,PB_MESH_RING,(Vector3){e->position.x,e->base.y-.45f,e->position.z},
                              (Vector3){1,0,0},90,(Vector3){width,width,width},(Color){232,105,220,180});
             }
+        }
+    }
+    if(g->boss_active) {
+        int shard;
+        float cycle=fmodf(g->boss_phase,3.2f);
+        pb_draw_mesh(&r->meshes,PB_MESH_SPHERE,g->boss_position,(Vector3){0,1,0},0,
+                     (Vector3){3.2f,2.5f,3.2f},(Color){102,56,160,255});
+        for(shard=0;shard<8;++shard) { float a=elapsed*1.4f+shard*.7854f;
+            Vector3 q={g->boss_position.x+cosf(a)*2.2f,g->boss_position.y+sinf(a*2)*.6f,g->boss_position.z+sinf(a)*2.2f};
+            pb_draw_mesh(&r->meshes,PB_MESH_WEDGE,q,(Vector3){0,1,0},a*57.3f,
+                         (Vector3){.65f,1.5f,.65f},(Color){245,112,192,255}); }
+        if(cycle>.8f&&cycle<1.25f) {
+            float radius=(cycle-.8f)*20;
+            pb_draw_mesh(&r->meshes,PB_MESH_RING,(Vector3){g->boss_position.x,8.05f,g->boss_position.z},
+                         (Vector3){1,0,0},90,(Vector3){radius,radius,radius},(Color){255,106,182,210});
         }
     }
 }
