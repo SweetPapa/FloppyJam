@@ -71,15 +71,16 @@ void pb_ui_pause(int selection, bool controller)
 
 void pb_ui_options(int selection, const PbSaveData *s, bool controller)
 {
-    panel(570,560); DrawText("OPTIONS",GetScreenWidth()/2-76,GetScreenHeight()/2-245,34,DARKPURPLE);
-    item(TextFormat("MASTER VOLUME       %3d",s->volume_master),GetScreenHeight()/2-185,selection==0);
-    item(TextFormat("MUSIC VOLUME        %3d",s->volume_music),GetScreenHeight()/2-137,selection==1);
-    item(TextFormat("SOUND VOLUME        %3d",s->volume_sfx),GetScreenHeight()/2-89,selection==2);
-    item(TextFormat("CAMERA SENSITIVITY  %3d",s->camera_sensitivity),GetScreenHeight()/2-41,selection==3);
-    item(TextFormat("INVERT CAMERA       %s",s->option_flags&1?"YES":"NO"),GetScreenHeight()/2+7,selection==4);
-    item(TextFormat("REDUCED EFFECTS     %s",s->option_flags&2?"YES":"NO"),GetScreenHeight()/2+55,selection==5);
-    item(TextFormat("SCREEN MODE         %s",s->option_flags&4?"BORDERLESS":"WINDOWED"),GetScreenHeight()/2+103,selection==6);
-    item("BACK",GetScreenHeight()/2+151,selection==7);
+    panel(570,620); DrawText("OPTIONS",GetScreenWidth()/2-76,GetScreenHeight()/2-275,34,DARKPURPLE);
+    item(TextFormat("MASTER VOLUME       %3d",s->volume_master),GetScreenHeight()/2-215,selection==0);
+    item(TextFormat("MUSIC VOLUME        %3d",s->volume_music),GetScreenHeight()/2-171,selection==1);
+    item(TextFormat("SOUND VOLUME        %3d",s->volume_sfx),GetScreenHeight()/2-127,selection==2);
+    item(TextFormat("CAMERA SENSITIVITY  %3d",s->camera_sensitivity),GetScreenHeight()/2-83,selection==3);
+    item(TextFormat("INVERT CAMERA       %s",s->option_flags&1?"YES":"NO"),GetScreenHeight()/2-39,selection==4);
+    item(TextFormat("REDUCED EFFECTS     %s",s->option_flags&2?"YES":"NO"),GetScreenHeight()/2+5,selection==5);
+    item(TextFormat("SCREEN MODE         %s",s->option_flags&4?"BORDERLESS":"WINDOWED"),GetScreenHeight()/2+49,selection==6);
+    item(TextFormat("FLOW AURA           %s",s->option_flags&8?"NO":"YES"),GetScreenHeight()/2+93,selection==7);
+    item("BACK",GetScreenHeight()/2+137,selection==8);
     hint(controller);
 }
 

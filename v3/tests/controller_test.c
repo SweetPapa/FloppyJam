@@ -40,6 +40,15 @@ int main(void)
         fprintf(stderr,"forward directional input failed: x=%f z=%f\n",player.position.x,player.position.z);
         return 1;
     }
+    pb_player_init(&player,(Vector3){0,1.15f,0});
+    input=(PbInput){0}; input.move_x=1; input.move_y=1;
+    for(i=0;i<30;++i) pb_player_update(&player,&world,input,0,1.0f/120.0f);
+    if(player.velocity.x<2||player.velocity.z>-2||
+       fabsf(fabsf(player.velocity.x)-fabsf(player.velocity.z))>.05f||
+       sqrtf(player.velocity.x*player.velocity.x+player.velocity.z*player.velocity.z)>8.51f) {
+        fprintf(stderr,"diagonal movement failed: vx=%f vz=%f\n",player.velocity.x,player.velocity.z);
+        return 1;
+    }
     {
         PbFollowCamera camera;
         pb_camera_init(&camera,player.position); camera.yaw=1.5f;
