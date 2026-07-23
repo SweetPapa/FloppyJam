@@ -8,9 +8,12 @@ set(CMAKE_C_EXTENSIONS OFF)
 # A plain configure must produce the contest-sized executable. Developers can
 # explicitly opt out with -DPOLYBLOOM_RELEASE=OFF for assertions/overlays.
 option(POLYBLOOM_RELEASE "Build the size-focused submission configuration" ON)
+option(POLYBLOOM_INCLUDE_LEVEL3 "Compile Aurora Foundry into the game" ON)
+option(POLYBLOOM_INCLUDE_LEVEL4 "Compile Sovereign Crown and its boss into the game" ON)
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
   set(CMAKE_BUILD_TYPE MinSizeRel CACHE STRING "Build type" FORCE)
 endif()
+message(STATUS "POLYBLOOM optional content: Level 3=${POLYBLOOM_INCLUDE_LEVEL3}, Level 4/Boss=${POLYBLOOM_INCLUDE_LEVEL4}")
 
 add_executable(polybloom
   src/main.c
@@ -27,6 +30,16 @@ add_executable(polybloom
   src/audio.c
   src/ui.c)
 target_include_directories(polybloom PRIVATE src)
+if(POLYBLOOM_INCLUDE_LEVEL3)
+  target_compile_definitions(polybloom PRIVATE POLYBLOOM_INCLUDE_LEVEL3=1)
+else()
+  target_compile_definitions(polybloom PRIVATE POLYBLOOM_INCLUDE_LEVEL3=0)
+endif()
+if(POLYBLOOM_INCLUDE_LEVEL4)
+  target_compile_definitions(polybloom PRIVATE POLYBLOOM_INCLUDE_LEVEL4=1)
+else()
+  target_compile_definitions(polybloom PRIVATE POLYBLOOM_INCLUDE_LEVEL4=0)
+endif()
 
 # Homebrew exposes both shared and static raylib libraries but its package target
 # selects the shared one. The contest package must be standalone, so prefer the

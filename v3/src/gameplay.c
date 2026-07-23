@@ -33,6 +33,7 @@ void pb_gameplay_init(PbGameplay *g, int level_id)
         add_enemy(g,PB_ENEMY_ROLLFIN,(Vector3){2,9,-140},4);
         return;
     }
+#if POLYBLOOM_INCLUDE_LEVEL3
     if(level_id==PB_LEVEL_FOUNDRY) {
         add_object(g,PB_OBJECT_ROTATING_BAR,(Vector3){0,9,-38});
         add_object(g,PB_OBJECT_BRITTLE,(Vector3){0,11,-58});
@@ -42,6 +43,8 @@ void pb_gameplay_init(PbGameplay *g, int level_id)
         add_enemy(g,PB_ENEMY_WISP,(Vector3){0,10,-104},2);
         return;
     }
+#endif
+#if POLYBLOOM_INCLUDE_LEVEL4
     if(level_id==PB_LEVEL_CROWN) {
         add_object(g,PB_OBJECT_BRITTLE,(Vector3){0,10,-30});
         add_object(g,PB_OBJECT_HEART,(Vector3){0,11,-65});
@@ -50,6 +53,7 @@ void pb_gameplay_init(PbGameplay *g, int level_id)
         g->boss_position=(Vector3){0,9.5f,-88}; g->boss_health=5; g->boss_active=true;
         return;
     }
+#endif
     add_object(g,PB_OBJECT_BRITTLE,(Vector3){0,3,-15});
     add_object(g,PB_OBJECT_BRITTLE,(Vector3){-1,4,-18});
     add_object(g,PB_OBJECT_BURST_TARGET,(Vector3){1,7,-70});
@@ -117,6 +121,7 @@ void pb_gameplay_update(PbGameplay *g, PbPlayer *p, Vector3 respawn, float dt, f
             else hurt(g,p,e->position,respawn);
         }
     }
+#if POLYBLOOM_INCLUDE_LEVEL4
     if(g->boss_active) {
         float cycle;
         float distance;
@@ -137,6 +142,7 @@ void pb_gameplay_update(PbGameplay *g, PbPlayer *p, Vector3 respawn, float dt, f
             if(fabsf(planar-radius)<.45f) hurt(g,p,g->boss_position,respawn);
         }
     }
+#endif
 }
 
 void pb_gameplay_fall(PbGameplay *g, PbPlayer *p, Vector3 respawn)
@@ -191,6 +197,7 @@ void pb_gameplay_draw(const PbGameplay *g, PbRenderer *r, float elapsed)
             }
         }
     }
+#if POLYBLOOM_INCLUDE_LEVEL4
     if(g->boss_active) {
         int shard;
         float cycle=fmodf(g->boss_phase,3.2f);
@@ -206,6 +213,7 @@ void pb_gameplay_draw(const PbGameplay *g, PbRenderer *r, float elapsed)
                          (Vector3){1,0,0},90,(Vector3){radius,radius,radius},(Color){255,106,182,210});
         }
     }
+#endif
 }
 
 uint32_t pb_gameplay_result_ms(const PbGameplay *g) { return (uint32_t)((g->run_time+g->penalty_time)*1000); }
