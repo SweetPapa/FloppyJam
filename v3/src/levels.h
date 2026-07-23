@@ -10,6 +10,15 @@
 #define PB_MAX_LEVEL_PIECES 96
 #define PB_MAX_CAMERA_ZONES 32
 
+#ifndef POLYBLOOM_INCLUDE_LEVEL3
+#define POLYBLOOM_INCLUDE_LEVEL3 1
+#endif
+#ifndef POLYBLOOM_INCLUDE_LEVEL4
+#define POLYBLOOM_INCLUDE_LEVEL4 1
+#endif
+
+#define PB_AVAILABLE_LEVELS (2 + POLYBLOOM_INCLUDE_LEVEL3 + POLYBLOOM_INCLUDE_LEVEL4)
+
 typedef enum PbSectionId {
     PB_SECTION_AWAKENING,
     PB_SECTION_ORCHARD,
@@ -70,8 +79,14 @@ typedef struct PbLevel {
 
 void pb_level_petalgarden_init(PbLevel *level, PbCollisionWorld *collision);
 void pb_level_prismrush_init(PbLevel *level, PbCollisionWorld *collision);
+#if POLYBLOOM_INCLUDE_LEVEL3
 void pb_level_foundry_init(PbLevel *level, PbCollisionWorld *collision);
+#endif
+#if POLYBLOOM_INCLUDE_LEVEL4
 void pb_level_crown_init(PbLevel *level, PbCollisionWorld *collision);
+#endif
+int pb_level_id_for_slot(int slot);
+int pb_level_slot_for_id(int level_id);
 void pb_level_update(PbLevel *level, PbCollisionWorld *collision, Vector3 player, float dt);
 void pb_level_draw(PbLevel *level, PbRenderer *renderer, float elapsed, bool reduced);
 float pb_level_camera_distance(const PbLevel *level, Vector3 player);
