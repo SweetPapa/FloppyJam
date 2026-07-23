@@ -21,6 +21,30 @@ static void hint(bool controller)
     DrawText(text,GetScreenWidth()/2-MeasureText(text,16)/2,GetScreenHeight()-42,16,(Color){70,61,86,255});
 }
 
+static const char *level_name(int id)
+{
+    if(id==PB_LEVEL_CASCADE) return "PRISMRUSH CASCADE";
+#if POLYBLOOM_INCLUDE_LEVEL3
+    if(id==PB_LEVEL_FOUNDRY) return "AURORA FOUNDRY";
+#endif
+#if POLYBLOOM_INCLUDE_LEVEL4
+    if(id==PB_LEVEL_CROWN) return "SOVEREIGN CROWN";
+#endif
+    return "PETALSTEP GARDENS";
+}
+
+static Color level_color(int id)
+{
+    if(id==PB_LEVEL_CASCADE) return (Color){70,188,222,255};
+#if POLYBLOOM_INCLUDE_LEVEL3
+    if(id==PB_LEVEL_FOUNDRY) return (Color){241,137,75,255};
+#endif
+#if POLYBLOOM_INCLUDE_LEVEL4
+    if(id==PB_LEVEL_CROWN) return (Color){166,134,226,255};
+#endif
+    return (Color){105,205,165,255};
+}
+
 void pb_ui_title(int selection, bool controller)
 {
     panel(500,390);
@@ -34,28 +58,29 @@ void pb_ui_title(int selection, bool controller)
 
 void pb_ui_level_select(int selection, const PbSaveData *save, bool controller)
 {
-    static const char *names[]={"PETALSTEP GARDENS","PRISMRUSH CASCADE","AURORA FOUNDRY","SOVEREIGN CROWN"};
-    static const Color colors[]={{105,205,165,255},{70,188,222,255},{241,137,75,255},{166,134,226,255}};
     int i;
-    panel(800,590);
-    DrawText("CHOOSE A BLOOM PATH",GetScreenWidth()/2-177,GetScreenHeight()/2-265,30,DARKPURPLE);
-    for(i=0;i<4;++i) {
+    panel(800,PB_AVAILABLE_LEVELS>2?590:420);
+    DrawText("CHOOSE A BLOOM PATH",GetScreenWidth()/2-177,
+             GetScreenHeight()/2-(PB_AVAILABLE_LEVELS>2?265:175),30,DARKPURPLE);
+    for(i=0;i<PB_AVAILABLE_LEVELS;++i) {
+        int id=pb_level_id_for_slot(i);
+        const char *name=level_name(id);
+        Color color=level_color(id);
         int x=GetScreenWidth()/2-365+(i%2)*375;
-        int y=GetScreenHeight()/2-210+(i/2)*235;
-        DrawRectangle(x,y,345,205,selection==i?colors[i]:Fade(colors[i],.55f));
-        DrawText(names[i],x+172-MeasureText(names[i],20)/2,y+22,20,DARKPURPLE);
-        DrawText(TextFormat("BEST  %s",save->best_time_ms[i]?TextFormat("%.2f",save->best_time_ms[i]/1000.0f):"--"),x+22,y+70,17,DARKGRAY);
-        DrawText(TextFormat("GLINTS %d/30   SEEDS %d/3",save->best_glints[i],
-                 (save->seed_masks[i]&1)+((save->seed_masks[i]>>1)&1)+((save->seed_masks[i]>>2)&1)),x+22,y+104,17,DARKGRAY);
-        if(save->flags&(1u<<i)) DrawText("COMPLETE",x+225,y+153,16,DARKPURPLE);
+        int y=GetScreenHeight()/2-(PB_AVAILABLE_LEVELS>2?210:105)+(i/2)*235;
+        DrawRectangle(x,y,345,205,selection==i?color:Fade(color,.55f));
+        DrawText(name,x+172-MeasureText(name,20)/2,y+22,20,DARKPURPLE);
+        DrawText(TextFormat("BEST  %s",save->best_time_ms[id]?TextFormat("%.2f",save->best_time_ms[id]/1000.0f):"--"),x+22,y+70,17,DARKGRAY);
+        DrawText(TextFormat("GLINTS %d/30   SEEDS %d/3",save->best_glints[id],
+                 (save->seed_masks[id]&1)+((save->seed_masks[id]>>1)&1)+((save->seed_masks[id]>>2)&1)),x+22,y+104,17,DARKGRAY);
+        if(save->flags&(1u<<id)) DrawText("COMPLETE",x+225,y+153,16,DARKPURPLE);
     }
     hint(controller);
 }
 
 void pb_ui_intro(const PbLevel *level, float timer)
 {
-    const char *name=level->level_id==PB_LEVEL_CASCADE?"PRISMRUSH CASCADE":level->level_id==PB_LEVEL_FOUNDRY?
-                     "AURORA FOUNDRY":level->level_id==PB_LEVEL_CROWN?"SOVEREIGN CROWN":"PETALSTEP GARDENS";
+    const char *name=level_name(level->level_id);
     float fade=timer<.3f?timer/.3f:timer>1.2f?(1.5f-timer)/.3f:1;
     DrawRectangle(0,GetScreenHeight()/2-48,GetScreenWidth(),96,Fade(BLACK,.45f*fade));
     DrawText(name,GetScreenWidth()/2-MeasureText(name,32)/2,GetScreenHeight()/2-18,32,Fade(WHITE,fade));
@@ -88,8 +113,7 @@ void pb_ui_options(int selection, const PbSaveData *s, bool controller)
 
 void pb_ui_results(const PbLevel *l, const PbGameplay *g, int selection, bool controller)
 {
-    const char *name=l->level_id==PB_LEVEL_CASCADE?"PRISMRUSH CASCADE":l->level_id==PB_LEVEL_FOUNDRY?
-                     "AURORA FOUNDRY":l->level_id==PB_LEVEL_CROWN?"SOVEREIGN CROWN":"PETALSTEP GARDENS";
+    const char *name=level_name(l->level_id);
     panel(620,520);
     DrawText("LEVEL COMPLETE",GetScreenWidth()/2-135,GetScreenHeight()/2-225,34,DARKPURPLE);
     DrawText(name,GetScreenWidth()/2-MeasureText(name,22)/2,GetScreenHeight()/2-172,22,DARKGRAY);

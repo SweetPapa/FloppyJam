@@ -54,6 +54,7 @@ static const PbCameraZone cascade_zones[] = {
     {-100,100,-1160,-900,PB_SECTION_CLIMB,12}, {-120,120,-1520,-1160,PB_SECTION_RUNOFF,14}
 };
 
+#if POLYBLOOM_INCLUDE_LEVEL3
 static const PbLevelPiece foundry_pieces[] = {
     PIECE(0,5,4,12,1,14,LEVEL_SOLID,0), PIECE(-3,6,-7,5,1,6,LEVEL_SOLID,1),
     PIECE(3,7,-14,5,1,6,LEVEL_MOVING,2), PIECE(0,8,-22,4,1,5,LEVEL_BOUNCE,3),
@@ -64,7 +65,9 @@ static const PbLevelPiece foundry_pieces[] = {
     PIECE(-5,10,-95,3,1,7,LEVEL_SOLID,0), PIECE(0,8,-103,3,1,7,LEVEL_FALLING,2),
     PIECE(5,6,-111,3,1,7,LEVEL_SOLID,0), PIECE(0,5,-120,12,1,10,LEVEL_SOLID,3)
 };
+#endif
 
+#if POLYBLOOM_INCLUDE_LEVEL4
 static const PbLevelPiece crown_pieces[] = {
     PIECE(0,7,4,12,1,14,LEVEL_SOLID,0), PIECE(0,8,-8,5,1,7,LEVEL_SOLID,1),
     PIECE(-4,9,-17,4,1,7,LEVEL_MOVING,2), PIECE(4,10,-26,4,1,7,LEVEL_MOVING,2),
@@ -73,12 +76,15 @@ static const PbLevelPiece crown_pieces[] = {
     PIECE(0,8,-73,7,1,8,LEVEL_SOLID,1), PIECE(0,7,-88,24,1,24,LEVEL_SOLID,3),
     PIECE(0,7,-105,10,1,8,LEVEL_SOLID,2)
 };
+#endif
 
+#if POLYBLOOM_INCLUDE_LEVEL3 || POLYBLOOM_INCLUDE_LEVEL4
 static const PbCameraZone extra_zones[] = {
     {-140,140,-120,100,PB_SECTION_AWAKENING,12}, {-140,140,-300,-120,PB_SECTION_ORCHARD,13},
     {-140,140,-520,-300,PB_SECTION_RINGWATER,14}, {-160,160,-760,-520,PB_SECTION_GROVE,15},
     {-160,160,-980,-760,PB_SECTION_CLIMB,14}, {-180,180,-1300,-980,PB_SECTION_RUNOFF,16}
 };
+#endif
 
 static Color palette(int id)
 {
@@ -151,6 +157,7 @@ void pb_level_prismrush_init(PbLevel *l, PbCollisionWorld *world)
     l->respawn=(Vector3){0,CASCADE_Y+1.15f,5}; l->gate=(Vector3){0,CASCADE_Y-1.8f,-147};
 }
 
+#if POLYBLOOM_INCLUDE_LEVEL3 || POLYBLOOM_INCLUDE_LEVEL4
 static void init_extra(PbLevel *l, PbCollisionWorld *world, int level_id,
                        const PbLevelPiece *pieces, int count, float end_z)
 {
@@ -178,7 +185,9 @@ static void init_extra(PbLevel *l, PbCollisionWorld *world, int level_id,
     l->checkpoint=l->checkpoints[0]; l->respawn=(Vector3){0,6.15f,5};
     l->gate=(Vector3){0,8,end_z};
 }
+#endif
 
+#if POLYBLOOM_INCLUDE_LEVEL3
 void pb_level_foundry_init(PbLevel *l, PbCollisionWorld *world)
 {
     init_extra(l,world,PB_LEVEL_FOUNDRY,foundry_pieces,
@@ -186,7 +195,9 @@ void pb_level_foundry_init(PbLevel *l, PbCollisionWorld *world)
     l->checkpoints[0]=(Vector3){0,8.15f,-54};
     l->checkpoints[1]=(Vector3){0,13.15f,-86};
 }
+#endif
 
+#if POLYBLOOM_INCLUDE_LEVEL4
 void pb_level_crown_init(PbLevel *l, PbCollisionWorld *world)
 {
     init_extra(l,world,PB_LEVEL_CROWN,crown_pieces,
@@ -195,6 +206,7 @@ void pb_level_crown_init(PbLevel *l, PbCollisionWorld *world)
     l->checkpoints[0]=(Vector3){0,12.15f,-35};
     l->checkpoints[1]=(Vector3){0,9.15f,-74};
 }
+#endif
 
 void pb_level_update(PbLevel *l, PbCollisionWorld *world, Vector3 p, float dt)
 {
@@ -262,11 +274,15 @@ void pb_level_draw(PbLevel *l, PbRenderer *r, float elapsed, bool reduced)
         Vector3 pos={p.px/Q,p.py/Q+(l->level_id==PB_LEVEL_CASCADE?CASCADE_Y:0),p.pz/Q};
         Vector3 size={p.sx/Q,p.sy/Q,p.sz/Q};
         static const Color cascade_palette[]={{53,157,196,255},{91,202,226,255},{242,117,181,255},{153,225,184,255}};
+        Color piece_color=l->level_id==PB_LEVEL_CASCADE?cascade_palette[p.color&3]:palette(p.color);
+#if POLYBLOOM_INCLUDE_LEVEL3
         static const Color foundry_palette[]={{91,68,142,255},{247,137,76,255},{255,205,78,255},{92,213,192,255}};
+        if(l->level_id==PB_LEVEL_FOUNDRY) piece_color=foundry_palette[p.color&3];
+#endif
+#if POLYBLOOM_INCLUDE_LEVEL4
         static const Color crown_palette[]={{77,110,177,255},{164,214,239,255},{244,114,178,255},{193,172,242,255}};
-        Color piece_color=l->level_id==PB_LEVEL_CASCADE?cascade_palette[p.color&3]:
-                          l->level_id==PB_LEVEL_FOUNDRY?foundry_palette[p.color&3]:
-                          l->level_id==PB_LEVEL_CROWN?crown_palette[p.color&3]:palette(p.color);
+        if(l->level_id==PB_LEVEL_CROWN) piece_color=crown_palette[p.color&3];
+#endif
         if(p.type==LEVEL_MOVING) pos.y+=sinf(elapsed*1.6f+i*.7f)*.8f;
         if(p.type==LEVEL_FALLING&&l->falling_timer[i]>.8f) pos.y-=fminf(12,(l->falling_timer[i]-.8f)*18);
         if(p.type==LEVEL_FALLING&&l->falling_timer[i]>0&&l->falling_timer[i]<.8f&&
@@ -316,8 +332,34 @@ const char *pb_level_section_name(const PbLevel *l)
 {
     static const char *garden[]={"AWAKENING TERRACE","PRISM ORCHARD","RINGWATER GAP","TURNING GROVE","SUNPETAL CLIMB","GARDEN RUNOFF"};
     static const char *cascade[]={"CASCADE ENTRY","SPLIT FALLS","FALLING STEPS","SHATTERWAKE CHASE","CORKSCREW CANOPY","FINAL RUSH"};
-    static const char *foundry[]={"EMBER DOCK","GEAR GARDEN","MOLTEN LIFTS","SPARKWORKS","AURORA STACK","FORGE FLIGHT"};
-    static const char *crown[]={"CROWN APPROACH","FROZEN TEETH","SKY BRIDGE","ROYAL ASCENT","THRONE RUN","PRISM SOVEREIGN"};
-    return l->level_id==PB_LEVEL_CASCADE?cascade[l->section]:l->level_id==PB_LEVEL_FOUNDRY?foundry[l->section]:
-           l->level_id==PB_LEVEL_CROWN?crown[l->section]:garden[l->section];
+    if(l->level_id==PB_LEVEL_CASCADE) return cascade[l->section];
+#if POLYBLOOM_INCLUDE_LEVEL3
+    { static const char *foundry[]={"EMBER DOCK","GEAR GARDEN","MOLTEN LIFTS","SPARKWORKS","AURORA STACK","FORGE FLIGHT"};
+      if(l->level_id==PB_LEVEL_FOUNDRY) return foundry[l->section]; }
+#endif
+#if POLYBLOOM_INCLUDE_LEVEL4
+    { static const char *crown[]={"CROWN APPROACH","FROZEN TEETH","SKY BRIDGE","ROYAL ASCENT","THRONE RUN","PRISM SOVEREIGN"};
+      if(l->level_id==PB_LEVEL_CROWN) return crown[l->section]; }
+#endif
+    return garden[l->section];
+}
+
+int pb_level_id_for_slot(int slot)
+{
+    static const int ids[]={PB_LEVEL_GARDEN,PB_LEVEL_CASCADE,
+#if POLYBLOOM_INCLUDE_LEVEL3
+        PB_LEVEL_FOUNDRY,
+#endif
+#if POLYBLOOM_INCLUDE_LEVEL4
+        PB_LEVEL_CROWN,
+#endif
+    };
+    return ids[slot<0?0:slot>=PB_AVAILABLE_LEVELS?PB_AVAILABLE_LEVELS-1:slot];
+}
+
+int pb_level_slot_for_id(int level_id)
+{
+    int i;
+    for(i=0;i<PB_AVAILABLE_LEVELS;++i) if(pb_level_id_for_slot(i)==level_id) return i;
+    return 0;
 }
