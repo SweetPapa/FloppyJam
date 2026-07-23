@@ -23,36 +23,68 @@ static Vector3 mote_local(Vector3 origin, Vector3 local, float yaw, Vector3 lean
 static void draw_mote(PbRenderer *renderer, Vector3 p, const PbPlayer *player,
                       float elapsed, bool flow_aura)
 {
-    Color body = (Color){245, 128, 142, 255};
+    Color body = player->state==PB_PLAYER_HURT?(Color){232,83,126,255}:(Color){245,128,142,255};
     Color petal = (Color){255, 198, 91, 255};
-    float petal_open = player->state == PB_PLAYER_GLIDING ? 1.15f : .72f;
-    float speed = Vector3Length(player->velocity);
-    float squash=player->grounded?1.0f+fminf(speed/60,.12f):.92f;
-    float stretch=player->state==PB_PLAYER_BURST?1.45f:1;
+    Color leaf=(Color){105,79,154,255};
+    float petal_open = player->state == PB_PLAYER_GLIDING ? 1.28f : .72f;
     float horizontal=sqrtf(player->velocity.x*player->velocity.x+player->velocity.z*player->velocity.z);
+    float gait=elapsed*(6.5f+horizontal*.8f);
+    float bob=player->grounded?sinf(gait)*fminf(horizontal/65,.11f):0;
+    float squash=player->grounded?1.0f+fminf(horizontal/55,.15f):.94f;
+    float stretch=player->state==PB_PLAYER_BURST?1.38f:1;
+    float vertical_stretch=!player->grounded?1+fminf(fabsf(player->velocity.y)/55,.18f):1;
     float yaw=atan2f(-player->facing.x,-player->facing.z);
     Vector3 direction=horizontal>.1f?(Vector3){player->velocity.x/horizontal,0,player->velocity.z/horizontal}:player->facing;
     Vector3 lean_axis={direction.z,0,-direction.x};
-    float lean=fminf(horizontal/8.5f,1)*.24f;
+    float lean=fminf(horizontal/8.5f,1)*.25f;
+    float blink=fmodf(elapsed,4.7f)>.13f?1:.12f;
     int i;
+    p.y+=bob;
+    if(player->state==PB_PLAYER_BURST) for(i=1;i<=3;++i) {
+        Vector3 ghost=Vector3Subtract(p,Vector3Scale(player->facing,i*.55f));
+        pb_draw_mesh(&renderer->meshes,PB_MESH_SPHERE,ghost,lean_axis,lean*57.2958f,
+                     (Vector3){1.3f+(.16f*i),.95f,1.15f},(Color){255,136,200,(unsigned char)(105-i*22)});
+    }
     pb_draw_mesh(&renderer->meshes,PB_MESH_SPHERE,p,lean_axis,lean*57.2958f,
-                 (Vector3){1.3f*stretch,1.15f/squash,1.3f},body);
+                 (Vector3){1.3f*stretch,1.15f*vertical_stretch/squash,1.3f},body);
+    /* Eyes, pupils, cheeks, and a tiny mouth make facing readable at a glance. */
     pb_draw_mesh(&renderer->meshes, PB_MESH_SPHERE,
                  mote_local(p,(Vector3){-.23f,.18f,-.55f},yaw,lean_axis,lean), (Vector3){0,1,0}, 0,
-                 (Vector3){.24f,.3f,.18f}, WHITE);
+                 (Vector3){.25f,.31f*blink,.18f}, WHITE);
     pb_draw_mesh(&renderer->meshes, PB_MESH_SPHERE,
                  mote_local(p,(Vector3){.23f,.18f,-.55f},yaw,lean_axis,lean), (Vector3){0,1,0}, 0,
-                 (Vector3){.24f,.3f,.18f}, WHITE);
+                 (Vector3){.25f,.31f*blink,.18f}, WHITE);
+    if(blink>.5f) for(i=-1;i<=1;i+=2)
+        pb_draw_mesh(&renderer->meshes,PB_MESH_SPHERE,
+                     mote_local(p,(Vector3){i*.23f,.16f,-.72f},yaw,lean_axis,lean),(Vector3){0,1,0},0,
+                     (Vector3){.09f,.14f,.07f},(Color){52,40,83,255});
+    for(i=-1;i<=1;i+=2)
+        pb_draw_mesh(&renderer->meshes,PB_MESH_SPHERE,
+                     mote_local(p,(Vector3){i*.48f,-.02f,-.55f},yaw,lean_axis,lean),(Vector3){0,1,0},0,
+                     (Vector3){.13f,.07f,.06f},(Color){255,184,181,210});
+    pb_draw_mesh(&renderer->meshes,PB_MESH_SPHERE,
+                 mote_local(p,(Vector3){0,-.15f,-.68f},yaw,lean_axis,lean),(Vector3){0,1,0},0,
+                 (Vector3){.13f,.045f,.055f},(Color){96,48,91,255});
     for (i = 0; i < 5; ++i) {
-        float a = (float)i*1.25663706f + (player->state==PB_PLAYER_GLIDING?elapsed*.9f:speed*0.03f);
+        float flutter=player->state==PB_PLAYER_GLIDING?sinf(elapsed*8+i)*.08f:0;
+        float a = (float)i*1.25663706f + (player->state==PB_PLAYER_GLIDING?elapsed*.65f:horizontal*0.03f);
         Vector3 q=mote_local(p,(Vector3){cosf(a)*petal_open,sinf(a)*petal_open,.18f},yaw,lean_axis,lean);
         pb_draw_mesh(&renderer->meshes, PB_MESH_PETAL, q, (Vector3){0,0,1},
-                     a*57.2958f, (Vector3){1,1,1}, petal);
+                     (a+flutter)*57.2958f, (Vector3){1,1,1}, petal);
     }
+    /* Leaf arms swing during a run and spread into a readable glide pose. */
+    for(i=-1;i<=1;i+=2) {
+        float arm=player->state==PB_PLAYER_GLIDING?-.55f:i*sinf(gait)*.35f;
+        Vector3 q=mote_local(p,(Vector3){i*.86f,-.06f,-.02f},yaw,lean_axis,lean);
+        pb_draw_mesh(&renderer->meshes,PB_MESH_PETAL,q,(Vector3){0,0,1},i*(72+arm*25),
+                     (Vector3){.72f,.42f,.72f},leaf);
+    }
+    pb_draw_mesh(&renderer->meshes,PB_MESH_SPHERE,mote_local(p,(Vector3){0,.88f,.02f},yaw,lean_axis,lean),
+                 (Vector3){0,1,0},0,(Vector3){.25f,.25f,.25f},(Color){255,226,100,255});
     pb_draw_mesh(&renderer->meshes, PB_MESH_WEDGE,mote_local(p,(Vector3){-.28f,-.62f,0},yaw,lean_axis,lean),
-                 (Vector3){0,1,0}, yaw*57.2958f, (Vector3){.45f,.2f,.65f}, PURPLE);
+                 (Vector3){0,1,0}, yaw*57.2958f+sinf(gait)*18, (Vector3){.45f,.2f,.65f}, leaf);
     pb_draw_mesh(&renderer->meshes, PB_MESH_WEDGE,mote_local(p,(Vector3){.28f,-.62f,0},yaw,lean_axis,lean),
-                 (Vector3){0,1,0}, yaw*57.2958f, (Vector3){.45f,.2f,.65f}, PURPLE);
+                 (Vector3){0,1,0}, yaw*57.2958f-sinf(gait)*18, (Vector3){.45f,.2f,.65f}, leaf);
     for(i=1;i<=3;++i) {
         Vector3 tail={p.x-player->facing.x*(.55f+i*.28f),p.y+.1f+sinf(elapsed*6-i)*.08f,
                       p.z-player->facing.z*(.55f+i*.28f)};
@@ -67,6 +99,9 @@ static void draw_mote(PbRenderer *renderer, Vector3 p, const PbPlayer *player,
         pb_draw_mesh(&renderer->meshes,PB_MESH_PETAL,q,(Vector3){0,1,0},-a*57.2958f,
                      (Vector3){.45f,.45f,.45f},glow);
     }
+    if(player->state==PB_PLAYER_GLIDING)
+        pb_draw_mesh(&renderer->meshes,PB_MESH_RING,(Vector3){p.x,p.y-.45f,p.z},(Vector3){1,0,0},90,
+                     (Vector3){1.65f,1.65f,1.65f},(Color){117,234,222,125});
 }
 
 static void start_level(int id, PbLevel *level, PbCollisionWorld *collision,
@@ -95,6 +130,7 @@ int main(void)
     float simulation_time = 0;
     float elapsed = 0.0f;
     float particle_clock = 0.0f;
+    float burst_particle_clock = 0.0f;
     bool free_camera = false;
     bool jump_latched = false;
     bool burst_latched = false;
@@ -148,6 +184,7 @@ int main(void)
         elapsed += dt;
         accumulator = fminf(accumulator+dt,.15f);
         particle_clock += dt;
+        burst_particle_clock += dt;
         if(mode==PB_MODE_TITLE) {
             if(nav_up) menu_selection=(menu_selection+2)%3;
             if(nav_down) menu_selection=(menu_selection+1)%3;
@@ -252,10 +289,26 @@ int main(void)
                 Vector3 old_respawn=level.respawn;
                 bool old_complete=level.complete;
                 PbPlayerState old_state=player.state;
+                float old_vertical=player.velocity.y;
                 pb_player_update(&player,&collision,input,follow.yaw,fixed_dt);
-                if(player.state==PB_PLAYER_BURST&&old_state!=PB_PLAYER_BURST) pb_audio_sfx(PB_SFX_BURST);
+                if(player.state==PB_PLAYER_BURST&&old_state!=PB_PLAYER_BURST) {
+                    int streak;
+                    pb_audio_sfx(PB_SFX_BURST);
+                    for(streak=0;streak<(reduced_effects?5:12);++streak)
+                        pb_particles_emit(&particles,player.position,
+                                          Vector3Add(Vector3Scale(player.facing,-4-(streak%4)),
+                                                     (Vector3){(streak%3-1)*.6f,(streak%5-2)*.35f,0}),
+                                          streak&1?(Color){255,115,193,255}:(Color){255,213,82,255},.5f,.15f);
+                }
                 else if(player.state==PB_PLAYER_GLIDING&&old_state!=PB_PLAYER_GLIDING) pb_audio_sfx(PB_SFX_GLIDE_OPEN);
-                else if(player.state==PB_PLAYER_RISING&&old_state==PB_PLAYER_GROUNDED) pb_audio_sfx(PB_SFX_JUMP);
+                else if(player.state==PB_PLAYER_RISING&&old_state==PB_PLAYER_GROUNDED) {
+                    int puff;
+                    pb_audio_sfx(PB_SFX_JUMP);
+                    for(puff=0;puff<(reduced_effects?3:7);++puff)
+                        pb_particles_emit(&particles,(Vector3){player.position.x,player.position.y-.58f,player.position.z},
+                                          (Vector3){(puff-3)*.25f,.3f,(puff%3-1)*.3f},
+                                          (Color){255,225,158,220},.35f,.08f);
+                }
                 else if(player.state==PB_PLAYER_BOUNCED&&old_state!=PB_PLAYER_BOUNCED) pb_audio_sfx(PB_SFX_BOUNCE);
                 pb_level_update(&level,&collision,player.position,fixed_dt);
                 if(level.glint_count>old_glints||level.seed_count>old_seeds) {
@@ -280,10 +333,13 @@ int main(void)
 #endif
                 if(old_state!=PB_PLAYER_GROUNDED&&player.state==PB_PLAYER_GROUNDED) {
                     int puff;
-                    for(puff=0;puff<(reduced_effects?3:8);++puff)
+                    float impact=fminf(fabsf(old_vertical)/10,1);
+                    for(puff=0;puff<(reduced_effects?4:10);++puff)
                         pb_particles_emit(&particles,(Vector3){player.position.x,player.position.y-.6f,player.position.z},
-                                          (Vector3){(puff-3.5f)*.25f,.5f,(puff%3-1)*.3f},
-                                          (Color){255,231,190,220},.45f,.09f);
+                                          (Vector3){(puff-4.5f)*(.2f+impact*.14f),.35f+impact*.45f,
+                                                    (puff%3-1)*(.3f+impact*.25f)},
+                                          puff&1?(Color){255,231,190,220}:(Color){255,174,126,210},
+                                          .42f+impact*.2f,.08f+impact*.04f);
                     pb_audio_sfx(PB_SFX_LANDING);
                 }
                 if(gameplay.effect_type!=PB_EFFECT_NONE) {
@@ -318,16 +374,26 @@ int main(void)
             follow.view.fovy += (desired_fov-follow.view.fovy)*fminf(dt*5,1);
         }
         draw_camera = follow.view;
-        if (mode==PB_MODE_PLAYING&&length > .7f && particle_clock > .045f) {
-            Vector3 v = {-input.move_x*.5f, .45f, input.move_y*.5f};
+        if (mode==PB_MODE_PLAYING&&player.grounded&&length > .7f && particle_clock > .045f) {
+            Vector3 v = {-player.velocity.x*.08f, .45f, -player.velocity.z*.08f};
             pb_particles_emit(&particles, (Vector3){draw_position.x,draw_position.y-.55f,draw_position.z},
                               v, (Color){255,224,148,255}, .65f, .08f);
             particle_clock = 0;
         }
-        if(mode==PB_MODE_PLAYING&&player.state==PB_PLAYER_BURST&&particle_clock>.018f) {
-            pb_particles_emit(&particles,draw_position,Vector3Scale(player.facing,-1.5f),
-                              (Color){255,121,191,235},.45f,.16f);
-            particle_clock=0;
+        if(mode==PB_MODE_PLAYING&&player.state==PB_PLAYER_BURST&&burst_particle_clock>.018f) {
+            Vector3 q=Vector3Subtract(draw_position,Vector3Scale(player.facing,.7f));
+            pb_particles_emit(&particles,q,Vector3Scale(player.facing,-2.5f),
+                              (Color){255,121,191,235},.5f,.18f);
+            pb_particles_emit(&particles,q,(Vector3){0,.8f,0},
+                              (Color){255,215,82,220},.35f,.1f);
+            burst_particle_clock=0;
+        } else if(mode==PB_MODE_PLAYING&&player.state==PB_PLAYER_GLIDING&&burst_particle_clock>.055f) {
+            int side;
+            for(side=-1;side<=1;side+=2)
+                pb_particles_emit(&particles,
+                                  (Vector3){draw_position.x+side*.75f,draw_position.y,draw_position.z},
+                                  (Vector3){0,-.25f,0},(Color){122,238,220,190},.55f,.07f);
+            burst_particle_clock=0;
         }
         pb_particles_update(&particles, dt);
         if (should_exit) break;
