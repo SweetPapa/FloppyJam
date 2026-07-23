@@ -18,5 +18,6 @@ void pb_ui_pause(int selection, bool controller);
 void pb_ui_options(int selection, const PbSaveData *save, bool controller);
 void pb_ui_results(const PbLevel *level, const PbGameplay *gameplay,
                    int selection, bool controller);
+void pb_ui_hud(const PbLevel *level, const PbGameplay *gameplay, bool controller);
 
 #endif

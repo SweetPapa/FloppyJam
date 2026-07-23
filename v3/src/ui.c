@@ -45,6 +45,46 @@ static Color level_color(int id)
     return (Color){105,205,165,255};
 }
 
+void pb_ui_hud(const PbLevel *l, const PbGameplay *g, bool controller)
+{
+    int i;
+    Color ink=(Color){74,47,101,255};
+    DrawRectangle(22,20,350,82,(Color){255,246,222,220});
+    DrawRectangle(22,20,6,82,level_color(l->level_id));
+    DrawText(pb_level_section_name(l),40,29,16,ink);
+    DrawPoly((Vector2){48,73},4,10,45,(Color){112,222,214,255});
+    DrawText(TextFormat("%02d / 30",l->glint_count),66,63,20,ink);
+    for(i=0;i<3;++i)
+        DrawPoly((Vector2){178+i*26,73},5,9,-90,i<l->seed_count?(Color){255,190,70,255}:Fade(ink,.25f));
+    DrawText(TextFormat("%.2f",pb_gameplay_result_ms(g)/1000.0f),282,63,18,ink);
+    DrawRectangle(GetScreenWidth()-164,20,142,50,(Color){255,246,222,220});
+    for(i=0;i<3;++i)
+        DrawPoly((Vector2){GetScreenWidth()-135+i*38,45},5,13,-90,
+                 i<g->health?(Color){247,103,137,255}:(Color){133,112,145,100});
+    if(g->glint_chain>1&&g->glint_chain_timer>0) {
+        float pulse=1+g->pickup_flash*.18f;
+        const char *chain=TextFormat("%d GLINT FLOW!",g->glint_chain);
+        int size=(int)(22*pulse);
+        DrawText(chain,GetScreenWidth()/2-MeasureText(chain,size)/2,112,size,
+                 (Color){255,209,72,255});
+    }
+#if POLYBLOOM_INCLUDE_LEVEL4
+    if(l->level_id==PB_LEVEL_CROWN&&g->boss_active) {
+        int x=GetScreenWidth()/2-170;
+        DrawRectangle(x,26,340,34,(Color){47,28,73,220});
+        DrawRectangle(x+5,50,330*g->boss_health/5,5,(Color){255,104,185,255});
+        DrawText("PRISM SOVEREIGN",GetScreenWidth()/2-MeasureText("PRISM SOVEREIGN",17)/2,31,17,WHITE);
+    }
+#endif
+    if(g->run_time<8&&l->section==PB_SECTION_AWAKENING) {
+        const char *tip=controller?"LEFT STICK / D-PAD MOVE   A JUMP   X BURST":
+                                   "WASD / ARROWS MOVE   AUTO CAMERA   SPACE JUMP   SHIFT BURST";
+        int width=MeasureText(tip,16);
+        DrawRectangle(GetScreenWidth()/2-width/2-14,GetScreenHeight()-58,width+28,36,(Color){255,246,222,210});
+        DrawText(tip,GetScreenWidth()/2-width/2,GetScreenHeight()-48,16,(Color){75,57,102,230});
+    }
+}
+
 void pb_ui_title(int selection, bool controller)
 {
     panel(500,390);

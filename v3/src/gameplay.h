@@ -49,6 +49,10 @@ typedef struct PbGameplay {
     float invulnerable;
     float run_time;
     float penalty_time;
+    int glint_chain;
+    float glint_chain_timer;
+    float pickup_flash;
+    float damage_flash;
     bool result_recorded;
     Vector3 effect_position;
     uint8_t effect_type;
@@ -66,6 +70,7 @@ void pb_gameplay_update(PbGameplay *gameplay, PbPlayer *player, Vector3 respawn,
                         float dt, float elapsed);
 void pb_gameplay_fall(PbGameplay *gameplay, PbPlayer *player, Vector3 respawn);
 void pb_gameplay_chase_hit(PbGameplay *gameplay, PbPlayer *player, Vector3 respawn);
+void pb_gameplay_collect_glints(PbGameplay *gameplay, int count);
 void pb_gameplay_draw(const PbGameplay *gameplay, PbRenderer *renderer, float elapsed);
 uint32_t pb_gameplay_result_ms(const PbGameplay *gameplay);
 bool pb_gameplay_flow_run(const PbGameplay *gameplay);

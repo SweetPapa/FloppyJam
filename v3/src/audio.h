@@ -19,5 +19,6 @@ void pb_audio_set_chase(bool active);
 void pb_audio_set_paused(bool paused);
 void pb_audio_set_volume(int master, int music, int sfx);
 void pb_audio_sfx(PbSfx effect);
+void pb_audio_glint(int chain);
 
 #endif

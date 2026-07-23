@@ -27,6 +27,7 @@ typedef struct PbAudioState {
     volatile int master;
     volatile int music;
     volatile int sfx;
+    volatile int glint_chain;
     int step;
 } PbAudioState;
 
@@ -35,6 +36,14 @@ static const float garden_lead[16]={523.25f,0,659.25f,0,783.99f,659.25f,587.33f,
 static const float cascade_lead[16]={311.13f,369.99f,415.30f,466.16f,369.99f,415.30f,466.16f,554.37f,415.30f,466.16f,554.37f,622.25f,466.16f,554.37f,622.25f,739.99f};
 static const float garden_bass[8]={130.81f,0,146.83f,0,164.81f,0,146.83f,0};
 static const float cascade_bass[8]={77.78f,77.78f,92.50f,77.78f,103.83f,92.50f,116.54f,103.83f};
+#if POLYBLOOM_INCLUDE_LEVEL3
+static const float foundry_lead[16]={220,0,329.63f,440,246.94f,0,369.99f,493.88f,277.18f,329.63f,415.30f,554.37f,329.63f,415.30f,493.88f,659.25f};
+static const float foundry_bass[8]={55,55,61.74f,55,69.30f,61.74f,73.42f,82.41f};
+#endif
+#if POLYBLOOM_INCLUDE_LEVEL4
+static const float crown_lead[16]={293.66f,349.23f,440,523.25f,349.23f,440,523.25f,587.33f,440,523.25f,698.46f,783.99f,523.25f,698.46f,880,1046.5f};
+static const float crown_bass[8]={73.42f,73.42f,87.31f,73.42f,98,87.31f,110,98};
+#endif
 
 static void add_voice(float frequency, float gain, float decay, int wave, int bus)
 {
@@ -57,7 +66,10 @@ static void trigger_sfx(int id)
         case PB_SFX_BURST: voice(180,.25f,.99935f,3); voice(520,.1f,.9995f,1); break;
         case PB_SFX_BOUNCE: voice(220,.2f,.9997f,2); break;
         case PB_SFX_LANDING: voice(90,.16f,.9987f,3); break;
-        case PB_SFX_GLINT: voice(880,.13f,.9997f,0); break;
+        case PB_SFX_GLINT: {
+            static const float pitches[8]={659.25f,739.99f,783.99f,880,987.77f,1046.5f,1174.66f,1318.51f};
+            voice(pitches[audio.glint_chain<8?audio.glint_chain:7],.13f,.9997f,0);
+        } break;
         case PB_SFX_SEED: voice(523.25f,.14f,.99985f,0); voice(659.25f,.12f,.99985f,0); break;
         case PB_SFX_CHECKPOINT: voice(659.25f,.13f,.99985f,2); break;
         case PB_SFX_DAMAGE: voice(115,.25f,.9995f,1); break;
@@ -78,6 +90,12 @@ static void music_step(void)
 {
     const float *lead=audio.level?cascade_lead:garden_lead;
     const float *bass=audio.level?cascade_bass:garden_bass;
+#if POLYBLOOM_INCLUDE_LEVEL3
+    if(audio.level==2) { lead=foundry_lead; bass=foundry_bass; }
+#endif
+#if POLYBLOOM_INCLUDE_LEVEL4
+    if(audio.level==3) { lead=crown_lead; bass=crown_bass; }
+#endif
     float note=lead[audio.step&15];
     if(note>0) music_voice(note,.045f,.99988f,audio.level?1:0);
     if((audio.step&1)==0) music_voice(bass[(audio.step>>1)&7],.055f,.9999f,2);
@@ -113,7 +131,7 @@ static void audio_callback(void *buffer_data, unsigned int frames)
         float mix=0;
         int i;
         if(!audio.paused&&audio.sample_clock>=audio.next_step) {
-            int bpm=audio.level?128:114;
+            int bpm=audio.level==0?114:audio.level==1?128:audio.level==2?122:136;
             music_step();
             audio.next_step=audio.sample_clock+(uint64_t)(PB_AUDIO_RATE*60/(bpm*4));
         }
@@ -141,3 +159,8 @@ void pb_audio_set_chase(bool active) { audio.chase=active; }
 void pb_audio_set_paused(bool paused) { if(audio.paused&&!paused) audio.next_step=audio.sample_clock; audio.paused=paused; }
 void pb_audio_set_volume(int master, int music, int sfx) { audio.master=master; audio.music=music; audio.sfx=sfx; }
 void pb_audio_sfx(PbSfx effect) { if(effect<PB_SFX_COUNT) audio.pending_sfx|=1u<<effect; }
+void pb_audio_glint(int chain)
+{
+    audio.glint_chain=chain>0?chain-1:0;
+    audio.pending_sfx|=1u<<PB_SFX_GLINT;
+}

@@ -129,6 +129,7 @@ int main(void)
     while (pb_platform_running()) {
         PbInput input = pb_platform_input();
         PbGameMode frame_mode=mode;
+        int previous_menu_selection=menu_selection;
         float dt = fminf(pb_platform_frame_time(), 0.05f);
         float length = sqrtf(input.move_x*input.move_x + input.move_y*input.move_y);
         Camera3D draw_camera;
@@ -197,6 +198,10 @@ int main(void)
                     accumulator=simulation_time=elapsed=0; intro_timer=0; mode=PB_MODE_LEVEL_INTRO; }
             }
         } else if(mode==PB_MODE_PLAYING&&input.pause_pressed) { mode=PB_MODE_PAUSED; menu_selection=0; }
+        if(frame_mode==mode&&menu_selection!=previous_menu_selection)
+            pb_audio_sfx(PB_SFX_MENU_MOVE);
+        else if(mode==PB_MODE_OPTIONS&&(nav_left||nav_right)&&menu_selection<4)
+            pb_audio_sfx(PB_SFX_MENU_MOVE);
 
         if(mode==PB_MODE_PLAYING) {
             if(input.restart_down) restart_hold+=dt; else restart_hold=0;
@@ -260,7 +265,11 @@ int main(void)
                         pb_particles_emit(&particles,player.position,
                                           (Vector3){(sparkle-2.5f)*.45f,1.2f+sparkle*.15f,((sparkle*3)%5-2)*.35f},
                                           color,.75f,.11f);
-                    pb_audio_sfx(level.seed_count>old_seeds?PB_SFX_SEED:PB_SFX_GLINT);
+                    if(level.glint_count>old_glints) {
+                        pb_gameplay_collect_glints(&gameplay,level.glint_count-old_glints);
+                        pb_audio_glint(gameplay.glint_chain);
+                    }
+                    if(level.seed_count>old_seeds) pb_audio_sfx(PB_SFX_SEED);
                 }
                 if(Vector3Distance(old_respawn,level.respawn)>.1f) pb_audio_sfx(PB_SFX_CHECKPOINT);
                 if(!old_complete&&level.complete) { pb_audio_sfx(PB_SFX_GATE); pb_audio_sfx(PB_SFX_LEVEL_COMPLETE); mode=PB_MODE_LEVEL_COMPLETE; }
@@ -298,7 +307,16 @@ int main(void)
             accumulator -= fixed_dt;
         }
         draw_position = pb_player_interpolated(&player,accumulator/fixed_dt);
-        follow.distance += (pb_level_camera_distance(&level,draw_position)-follow.distance)*fminf(dt*3,1);
+        {
+            float speed=sqrtf(player.velocity.x*player.velocity.x+player.velocity.z*player.velocity.z);
+            float desired_distance=pb_level_camera_distance(&level,draw_position);
+            float desired_fov=55+fminf(speed/8.5f,1)*2;
+            if(player.state==PB_PLAYER_BURST) { desired_distance+=1; desired_fov=66; }
+            else if(player.state==PB_PLAYER_GLIDING) { desired_distance+=1.5f; desired_fov=60; }
+            if(level.chase_active) { desired_distance+=2; desired_fov=64; }
+            follow.distance += (desired_distance-follow.distance)*fminf(dt*3,1);
+            follow.view.fovy += (desired_fov-follow.view.fovy)*fminf(dt*5,1);
+        }
         draw_camera = follow.view;
         if (mode==PB_MODE_PLAYING&&length > .7f && particle_clock > .045f) {
             Vector3 v = {-input.move_x*.5f, .45f, input.move_y*.5f};
@@ -324,18 +342,9 @@ int main(void)
         draw_mote(&renderer,draw_position,&player,elapsed,(save.option_flags&8)==0);
         pb_renderer_end(&renderer);
         if(mode==PB_MODE_PLAYING||mode==PB_MODE_LEVEL_COMPLETE) {
-            DrawText(TextFormat("%s   GLINTS %02d/30   SEEDS %d/3",pb_level_section_name(&level),level.glint_count,level.seed_count),36,32,18,DARKPURPLE);
-            DrawText(TextFormat("HEALTH %s%s%s   TIME %.2f",gameplay.health>0?"*":"",gameplay.health>1?"*":"",gameplay.health>2?"*":"",
-                                pb_gameplay_result_ms(&gameplay)/1000.0f),36,58,18,DARKPURPLE);
-#if POLYBLOOM_INCLUDE_LEVEL4
-            if(level.level_id==PB_LEVEL_CROWN&&gameplay.boss_active)
-                DrawText(TextFormat("PRISM SOVEREIGN  %d / 5",gameplay.boss_health),
-                         GetScreenWidth()/2-118,32,20,(Color){255,115,191,255});
-#endif
-            if(mode==PB_MODE_PLAYING&&level.section==PB_SECTION_AWAKENING&&gameplay.run_time<8)
-                DrawText(controller_prompts?"LEFT STICK / D-PAD MOVE   RIGHT STICK LOOK   A JUMP   X BURST":
-                                            "WASD / ARROWS MOVE   AUTO CAMERA   SPACE JUMP   SHIFT BURST",
-                         36,86,16,(Color){75,57,102,230});
+            if(gameplay.damage_flash>0)
+                DrawRectangle(0,0,GetScreenWidth(),GetScreenHeight(),Fade((Color){255,45,90,255},gameplay.damage_flash*.16f));
+            pb_ui_hud(&level,&gameplay,controller_prompts);
         }
         if(mode==PB_MODE_TITLE) pb_ui_title(menu_selection,controller_prompts);
         else if(mode==PB_MODE_LEVEL_SELECT) pb_ui_level_select(menu_selection,&save,controller_prompts);
