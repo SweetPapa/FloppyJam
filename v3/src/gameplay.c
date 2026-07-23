@@ -66,14 +66,23 @@ void pb_gameplay_init(PbGameplay *g, int level_id)
 
 void pb_gameplay_chase_hit(PbGameplay *g, PbPlayer *p, Vector3 respawn)
 {
-    g->falls++; g->penalty_time+=3; pb_player_init(p,respawn);
+    g->falls++; g->penalty_time+=3; g->damage_flash=1; pb_player_init(p,respawn);
+}
+
+void pb_gameplay_collect_glints(PbGameplay *g, int count)
+{
+    if(count<=0) return;
+    g->glint_chain=g->glint_chain_timer>0?g->glint_chain+count:count;
+    if(g->glint_chain>99) g->glint_chain=99;
+    g->glint_chain_timer=1.35f;
+    g->pickup_flash=1;
 }
 
 static void hurt(PbGameplay *g, PbPlayer *p, Vector3 source, Vector3 respawn)
 {
     Vector3 away;
     if (g->invulnerable>0) return;
-    g->health--; g->damage_events++; g->invulnerable=1;
+    g->health--; g->damage_events++; g->invulnerable=1; g->damage_flash=1;
     g->effect_type=PB_EFFECT_DAMAGE; g->effect_position=p->position;
     away=Vector3Normalize(Vector3Subtract(p->position,source));
     p->velocity=(Vector3){away.x*7,7,away.z*7}; p->state=PB_PLAYER_HURT;
@@ -85,6 +94,9 @@ void pb_gameplay_update(PbGameplay *g, PbPlayer *p, Vector3 respawn, float dt, f
     int i;
     g->run_time+=dt;
     g->invulnerable=fmaxf(0,g->invulnerable-dt);
+    g->glint_chain_timer=fmaxf(0,g->glint_chain_timer-dt);
+    g->pickup_flash=fmaxf(0,g->pickup_flash-dt*3.5f);
+    g->damage_flash=fmaxf(0,g->damage_flash-dt*3.2f);
     for(i=0;i<g->object_count;++i) {
         PbObject *o=&g->objects[i];
         if(!o->active) continue;
@@ -147,7 +159,7 @@ void pb_gameplay_update(PbGameplay *g, PbPlayer *p, Vector3 respawn, float dt, f
 
 void pb_gameplay_fall(PbGameplay *g, PbPlayer *p, Vector3 respawn)
 {
-    g->falls++; g->health--; g->penalty_time+=3;
+    g->falls++; g->health--; g->penalty_time+=3; g->damage_flash=1;
     if(g->health<=0) { g->health=3; g->penalty_time+=7; }
     pb_player_init(p,respawn);
 }
