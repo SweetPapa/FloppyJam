@@ -74,8 +74,12 @@ static void start_level(int id, PbLevel *level, PbCollisionWorld *collision,
                         PbParticles *particles, bool reduced)
 {
     if(id==PB_LEVEL_CASCADE) pb_level_prismrush_init(level,collision);
+#if POLYBLOOM_INCLUDE_LEVEL3
     else if(id==PB_LEVEL_FOUNDRY) pb_level_foundry_init(level,collision);
+#endif
+#if POLYBLOOM_INCLUDE_LEVEL4
     else if(id==PB_LEVEL_CROWN) pb_level_crown_init(level,collision);
+#endif
     else pb_level_petalgarden_init(level,collision);
     pb_gameplay_init(gameplay,level->level_id);
     pb_player_init(player,level->respawn);
@@ -154,10 +158,10 @@ int main(void)
             if(back) should_exit=true;
         } else if(mode==PB_MODE_LEVEL_SELECT) {
             if(nav_left&&menu_selection%2) menu_selection--;
-            if(nav_right&&menu_selection%2==0) menu_selection++;
+            if(nav_right&&menu_selection%2==0&&menu_selection+1<PB_AVAILABLE_LEVELS) menu_selection++;
             if(nav_up&&menu_selection>=2) menu_selection-=2;
-            if(nav_down&&menu_selection<2) menu_selection+=2;
-            if(action) { start_level(menu_selection,&level,&collision,&gameplay,&player,&follow,&particles,reduced_effects);
+            if(nav_down&&menu_selection+2<PB_AVAILABLE_LEVELS) menu_selection+=2;
+            if(action) { start_level(pb_level_id_for_slot(menu_selection),&level,&collision,&gameplay,&player,&follow,&particles,reduced_effects);
                 accumulator=simulation_time=elapsed=0; intro_timer=0; mode=PB_MODE_LEVEL_INTRO; pb_audio_sfx(PB_SFX_MENU_CONFIRM); }
             if(back) { mode=PB_MODE_TITLE; menu_selection=0; }
         } else if(mode==PB_MODE_OPTIONS) {
@@ -186,7 +190,8 @@ int main(void)
         } else if(mode==PB_MODE_RESULTS) {
             if(nav_up) menu_selection=(menu_selection+2)%3;
             if(nav_down) menu_selection=(menu_selection+1)%3;
-            if(action) { int id=menu_selection==1?(level.level_id+1)%4:level.level_id;
+            if(action) { int slot=pb_level_slot_for_id(level.level_id);
+                int id=menu_selection==1?pb_level_id_for_slot((slot+1)%PB_AVAILABLE_LEVELS):level.level_id;
                 if(menu_selection==2) { mode=PB_MODE_LEVEL_SELECT; menu_selection=0; }
                 else { start_level(id,&level,&collision,&gameplay,&player,&follow,&particles,reduced_effects);
                     accumulator=simulation_time=elapsed=0; intro_timer=0; mode=PB_MODE_LEVEL_INTRO; }
@@ -260,8 +265,10 @@ int main(void)
                 if(Vector3Distance(old_respawn,level.respawn)>.1f) pb_audio_sfx(PB_SFX_CHECKPOINT);
                 if(!old_complete&&level.complete) { pb_audio_sfx(PB_SFX_GATE); pb_audio_sfx(PB_SFX_LEVEL_COMPLETE); mode=PB_MODE_LEVEL_COMPLETE; }
                 pb_gameplay_update(&gameplay,&player,level.respawn,fixed_dt,simulation_time);
+#if POLYBLOOM_INCLUDE_LEVEL4
                 if(level.level_id==PB_LEVEL_CROWN&&!gameplay.boss_active&&gameplay.boss_health<=0)
                     level.gate_locked=false;
+#endif
                 if(old_state!=PB_PLAYER_GROUNDED&&player.state==PB_PLAYER_GROUNDED) {
                     int puff;
                     for(puff=0;puff<(reduced_effects?3:8);++puff)
@@ -320,9 +327,11 @@ int main(void)
             DrawText(TextFormat("%s   GLINTS %02d/30   SEEDS %d/3",pb_level_section_name(&level),level.glint_count,level.seed_count),36,32,18,DARKPURPLE);
             DrawText(TextFormat("HEALTH %s%s%s   TIME %.2f",gameplay.health>0?"*":"",gameplay.health>1?"*":"",gameplay.health>2?"*":"",
                                 pb_gameplay_result_ms(&gameplay)/1000.0f),36,58,18,DARKPURPLE);
+#if POLYBLOOM_INCLUDE_LEVEL4
             if(level.level_id==PB_LEVEL_CROWN&&gameplay.boss_active)
                 DrawText(TextFormat("PRISM SOVEREIGN  %d / 5",gameplay.boss_health),
                          GetScreenWidth()/2-118,32,20,(Color){255,115,191,255});
+#endif
             if(mode==PB_MODE_PLAYING&&level.section==PB_SECTION_AWAKENING&&gameplay.run_time<8)
                 DrawText(controller_prompts?"LEFT STICK / D-PAD MOVE   RIGHT STICK LOOK   A JUMP   X BURST":
                                             "WASD / ARROWS MOVE   AUTO CAMERA   SPACE JUMP   SHIFT BURST",

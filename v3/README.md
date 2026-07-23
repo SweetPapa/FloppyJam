@@ -24,6 +24,39 @@ cmake -S . -B build-debug \
 cmake --build build-debug
 ```
 
+## Optional level build modes
+
+Levels 3 and 4 are independently removable at compile time. Excluded content
+is also removed from level select, navigation, gameplay code, boss code, and
+the linked executable.
+
+Original two-level build:
+
+```sh
+cmake -S . -B build-two-levels \
+  -DPOLYBLOOM_INCLUDE_LEVEL3=OFF \
+  -DPOLYBLOOM_INCLUDE_LEVEL4=OFF
+cmake --build build-two-levels
+```
+
+Include Level 3 but exclude Level 4 and the boss:
+
+```sh
+cmake -S . -B build-no-boss \
+  -DPOLYBLOOM_INCLUDE_LEVEL3=ON \
+  -DPOLYBLOOM_INCLUDE_LEVEL4=OFF
+cmake --build build-no-boss
+```
+
+Exclude Level 3 but retain Level 4 and the boss:
+
+```sh
+cmake -S . -B build-boss-only \
+  -DPOLYBLOOM_INCLUDE_LEVEL3=OFF \
+  -DPOLYBLOOM_INCLUDE_LEVEL4=ON
+cmake --build build-boss-only
+```
+
 The post-build check reports extracted package size and fails if the executable
 exceeds 1,474,560 bytes. The build prefers a static raylib archive so the result
 does not depend on a separately packaged raylib library.
