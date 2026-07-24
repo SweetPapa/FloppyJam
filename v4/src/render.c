@@ -507,6 +507,13 @@ static void draw_player(App *a) {
         DrawCylinderEx(pos, t, 3.5f * WS, 1.5f * WS, 6, with_alpha(mag_color(g->color, 0), 0.55f));
         DrawCylinderEx(pos, t, 1.2f * WS, 0.6f * WS, 5, (Color){255,255,255,200});
     }
+    /* tether while orbiting: shows what you are swinging around, and the
+     * anchor you will sling from */
+    if (g->state == PS_ATTACHED && g->attached_idx >= 0) {
+        Vector3 t = game_to_world(g->lv->mag[g->attached_idx].x,
+                                  g->lv->mag[g->attached_idx].y, 0);
+        DrawCylinderEx(pos, t, 2.2f * WS, 1.0f * WS, 6, with_alpha(glow, 0.7f));
+    }
     float spin = a->t * 4.0f;
     float speed = sqrtf(g->vx * g->vx + g->vy * g->vy);
     float stretch = 1.0f + clampf(speed / 900.0f, 0, 0.35f);
@@ -596,8 +603,9 @@ void render_update_fx(App *a, float dt) {
      * The curve deliberately hugs zero at low speed so hanging on a node
      * feels like a heavy, static drag, then ramps hard once you commit to a
      * swing — the contrast is what sells the acceleration. */
+    /* orbiting counts as motion: swinging round a node should feel alive */
     float speed = sqrtf(a->sim.vx * a->sim.vx + a->sim.vy * a->sim.vy);
-    if (a->sim.state == PS_ATTACHED || a->sim.state == PS_DEAD) speed = 0.0f;
+    if (a->sim.state == PS_DEAD) speed = 0.0f;
     float raw_n = clampf((speed - 190.0f) / 460.0f, 0.0f, 1.0f);
     raw_n = raw_n * raw_n; /* stays low, then rises fast */
     /* fast attack, slow release: motion blooms instantly and lingers */

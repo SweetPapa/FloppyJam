@@ -49,6 +49,45 @@ tether pulls you into an arc. Chain swings without stopping to build a combo
 multiplier (up to 10×). Don't fall behind — the lava never stops, and
 backtracking downward surges its speed 1.5×.
 
+## Swing physics
+
+Landing on a node does **not** park you on it. You stay on the tether and
+swing around it as a pendulum, and the tangential part of your arrival
+velocity becomes spin — hit a node fast and side-on and you whip right around
+it; drift in slowly and you just hang. Letting go carries that momentum into
+the next launch, so **when** you release is now as important as **what** you
+release toward. Time it at the bottom of an arc and you sling; release into
+the swing and you stall.
+
+Wild slings bounce off the shaft walls rather than sailing out of the level.
+
+### Keeping it playable
+
+More dynamics means more ways to break a level, so the freedom is fenced in
+by deliberate guard rails:
+
+- **Homing is untouched.** The travel phase still steers toward the node you
+  picked, with no gravity, so it always converges — every node stays
+  reachable and every level stays completable no matter how wild the launch.
+- **Launch speed is capped** at the pre-existing maximum, so arcs stay
+  bounded.
+- **Spin is capped** and **damped**, so you can never become uncontrollable
+  and you always settle into a predictable hang within a couple of seconds —
+  a calm shot is available to anyone willing to wait a beat.
+- **Tether length is clamped** to a narrow band, keeping your position
+  relative to hazards close to as authored.
+- **Lava is measured at the anchor node while you are tethered**, not at your
+  dangling feet. The levels were authored assuming you sit on the node, so
+  this preserves every hand-tuned lava margin exactly; the orbit stays a
+  movement mechanic and can never silently make a level unsurvivable. Once
+  you let go, your real position is what counts.
+
+The headless suite enforces all of this: it checks that arrival momentum
+actually swings the tether, that the tether always settles, and that the
+campaign stays beatable (a naive bot clears 24 of 25 — it clears one *more*
+than before these physics, since the extra momentum lets it win the race
+level).
+
 ## Stars
 
 - ★ Finish the level
