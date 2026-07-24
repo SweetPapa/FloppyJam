@@ -1,0 +1,200 @@
+{
+  "id": 12,
+  "name": "Cave of Shadows",
+  "parTime": 220,
+  "lavaSpeed": 34,
+  "lavaAcceleration": 0,
+  "checkpoints": [
+    {
+      "id": "cp1",
+      "y": 4038,
+      "respawnPlatformId": "m5"
+    },
+    {
+      "id": "cp2",
+      "y": 3276,
+      "respawnPlatformId": "m9"
+    },
+    {
+      "id": "cp3",
+      "y": 2514,
+      "respawnPlatformId": "m13"
+    },
+    {
+      "id": "cp4",
+      "y": 1751,
+      "respawnPlatformId": "m18"
+    },
+    {
+      "id": "cp5",
+      "y": 989,
+      "respawnPlatformId": "m21"
+    }
+  ],
+  "magnets": [
+    {
+      "id": "m1",
+      "x": 634,
+      "y": 4800,
+      "color": "green"
+    },
+    {
+      "id": "m2",
+      "x": 515,
+      "y": 4580,
+      "color": "green"
+    },
+    {
+      "id": "m3",
+      "x": 411,
+      "y": 4360,
+      "color": "red"
+    },
+    {
+      "id": "m4",
+      "x": 643,
+      "y": 4140,
+      "color": "red"
+    },
+    {
+      "id": "m5",
+      "x": 411,
+      "y": 3920,
+      "color": "yellow"
+    },
+    {
+      "id": "m6",
+      "x": 643,
+      "y": 3700,
+      "color": "yellow"
+    },
+    {
+      "id": "m7",
+      "x": 480,
+      "y": 3393,
+      "color": "green"
+    },
+    {
+      "id": "m8",
+      "x": 722,
+      "y": 3393,
+      "color": "red"
+    },
+    {
+      "id": "m9",
+      "x": 601,
+      "y": 3233,
+      "color": "blue"
+    },
+    {
+      "id": "m10",
+      "x": 700,
+      "y": 3013,
+      "color": "red"
+    },
+    {
+      "id": "m11",
+      "x": 468,
+      "y": 2793,
+      "color": "yellow"
+    },
+    {
+      "id": "m12",
+      "x": 700,
+      "y": 2573,
+      "color": "green"
+    },
+    {
+      "id": "m13",
+      "x": 468,
+      "y": 2353,
+      "color": "blue"
+    },
+    {
+      "id": "m14",
+      "x": 549,
+      "y": 2133,
+      "color": "red"
+    },
+    {
+      "id": "m15",
+      "x": 432,
+      "y": 1927,
+      "color": "red"
+    },
+    {
+      "id": "m16",
+      "x": 645,
+      "y": 1927,
+      "color": "yellow"
+    },
+    {
+      "id": "m17",
+      "x": 539,
+      "y": 1767,
+      "color": "green"
+    },
+    {
+      "id": "m18",
+      "x": 612,
+      "y": 1547,
+      "color": "blue"
+    },
+    {
+      "id": "m19",
+      "x": 465,
+      "y": 1327,
+      "color": "blue"
+    },
+    {
+      "id": "m20",
+      "x": 697,
+      "y": 1107,
+      "color": "yellow"
+    },
+    {
+      "id": "m21",
+      "x": 643,
+      "y": 887,
+      "color": "green"
+    },
+    {
+      "id": "m22",
+      "x": 726,
+      "y": 667,
+      "color": "red"
+    },
+    {
+      "id": "m23",
+      "x": 645,
+      "y": 447,
+      "color": "blue"
+    },
+    {
+      "id": "m24",
+      "x": 413,
+      "y": 227,
+      "color": "yellow"
+    }
+  ],
+  "obstacles": [
+    {
+      "id": "sw1",
+      "type": "sweeper",
+      "x": 539,
+      "y": 3333,
+      "length": 128,
+      "speed": -89
+    },
+    {
+      "id": "rm2",
+      "type": "roamer",
+      "x": 562,
+      "y": 1867,
+      "speed": 60
+    }
+  ],
+  "background": {
+    "color": "#0a0a1a"
+  }
+}

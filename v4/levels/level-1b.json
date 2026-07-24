@@ -1,0 +1,93 @@
+{
+  "id": 2,
+  "name": "4-Color Park Walk",
+  "parTime": 180,
+  "lavaSpeed": 25,
+  "lavaAcceleration": 0,
+  "checkpoints": [],
+  "magnets": [
+    {
+      "id": "m2",
+      "x": 240,
+      "y": 4640,
+      "color": "green"
+    },
+    {
+      "id": "m3",
+      "x": 240,
+      "y": 4440,
+      "color": "blue"
+    },
+    {
+      "id": "m4",
+      "x": 120,
+      "y": 3960,
+      "color": "red"
+    },
+    {
+      "id": "m12",
+      "x": 300,
+      "y": 3560,
+      "color": "red"
+    },
+    {
+      "id": "m13",
+      "x": 380,
+      "y": 3160,
+      "color": "yellow"
+    },
+    {
+      "id": "m14",
+      "x": 280,
+      "y": 2960,
+      "color": "green"
+    },
+    {
+      "id": "m15",
+      "x": 400,
+      "y": 2760,
+      "color": "blue"
+    },
+    {
+      "id": "m5",
+      "x": 80,
+      "y": 3800,
+      "color": "green"
+    },
+    {
+      "id": "m6",
+      "x": 220,
+      "y": 3700,
+      "color": "yellow"
+    },
+    {
+      "id": "m7",
+      "x": 260,
+      "y": 3360,
+      "color": "blue"
+    },
+    {
+      "id": "m8",
+      "x": 320,
+      "y": 4220,
+      "color": "yellow"
+    },
+    {
+      "id": "m9",
+      "x": 420,
+      "y": 4060,
+      "color": "red"
+    },
+    {
+      "id": "m10",
+      "x": 300,
+      "y": 2560,
+      "color": "red"
+    }
+  ],
+  "obstacles": [],
+  "background": {
+    "color": "#0a0a1a"
+  },
+  "coordinateFormat": "540px"
+}

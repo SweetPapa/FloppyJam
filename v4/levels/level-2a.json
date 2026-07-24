@@ -1,0 +1,193 @@
+{
+  "id": 4,
+  "name": "First Colors",
+  "parTime": 246,
+  "lavaSpeed": 30,
+  "lavaAcceleration": 0,
+  "checkpoints": [
+    {
+      "id": "cp1",
+      "y": 4042,
+      "respawnPlatformId": "m5"
+    },
+    {
+      "id": "cp2",
+      "y": 3283,
+      "respawnPlatformId": "m8"
+    },
+    {
+      "id": "cp3",
+      "y": 2525,
+      "respawnPlatformId": "m13"
+    },
+    {
+      "id": "cp4",
+      "y": 1767,
+      "respawnPlatformId": "m17"
+    },
+    {
+      "id": "cp5",
+      "y": 1008,
+      "respawnPlatformId": "m20"
+    }
+  ],
+  "magnets": [
+    {
+      "id": "m1",
+      "x": 491,
+      "y": 4800,
+      "color": "yellow"
+    },
+    {
+      "id": "m2",
+      "x": 486,
+      "y": 4580,
+      "color": "green"
+    },
+    {
+      "id": "m3",
+      "x": 410,
+      "y": 4360,
+      "color": "blue"
+    },
+    {
+      "id": "m4",
+      "x": 621,
+      "y": 4140,
+      "color": "red"
+    },
+    {
+      "id": "m5",
+      "x": 698,
+      "y": 3920,
+      "color": "red"
+    },
+    {
+      "id": "m6",
+      "x": 660,
+      "y": 3700,
+      "color": "yellow"
+    },
+    {
+      "id": "m7",
+      "x": 586,
+      "y": 3480,
+      "color": "green"
+    },
+    {
+      "id": "m8",
+      "x": 621,
+      "y": 3260,
+      "color": "green"
+    },
+    {
+      "id": "m9",
+      "x": 602,
+      "y": 3040,
+      "color": "red"
+    },
+    {
+      "id": "m10",
+      "x": 450,
+      "y": 2820,
+      "color": "blue"
+    },
+    {
+      "id": "m11",
+      "x": 441,
+      "y": 2660,
+      "color": "yellow"
+    },
+    {
+      "id": "m12",
+      "x": 636,
+      "y": 2660,
+      "color": "green"
+    },
+    {
+      "id": "m13",
+      "x": 539,
+      "y": 2500,
+      "color": "green"
+    },
+    {
+      "id": "m14",
+      "x": 614,
+      "y": 2280,
+      "color": "red"
+    },
+    {
+      "id": "m15",
+      "x": 683,
+      "y": 2060,
+      "color": "blue"
+    },
+    {
+      "id": "m16",
+      "x": 451,
+      "y": 1840,
+      "color": "yellow"
+    },
+    {
+      "id": "m17",
+      "x": 430,
+      "y": 1620,
+      "color": "yellow"
+    },
+    {
+      "id": "m18",
+      "x": 622,
+      "y": 1400,
+      "color": "green"
+    },
+    {
+      "id": "m19",
+      "x": 390,
+      "y": 1180,
+      "color": "red"
+    },
+    {
+      "id": "m20",
+      "x": 622,
+      "y": 960,
+      "color": "blue"
+    },
+    {
+      "id": "m21",
+      "x": 547,
+      "y": 740,
+      "color": "blue"
+    },
+    {
+      "id": "m22",
+      "x": 525,
+      "y": 520,
+      "color": "green"
+    },
+    {
+      "id": "m23",
+      "x": 721,
+      "y": 300,
+      "color": "red"
+    },
+    {
+      "id": "m24",
+      "x": 582,
+      "y": 250,
+      "color": "yellow"
+    }
+  ],
+  "obstacles": [
+    {
+      "id": "sw1",
+      "type": "sweeper",
+      "x": 569,
+      "y": 2600,
+      "length": 114,
+      "speed": -66
+    }
+  ],
+  "background": {
+    "color": "#0a0a1a"
+  }
+}

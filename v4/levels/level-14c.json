@@ -1,0 +1,622 @@
+{
+  "id": 24,
+  "name": "New Level",
+  "parTime": 180,
+  "lavaSpeed": 25,
+  "lavaAcceleration": 0,
+  "checkpoints": [
+    {
+      "id": "cp3",
+      "y": 3660,
+      "respawnPlatformId": "m11"
+    },
+    {
+      "id": "cp1",
+      "y": 2060,
+      "respawnPlatformId": "m19"
+    },
+    {
+      "id": "cp2",
+      "y": 1280,
+      "respawnPlatformId": "m27"
+    },
+    {
+      "id": "cp4",
+      "y": 720,
+      "respawnPlatformId": "m27"
+    }
+  ],
+  "magnets": [
+    {
+      "id": "m1",
+      "x": 160,
+      "y": 4700,
+      "color": "blue"
+    },
+    {
+      "id": "m2",
+      "x": 380,
+      "y": 4600,
+      "color": "red"
+    },
+    {
+      "id": "m3",
+      "x": 180,
+      "y": 4500,
+      "color": "yellow"
+    },
+    {
+      "id": "m4",
+      "x": 360,
+      "y": 4420,
+      "color": "green"
+    },
+    {
+      "id": "m5",
+      "x": 160,
+      "y": 4320,
+      "color": "blue"
+    },
+    {
+      "id": "m6",
+      "x": 160,
+      "y": 4160,
+      "color": "blue"
+    },
+    {
+      "id": "m7",
+      "x": 320,
+      "y": 4100,
+      "color": "yellow"
+    },
+    {
+      "id": "m8",
+      "x": 240,
+      "y": 3980,
+      "color": "red"
+    },
+    {
+      "id": "m9",
+      "x": 240,
+      "y": 3820,
+      "color": "red"
+    },
+    {
+      "id": "m10",
+      "x": 320,
+      "y": 3740,
+      "color": "green"
+    },
+    {
+      "id": "m11",
+      "x": 460,
+      "y": 3600,
+      "color": "green"
+    },
+    {
+      "id": "m12",
+      "x": 300,
+      "y": 3500,
+      "color": "blue"
+    },
+    {
+      "id": "m13",
+      "x": 140,
+      "y": 3380,
+      "color": "blue"
+    },
+    {
+      "id": "m14",
+      "x": 140,
+      "y": 3260,
+      "color": "yellow"
+    },
+    {
+      "id": "m15",
+      "x": 140,
+      "y": 3060,
+      "color": "red"
+    },
+    {
+      "id": "m16",
+      "x": 140,
+      "y": 2720,
+      "color": "green"
+    },
+    {
+      "id": "m17",
+      "x": 140,
+      "y": 2380,
+      "color": "green"
+    },
+    {
+      "id": "m18",
+      "x": 400,
+      "y": 2200,
+      "color": "blue"
+    },
+    {
+      "id": "m19",
+      "x": 100,
+      "y": 2020,
+      "color": "red"
+    },
+    {
+      "id": "m20",
+      "x": 400,
+      "y": 2020,
+      "color": "red"
+    },
+    {
+      "id": "m21",
+      "x": 400,
+      "y": 1840,
+      "color": "green"
+    },
+    {
+      "id": "m22",
+      "x": 100,
+      "y": 1740,
+      "color": "blue"
+    },
+    {
+      "id": "m23",
+      "x": 400,
+      "y": 1600,
+      "color": "blue"
+    },
+    {
+      "id": "m24",
+      "x": 80,
+      "y": 1520,
+      "color": "red"
+    },
+    {
+      "id": "m25",
+      "x": 400,
+      "y": 1400,
+      "color": "yellow"
+    },
+    {
+      "id": "m26",
+      "x": 80,
+      "y": 1320,
+      "color": "red"
+    },
+    {
+      "id": "m27",
+      "x": 420,
+      "y": 1200,
+      "color": "blue"
+    },
+    {
+      "id": "m28",
+      "x": 260,
+      "y": 1040,
+      "color": "green"
+    },
+    {
+      "id": "m29",
+      "x": 140,
+      "y": 900,
+      "color": "yellow"
+    },
+    {
+      "id": "m30",
+      "x": 40,
+      "y": 800,
+      "color": "red"
+    },
+    {
+      "id": "m31",
+      "x": 340,
+      "y": 700,
+      "color": "blue"
+    },
+    {
+      "id": "m32",
+      "x": 420,
+      "y": 600,
+      "color": "green"
+    },
+    {
+      "id": "m33",
+      "x": 200,
+      "y": 500,
+      "color": "red"
+    },
+    {
+      "id": "m34",
+      "x": 340,
+      "y": 400,
+      "color": "yellow"
+    },
+    {
+      "id": "m35",
+      "x": 180,
+      "y": 300,
+      "color": "blue"
+    },
+    {
+      "id": "m36",
+      "x": 340,
+      "y": 200,
+      "color": "green"
+    },
+    {
+      "id": "m37",
+      "x": 240,
+      "y": 150,
+      "color": "red"
+    }
+  ],
+  "obstacles": [
+    {
+      "id": "obs1",
+      "type": "sweeper",
+      "x": 20,
+      "y": 2200,
+      "length": 100,
+      "speed": 60
+    },
+    {
+      "id": "obs2",
+      "type": "sweeper",
+      "x": 520,
+      "y": 2200,
+      "length": 100,
+      "speed": 60
+    },
+    {
+      "id": "obs3",
+      "type": "sweeper",
+      "x": 80,
+      "y": 3320,
+      "length": 100,
+      "speed": 60
+    },
+    {
+      "id": "obs4",
+      "type": "sweeper",
+      "x": 100,
+      "y": 4240,
+      "length": 100,
+      "speed": 60
+    },
+    {
+      "id": "obs5",
+      "type": "sweeper",
+      "x": 340,
+      "y": 4500,
+      "length": 100,
+      "speed": 60
+    },
+    {
+      "id": "obs6",
+      "type": "laser_gate",
+      "x": 180,
+      "y": 3900,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs7",
+      "type": "laser_gate",
+      "x": 360,
+      "y": 3900,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs8",
+      "type": "laser_gate",
+      "x": 80,
+      "y": 1420,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs9",
+      "type": "sweeper",
+      "x": 260,
+      "y": 1620,
+      "length": 100,
+      "speed": 60
+    },
+    {
+      "id": "obs10",
+      "type": "sweeper",
+      "x": 260,
+      "y": 1640,
+      "length": 100,
+      "speed": 60
+    },
+    {
+      "id": "obs11",
+      "type": "sweeper",
+      "x": 260,
+      "y": 1600,
+      "length": 100,
+      "speed": 60
+    },
+    {
+      "id": "obs12",
+      "type": "laser_gate",
+      "x": 400,
+      "y": 1320,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs13",
+      "type": "roamer",
+      "x": 400,
+      "y": 1940,
+      "speed": 60
+    },
+    {
+      "id": "obs14",
+      "type": "roamer",
+      "x": 400,
+      "y": 1760,
+      "speed": 60
+    },
+    {
+      "id": "obs15",
+      "type": "roamer",
+      "x": 320,
+      "y": 1840,
+      "speed": 60
+    },
+    {
+      "id": "obs16",
+      "type": "roamer",
+      "x": 260,
+      "y": 1360,
+      "speed": 60
+    },
+    {
+      "id": "obs17",
+      "type": "laser_gate",
+      "x": 20,
+      "y": 2780,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs18",
+      "type": "laser_gate",
+      "x": 120,
+      "y": 2780,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs19",
+      "type": "laser_gate",
+      "x": 220,
+      "y": 2780,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs20",
+      "type": "laser_gate",
+      "x": 320,
+      "y": 2780,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs21",
+      "type": "laser_gate",
+      "x": 420,
+      "y": 2780,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs22",
+      "type": "laser_gate",
+      "x": 500,
+      "y": 2780,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs23",
+      "type": "laser_gate",
+      "x": 0,
+      "y": 2460,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs24",
+      "type": "laser_gate",
+      "x": 100,
+      "y": 2460,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs25",
+      "type": "laser_gate",
+      "x": 200,
+      "y": 2460,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs26",
+      "type": "laser_gate",
+      "x": 300,
+      "y": 2460,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs27",
+      "type": "laser_gate",
+      "x": 420,
+      "y": 2460,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs28",
+      "type": "laser_gate",
+      "x": 540,
+      "y": 2460,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs29",
+      "type": "laser_gate",
+      "x": 0,
+      "y": 3160,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs30",
+      "type": "laser_gate",
+      "x": 100,
+      "y": 3160,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs31",
+      "type": "laser_gate",
+      "x": 200,
+      "y": 3160,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs32",
+      "type": "laser_gate",
+      "x": 300,
+      "y": 3160,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs33",
+      "type": "laser_gate",
+      "x": 400,
+      "y": 3160,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs34",
+      "type": "laser_gate",
+      "x": 520,
+      "y": 3160,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs35",
+      "type": "magnet_mine",
+      "x": 320,
+      "y": 1100
+    },
+    {
+      "id": "obs36",
+      "type": "magnet_mine",
+      "x": 200,
+      "y": 980
+    },
+    {
+      "id": "obs37",
+      "type": "magnet_mine",
+      "x": 80,
+      "y": 860
+    },
+    {
+      "id": "obs38",
+      "type": "magnet_mine",
+      "x": 180,
+      "y": 760
+    },
+    {
+      "id": "obs39",
+      "type": "laser_gate",
+      "x": 20,
+      "y": 740,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs40",
+      "type": "sweeper",
+      "x": 280,
+      "y": 280,
+      "length": 100,
+      "speed": 60
+    },
+    {
+      "id": "obs41",
+      "type": "sweeper",
+      "x": 200,
+      "y": 400,
+      "length": 100,
+      "speed": 60
+    },
+    {
+      "id": "obs42",
+      "type": "sweeper",
+      "x": 320,
+      "y": 540,
+      "length": 100,
+      "speed": 60
+    },
+    {
+      "id": "obs43",
+      "type": "sweeper",
+      "x": 460,
+      "y": 380,
+      "length": 100,
+      "speed": 60
+    },
+    {
+      "id": "obs44",
+      "type": "sweeper",
+      "x": 160,
+      "y": 200,
+      "length": 100,
+      "speed": 60
+    }
+  ],
+  "background": {
+    "color": "#0a0a1a"
+  },
+  "coordinateFormat": "540px"
+}
