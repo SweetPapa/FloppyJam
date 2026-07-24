@@ -15,9 +15,10 @@ typedef enum {
 
 typedef struct {
     float yaw, pitch;
-    int   zoom;             /* 0..2 */
+    int   zoom;             /* 0..3 */
     V3    target;           /* smoothed look-at            */
-    V3    pos;              /* smoothed eye                */
+    V3    pos;              /* derived eye                 */
+    float eye_dist;         /* smoothed, wall-aware orbit radius */
     int   mode;
     float t;                /* seconds in the current mode */
     float shake;

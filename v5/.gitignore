@@ -5,3 +5,4 @@ bp_test_physics
 bp_test_course
 src/*.o
 tour_*.png
+bp_test_camera

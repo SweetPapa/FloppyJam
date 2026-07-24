@@ -17,6 +17,7 @@ typedef enum {
     SFX_WARP,        /* pocket to pocket                                 */
     SFX_UNCAP,       /* rack hole opens                                  */
     SFX_UI,          /* menu tick                                        */
+    SFX_TICK,        /* aim detent click                                 */
     SFX_LAND,        /* ball landing after flight                        */
     SFX_BOING0, SFX_BOING1, SFX_BOING2, SFX_BOING3, SFX_BOING4,
     SFX_COUNT

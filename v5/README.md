@@ -45,16 +45,22 @@ Keyboard-and-mouse first; **keyboard alone is fully playable**.
 
 | Action | Input |
 | --- | --- |
-| Aim | drag left mouse button, or `A` / `D` |
-| Fine aim (8× slower) | hold `SHIFT` |
+| Aim | `A` / `D` — detented, one audible click per notch. Tap for exactly one click, hold to sweep |
+| Fine aim | hold `SHIFT` (same detents, five times smaller) |
 | Power | hold `SPACE`, release to strike — the meter climbs, falls, climbs |
 | English (cue-ball face) | arrow keys: `↑` follow, `↓` draw, `←` `→` side |
 | Centre the english | `C` |
-| Orbit camera | drag right mouse button, or `Q` / `E` |
+| Orbit camera | drag **any** mouse button, or `Q` / `E` to swing, `W` / `S` to raise and lower |
 | Zoom (4 steps) | mouse wheel, or `Z` / `X` |
+| Square the camera up behind your aim | `V` |
 | Skip the ball to rest | `R` during the ride — identical result, sim runs at full speed |
 | Scorecard | `TAB` |
 | Pause / restart hole / options | `ESC` |
+
+The mouse is **camera only** and the keyboard does the aiming, so the two never
+fight over the same button. Aiming is detented rather than continuous: each
+notch clicks, so you can line up off a rail and then count three clicks left
+instead of nudging a slider and hoping.
 
 English resets to centre at the start of each **hole**, not each shot: leaving
 your last spin dialled in is a small mastery reward and a small trap.
@@ -82,6 +88,24 @@ a missed hero shot should leave you playable, just worse off.
   opens the route you wanted.
 - **Rack holes** (10 and 16) — the cup starts capped. Pot the 8-ball into any
   pocket and it opens. First you play pool, then you play golf.
+
+## Feel and feedback
+
+The strike scales continuously with power: crack brightness and pitch, a sub-thump
+layered in above 42%, hitstop from 18 to 66 ms, shockwave radius, dust count,
+camera kick, a rim flash past 78%, and a word plus percentage that lands right
+where the power meter was. You can tell how hard you hit it with your eyes shut.
+
+Aiming is **detented**. Each notch of `A`/`D` clicks audibly and ticks the compass
+strip on the HUD, so a line can be counted rather than eyeballed, and `SHIFT`
+subdivides the same notch for surgical banks.
+
+There is a **breeze** on every hole — deterministic from the hole index, so a hole
+always feels the same. It drifts motes across the green, leans and flutters the
+flag, and pushes confetti around. It is deliberately **cosmetic only** and is never
+read by `physics.c`: adding wind to the simulation would invalidate every tuning
+gate, and a wind gauge that did not move the ball would lie to the player. So
+there is no gauge — just weather.
 
 ## Physics
 

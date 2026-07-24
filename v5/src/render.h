@@ -22,6 +22,8 @@ typedef struct {
     int   scores[BP_NHOLES];    /* 0 = not played                         */
     int   bests[BP_NHOLES];
     float power; int charging;
+    float pow_flash, pow_value;   /* post-strike readout                    */
+    float aim_tick;               /* detent pulse                           */
     float tx, ty;
     int   riding;
     float ball_speed;
