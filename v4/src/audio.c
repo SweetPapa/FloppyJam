@@ -85,6 +85,7 @@ void audio_init(App *a) {
     a->sfx[SFX_DEATH]      = synth(3, 0.55f, 420.0f, 70.0f, 0.55f);
     a->sfx[SFX_COMPLETE]   = synth(2, 0.7f, 523.25f, 0.0f, 0.5f);
     a->sfx[SFX_UI]         = synth(1, 0.08f, 660.0f, 0.0f, 0.3f);
+    a->sfx[SFX_WARN]       = synth(0, 0.30f, 150.0f, 90.0f, 0.4f); /* lava rumble */
 }
 
 void audio_shutdown(App *a) {
@@ -96,5 +97,15 @@ void audio_shutdown(App *a) {
 
 void audio_play(App *a, SfxId id) {
     if (!a->audio_ok || a->muted || id < 0 || id >= SFX_COUNT) return;
+    SetSoundPitch(a->sfx[id], 1.0f);
+    PlaySound(a->sfx[id]);
+}
+
+/* Same, but transposed — used to raise the landing tone as a combo builds. */
+void audio_play_pitched(App *a, SfxId id, float pitch) {
+    if (!a->audio_ok || a->muted || id < 0 || id >= SFX_COUNT) return;
+    if (pitch < 0.5f) pitch = 0.5f;
+    if (pitch > 2.5f) pitch = 2.5f;
+    SetSoundPitch(a->sfx[id], pitch);
     PlaySound(a->sfx[id]);
 }
