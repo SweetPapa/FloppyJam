@@ -79,8 +79,11 @@ void pz_button(Rectangle r, const char *label, bool enabled, int seed)
                           : (Color){ 230, 219, 196, 255 };
     ink_fill(p, 4, HATCH_NONE, seed, fill);
     ink_rect(r, 2.2f, 0.8f, seed + 1, enabled ? col_ink() : col_ink_soft());
-    float w = art_text_w(label, 18);
-    art_text(label, r.x + (r.width - w) * 0.5f, r.y + r.height * 0.5f - 12, 18,
+    /* a label that outgrows its button steps down rather than spilling out */
+    float sz = art_text_size_for(label, r.width - 18, 18);
+    float w = art_text_w(label, sz);
+    art_text(label, r.x + (r.width - w) * 0.5f,
+             r.y + r.height * 0.5f - sz * text_scale() * 0.62f, sz,
              enabled ? col_ink() : col_ink_soft());
 }
 
@@ -93,7 +96,7 @@ bool pz_button_clicked(Rectangle r, bool enabled)
     return true;
 }
 
-static void spend_hint(void)
+void puzzle_spend_hint(void)
 {
     if (!g_cur || g_ctx.hint_tier >= 3) { g_hint_text = ui_str("hint.exhausted"); return; }
     if (flag_get("feathers") <= 0) { g_hint_text = ui_str("hint.nofeathers"); return; }
@@ -118,7 +121,7 @@ pz_status puzzle_update(float dt)
     if (IsKeyPressed(KEY_ESCAPE)) return PZ_EXITED;
     if (pz_button_clicked(R_LEAVE, true)) return PZ_EXITED;
     if (pz_button_clicked(R_HINT, flag_get("feathers") > 0 && g_ctx.hint_tier < 3))
-        spend_hint();
+        puzzle_spend_hint();
     /* three honest attempts, then a free skip that costs nothing (§1.2.1) */
     if (pz_button_clicked(R_SKIP, g_ctx.attempts >= 3)) {
         g_skipped = true;
@@ -158,17 +161,28 @@ void puzzle_draw(void)
     pz_button(R_SKIP, ui_str("pz.skip"), g_ctx.attempts >= 3, 6172);
     pz_button(R_LEAVE, ui_str("pz.leave"), true, 6174);
 
-    const char *msg = g_hint_text;
+    /* A hint is prose and needs room to be prose. It gets its own note over
+     * the puzzle rather than three cramped lines in a margin, which is where
+     * tier-2 hints used to run off the bottom of the screen. */
+    if (g_hint_text && !g_solved) {
+        Rectangle note = { 250, 372, 780, 168 };
+        paper_panel(note, 3.5f, 6180);
+        doodle(D_FEATHER, note.x + 34, note.y + 40, 16, -0.4f, col_accent_a());
+        art_text_fit(g_hint_text,
+                     (Rectangle){ note.x + 66, note.y + 22, note.width - 96,
+                                  note.height - 44 }, 18, col_ink());
+    }
+
+    const char *msg;
     char buf[256];
     if (g_solved) {
         snprintf(buf, sizeof buf, "%s",
                  g_skipped ? ui_str("pz.skipped") : ui_str("pz.solved"));
         msg = buf;
-    } else if (!msg) {
-        if (g_ctx.attempts >= 3) msg = ui_str("pz.skiphint");
-        else                     msg = ui_str("pz.tryit");
-    }
-    art_text_wrap(msg, 676, 600, 310, 15, g_solved ? col_cool() : col_ink(), -1);
+    } else if (g_ctx.attempts >= 3) msg = ui_str("pz.skiphint");
+    else                            msg = ui_str("pz.tryit");
+    art_text_fit(msg, (Rectangle){ 668, 594, 322, 52 }, 15,
+                 g_solved ? col_cool() : col_ink());
 
     if (g_ctx.attempts > 0 && !g_solved) {
         char a[64];

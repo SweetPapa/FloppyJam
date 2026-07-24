@@ -59,6 +59,12 @@ the sparkles because they are always something.
 Nothing in the game is timed, nothing has a fail state, and no wrong answer
 ever takes anything away from you.
 
+Nothing is ever cut off, either. A line too long for its panel pages — a
+chevron appears and a click turns it — and anything that has to be read all
+at once, like a deduction scroll or a hint, steps its type down until it
+fits. That holds at all three text sizes, and `make check` fails the build if
+a writer ever exceeds what the engine can hold.
+
 ## The colour is the progress bar
 
 The world is ink on gray paper. Every chapter you close restores one hue band
@@ -84,7 +90,7 @@ not as an aspiration, as a build failure.
 clue it requires is grantable, that it is grantable in a chapter at or before
 that board's, and that **every blank cites at least two independent evidence
 sources**. It also proves no dialogue node is unreachable, no jump dangles, and
-no clue is granted that nothing ever uses. `make check` runs it and 1,343 more
+no clue is granted that nothing ever uses. `make check` runs it and 2,125 more
 content assertions through the interpreters' own reader, plus 270 headless
 puzzle solves.
 
@@ -132,13 +138,14 @@ make check
   order, trust, complete iteration (a save is "every non-zero flag by name", so
   incomplete iteration would silently eat a chapter), and refusing to wrap when
   full.
-- `test_content` — 1,343 assertions over the real baked town: clue closure and
+- `test_content` — 2,125 assertions over the real baked town: clue closure and
   the two-sources rule for all six boards, every blank present in its scroll
   and its answer present in its pool, every scene exit/talk/board target
   resolving, no dead-end screens, the closed cutscene verb set, every dialogue
   jump landing, every clue having English to show the player, the condition
-  evaluator, and a save round-trip including a flag from a build that does not
-  exist yet.
+  evaluator, a save round-trip including a flag from a build that does not
+  exist yet, and that no line, hotspot or joined dialogue beat is longer than
+  the engine can show.
 - `test_puzzles` — all 15 mini-games driven to solved with no window and no
   mouse, at three difficulties across six seeds (270 runs), plus every hint
   tier non-empty and every seeded puzzle proven deterministic.
@@ -153,8 +160,15 @@ itself:
 ./huedunit --shot scene:ch1_dock        dock.png
 ./huedunit --shot board:ch1_midnight    board.png
 ./huedunit --shot puzzle:mirror_light   nona.png
-./huedunit --shot cut:f_festival        finale.png
+./huedunit --shot puzzle:water_flow+hint hint.png
+./huedunit --shot settings              settings.png
+./huedunit --shot journal               journal.png
+./huedunit --shot cut:ch2_hue_yellow    scene.png 230   # frames to wait
 ```
+
+Every screen in the game is reachable this way, which is how the "nothing
+clips at any text size" claim above was checked rather than argued: set
+`text 2` in `huedunit.cfg` and photograph the lot.
 
 It jumps straight to that screen, fabricates exactly enough world state to make
 it honest, waits for the animation to settle, writes the PNG and exits.

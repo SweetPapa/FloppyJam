@@ -13,6 +13,12 @@
 
 #include <stdbool.h>
 
+/* The longest single authored string the engine will carry: one spoken beat,
+ * one hotspot's flavour text, one board line. Every buffer that holds prose is
+ * this size, and `bakery` fails the build on anything longer, so content can
+ * never be quietly cut off at a buffer edge. */
+#define TEXT_MAX 512
+
 void content_init(void);
 
 /* --- blocks ---------------------------------------------------------------

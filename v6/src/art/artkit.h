@@ -10,6 +10,7 @@
 #define HD_ARTKIT_H
 
 #include "raylib.h"
+#include "content/content.h"
 #include <stdbool.h>
 
 /* virtual canvas — everything draws in these units, letterboxed to the window */
@@ -97,6 +98,32 @@ float art_text_w(const char *s, float size);
  * otherwise only the first `reveal` characters (dialogue typewriter). */
 float art_text_wrap(const char *s, float x, float y, float wide, float size,
                     Color c, int reveal);
+
+/* Bounded, pageable flow — the only text call that cannot lose a word.
+ *
+ * Lays out `s` from character `start`, wrapping to `wide`, into at most
+ * `maxh` pixels. Returns the index of the first character that did NOT fit,
+ * or -1 when everything from `start` was laid out; the caller pages from
+ * there. `reveal` counts characters from `start` (negative reveals all).
+ * With `draw` false it measures and draws nothing, which is how a caller
+ * asks "does this fit?" without a flicker. `out_h` may be NULL.
+ *
+ * Everything that shows authored prose goes through here, because a panel
+ * that silently clips its last sentence is indistinguishable from a writer
+ * who never wrote it. */
+int art_text_flow(const char *s, int start, float x, float y, float wide,
+                  float maxh, float size, Color c, int reveal, bool draw,
+                  float *out_h);
+
+/* Fits `s` inside `box` by stepping the type down until it does, for the
+ * places that must show everything at once and cannot page: a deduction
+ * scroll, a recap, a hint note. Returns the size it settled on. */
+float art_text_fit(const char *s, Rectangle box, float size, Color c);
+
+/* The size at which `s` fits `wide` on a single line, stepping down from
+ * `size`. For headings, chips and button labels, which must stay on one
+ * line and must not run off the paper at the larger text settings. */
+float art_text_size_for(const char *s, float wide, float size);
 
 /* --- paper puppets (§8.1, §8.3) ------------------------------------------- */
 enum { POSE_STAND = 0, POSE_WALK, POSE_SIT, POSE_POINT, POSE_BUSY };

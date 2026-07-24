@@ -21,7 +21,7 @@ typedef struct {
     Rectangle r;
     int  kind;
     char arg[48];
-    char label[160];
+    char label[TEXT_MAX];
     char cond[96];
     bool has_cond;
 } Hot;
@@ -50,8 +50,9 @@ static float g_step_acc;
 
 /* pending: walk there first, then do the thing */
 static int   g_pending = -1;
-static char  g_inspect[240];
+static char  g_inspect[TEXT_MAX];
 static float g_inspect_t;
+static int   g_inspect_page, g_inspect_next = -1;
 
 const char *scene_current(void) { return g_id; }
 const char *scene_title(void) { return g_title; }
@@ -390,11 +391,11 @@ bool scene_load(const char *id)
             else if (eq(kind, "cut"))   { h->kind = SC_CUT;   word(&p, h->arg, 48); }
             else                        { h->kind = SC_NONE; }
 
-            char tail[240];
+            char tail[TEXT_MAX + 64];
             rest(p, tail, sizeof tail);
             /* "<label>" [if <cond>] */
             const char *q = tail;
-            char lab[200];
+            char lab[TEXT_MAX];
             if (word(&q, lab, sizeof lab)) snprintf(h->label, sizeof h->label, "%s", lab);
             char maybe_if[8];
             const char *save = q;
@@ -432,11 +433,15 @@ static void fire(int i)
         sfx_play(SFX_FEATHER);
         snprintf(g_inspect, sizeof g_inspect, "%s", ui_str("feather.found"));
         g_inspect_t = 3.0f;
+        g_inspect_page = 0;
+        g_inspect_next = -1;
         return;
     }
     if (h->kind == SC_NONE) {
         snprintf(g_inspect, sizeof g_inspect, "%s", h->label);
         g_inspect_t = 5.0f;
+        g_inspect_page = 0;
+        g_inspect_next = -1;
         sfx_play(SFX_TICK);
         return;
     }
@@ -493,7 +498,9 @@ scene_request scene_update(float dt)
             g_walking = true;
         }
     } else if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        g_inspect_t = 0;                         /* click dismisses flavour text */
+        /* click turns the page, and only dismisses on the last one */
+        if (g_inspect_next >= 0) { g_inspect_page = g_inspect_next; g_inspect_t = 5.0f; }
+        else                     { g_inspect_t = 0; }
     }
 
     if (g_walking) {
@@ -572,9 +579,16 @@ void scene_draw(void)
     }
 
     if (g_inspect_t > 0) {
-        Rectangle r = { 220, VH - 190, VW - 440, 120 };
+        Rectangle r = { 200, VH - 210, VW - 400, 150 };
         paper_panel(r, 3.0f, 1300);
-        art_text_wrap(g_inspect, r.x + 24, r.y + 22, r.width - 48, 18, col_ink(), -1);
+        g_inspect_next = art_text_flow(g_inspect, g_inspect_page, r.x + 24, r.y + 22,
+                                       r.width - 48, r.height - 44, 18, col_ink(),
+                                       -1, true, NULL);
+        if (g_inspect_next >= 0) {
+            float mx = r.x + r.width - 30, my = r.y + r.height - 20;
+            ink_line(mx - 8, my - 4, mx, my + 4, 2.4f, 0.5f, 1301, col_accent_b());
+            ink_line(mx + 8, my - 4, mx, my + 4, 2.4f, 0.5f, 1302, col_accent_b());
+        }
     }
 
     vignette(0.45f);

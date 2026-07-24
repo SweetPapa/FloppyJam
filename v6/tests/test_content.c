@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 static int g_fail, g_checks;
 
@@ -495,6 +496,117 @@ static void check_reachability(void)
     }
 }
 
+/* ------------------------------------------------------ nothing is cut off
+ *
+ * bakery checks this at build time against the authored files; this checks it
+ * again through the reader the game actually uses, because the failure mode
+ * is silent. An overlong line does not crash — it just stops mid-sentence on
+ * screen, and the only symptom is a character who trails off. */
+static void check_no_truncation(void)
+{
+    int longest = 0;
+
+    for (int i = 0; i < content_block_count("cut"); i++) {
+        char id[48];
+        Block b;
+        if (!content_block_at("cut", i, id, sizeof id, &b)) continue;
+        Cursor c;
+        cur_open(&c, &b);
+        char line[TEXT_MAX * 2];
+        while (cur_line(&c, line, sizeof line)) {
+            const char *p = line;
+            char kw[24];
+            word(&p, kw, sizeof kw);
+            if (!eq(kw, "SAY")) continue;
+            char who[48], said[TEXT_MAX * 2];
+            word(&p, who, sizeof who);
+            rest(p, said, sizeof said);
+            int n = (int)strlen(said);
+            if (n > longest) longest = n;
+            char d[192];
+            snprintf(d, sizeof d, "cutscene '%s' has a %d-character line; the "
+                     "engine holds %d", id, n, TEXT_MAX - 1);
+            expect(n < TEXT_MAX, "no spoken line is cut off", d);
+        }
+    }
+
+    for (int i = 0; i < content_block_count("scene"); i++) {
+        char id[48];
+        Block b;
+        if (!content_block_at("scene", i, id, sizeof id, &b)) continue;
+        Cursor c;
+        cur_open(&c, &b);
+        char line[TEXT_MAX * 2];
+        while (cur_line(&c, line, sizeof line)) {
+            const char *p = line;
+            char kw[24];
+            word(&p, kw, sizeof kw);
+            if (!eq(kw, "hot")) continue;
+            const char *a = strchr(p, '"');
+            if (!a) continue;
+            const char *e = strchr(a + 1, '"');
+            if (!e) continue;
+            int n = (int)(e - a - 1);
+            if (n > longest) longest = n;
+            char d[192];
+            snprintf(d, sizeof d, "scene '%s' has a %d-character hotspot text; "
+                     "the engine holds %d", id, n, TEXT_MAX - 1);
+            expect(n < TEXT_MAX, "no flavour text is cut off", d);
+        }
+    }
+
+    /* dialogue, as the interpreter joins it: a beat is a paragraph, and the
+     * paragraph is what has to fit */
+    for (int i = 0; i < content_block_count("@node"); i++) {
+        char id[48];
+        Block b;
+        if (!content_block_at("@node", i, id, sizeof id, &b)) continue;
+        Cursor c;
+        cur_open(&c, &b);
+        char line[TEXT_MAX * 2];
+        int run = 0;
+        char last_char = '.';
+        while (cur_line(&c, line, sizeof line)) {
+            if (line[0] == '@' || line[0] == '[' || line[0] == '*') { run = 0; continue; }
+            const char *p = line;
+            char kw[32];
+            word(&p, kw, sizeof kw);
+            static const char *verbs[] = { "grant", "set", "add", "trust",
+                                           "start_puzzle", "play_cut",
+                                           "open_board", "goto", "end", 0 };
+            bool is_verb = false;
+            for (int k = 0; verbs[k]; k++) if (eq(verbs[k], kw)) is_verb = true;
+            if (is_verb) { run = 0; continue; }
+
+            /* mirror the interpreter's own join: a wrapped line continues the
+             * beat, a finished sentence followed by a capital starts a new one */
+            const char *colon = strchr(line, ':');
+            bool speaker = colon && colon - line <= 40;
+            if (speaker) {
+                run = (int)strlen(colon + 1);
+            } else {
+                char prev = run ? last_char : '.';
+                bool closed = (prev == '.' || prev == '!' || prev == '?' ||
+                               prev == '"' || prev == ':');
+                if (run && closed && isupper((unsigned char)line[0]))
+                    run = (int)strlen(line);
+                else
+                    run += (int)strlen(line) + (run ? 1 : 0);
+            }
+            {
+                int L = (int)strlen(line);
+                last_char = L ? line[L - 1] : '.';
+            }
+            if (run > longest) longest = run;
+            char d[192];
+            snprintf(d, sizeof d, "node '%s' has a %d-character beat; the engine "
+                     "holds %d", id, run, TEXT_MAX - 1);
+            expect(run < TEXT_MAX, "no dialogue beat is cut off", d);
+        }
+    }
+    printf("  longest authored string: %d of %d\n", longest, TEXT_MAX - 1);
+}
+
 /* --------------------------------------------------------------- conditions */
 static void check_conditions(void)
 {
@@ -578,6 +690,7 @@ int main(void)
     check_cutscenes();
     check_dialogue();
     check_reachability();
+    check_no_truncation();
     check_conditions();
     check_saves();
 

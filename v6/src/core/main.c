@@ -17,14 +17,19 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 int main(int argc, char **argv)
 {
     const char *shot = NULL, *shot_out = "huedunit_shot.png";
+    int shot_wait = 100;             /* frames to let the screen settle */
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--shot") == 0 && i + 1 < argc) {
             shot = argv[++i];
             if (i + 1 < argc && argv[i + 1][0] != '-') shot_out = argv[++i];
+            /* a cutscene needs long enough to reach the line worth looking at */
+            if (i + 1 < argc && argv[i + 1][0] >= '0' && argv[i + 1][0] <= '9')
+                shot_wait = atoi(argv[++i]);
         }
     }
 
@@ -45,7 +50,7 @@ int main(int argc, char **argv)
             CloseWindow();
             return 2;
         }
-        shot_frames = 100;           /* let idle animation and blooms settle */
+        shot_frames = shot_wait;     /* let idle animation and blooms settle */
     }
 
     while (!WindowShouldClose() && !app_wants_quit()) {

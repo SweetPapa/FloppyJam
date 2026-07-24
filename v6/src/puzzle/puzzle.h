@@ -57,6 +57,8 @@ void        puzzle_draw(void);
 const char *puzzle_current_id(void);
 const char *puzzle_clue(void);
 bool        puzzle_was_skipped(void);
+/* spend a feather on the next hint tier; the capture harness uses it too */
+void        puzzle_spend_hint(void);
 
 /* puzzles call this when the player commits a wrong answer; three honest
  * attempts unlock the skip, and nothing is ever taken away (§1.2.1) */

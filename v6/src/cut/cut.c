@@ -17,7 +17,8 @@
 
 typedef struct {
     char verb[12];
-    char a[64], b[64];
+    char a[64];
+    char b[TEXT_MAX];      /* a spoken line, whole */
     float f[5];
     int   nf;
 } Cmd;
@@ -45,11 +46,14 @@ static int    g_nact;
 static Prop   g_prop[MAX_PROPS];
 static int    g_nprop;
 
-static char  g_say[320];
+static char  g_say[TEXT_MAX];
 static int   g_say_who = -1;
 static float g_say_reveal;
 static float g_say_hold;
 static float g_blip_acc;
+/* same paging contract as dialogue: a line longer than the panel is read a
+ * page at a time, never clipped. Set by cut_draw, read by cut_update. */
+static int   g_page, g_page_next = -1, g_page_len;
 
 static char  g_title_a[64], g_title_b[64];
 static float g_title_t;
@@ -137,7 +141,7 @@ bool cut_play(const char *id)
                                 (t[0] >= '0' && t[0] <= '9'));
                 if (numeric && cm->nf < 5) cm->f[cm->nf++] = (float)atof(t);
                 else if (slot == 0) { snprintf(cm->a, 64, "%s", t); slot = 1; }
-                else if (slot == 1) { snprintf(cm->b, 64, "%s", t); slot = 2; }
+                else if (slot == 1) { snprintf(cm->b, TEXT_MAX, "%s", t); slot = 2; }
             }
         }
         g_ncmd++;
@@ -241,6 +245,9 @@ static void step(void)
             g_say_reveal = 0;
             g_say_hold = 0;
             g_blip_acc = 0;
+            g_page = 0;
+            g_page_next = -1;
+            g_page_len = 0;
             music_duck(true);
             return;
         }
@@ -303,7 +310,8 @@ bool cut_update(float dt)
     }
 
     if (g_say[0]) {
-        int len = (int)strlen(g_say);
+        int len = g_page_len > 0 ? g_page_len : (int)strlen(g_say) - g_page;
+        if (len < 0) len = 0;
         if (g_say_reveal < len) {
             float sp = settings()->reduce_motion ? 9999.0f : 50.0f;
             g_say_reveal += dt * sp;
@@ -312,10 +320,21 @@ bool cut_update(float dt)
             if (advance) g_say_reveal = (float)len;
         } else {
             g_say_hold += dt;
-            if (advance || g_say_hold > 6.0f) {
-                g_say[0] = 0;
-                music_duck(false);
-                step();
+            /* a line with more to it waits for the reader; only the last page
+             * of a line ever auto-advances */
+            bool more = g_page_next >= 0;
+            if (advance || (!more && g_say_hold > 6.0f)) {
+                if (more) {
+                    g_page = g_page_next;
+                    g_say_reveal = 0;
+                    g_say_hold = 0;
+                    g_blip_acc = 0;
+                    sfx_play(SFX_PAGE);
+                } else {
+                    g_say[0] = 0;
+                    music_duck(false);
+                    step();
+                }
             }
         }
         return !g_active;
@@ -375,9 +394,18 @@ void cut_draw(void)
                      col_ink_soft());
             tx = panel.x + 140;
         }
-        art_text_wrap(g_say, tx, panel.y + 24, panel.x + panel.width - tx - 26, 19,
-                      col_ink(), (int)g_say_reveal);
+        float ty = panel.y + 24;
+        float room = panel.y + panel.height - ty - 18;
+        g_page_next = art_text_flow(g_say, g_page, tx, ty,
+                                    panel.x + panel.width - tx - 26, room, 19,
+                                    col_ink(), (int)g_say_reveal, true, NULL);
+        g_page_len = (g_page_next < 0 ? (int)strlen(g_say) : g_page_next) - g_page;
+        if (g_page_next >= 0 && g_say_reveal >= (float)g_page_len) {
+            float mx = panel.x + panel.width - 34, my = panel.y + panel.height - 26;
+            ink_line(mx - 9, my - 4, mx, my + 5, 2.6f, 0.5f, 3241, col_accent_b());
+            ink_line(mx + 9, my - 4, mx, my + 5, 2.6f, 0.5f, 3242, col_accent_b());
+        }
     }
 
-    art_text(ui_str("cut.skip"), 22, VH - 26, 13, col_ink_soft());
+    art_text(ui_str("cut.skip"), 22, 16, 13, col_ink_soft());
 }

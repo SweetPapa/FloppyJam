@@ -214,6 +214,19 @@ line above it, unless the line above finished its sentence and this one starts
 with a capital. Paragraph = beat; line breaks are the writer's, not the
 reader's.
 
+**[W0] No string is ever cut off.** `TEXT_MAX` (512, in `content/content.h`)
+is the longest single authored string the engine carries — one spoken beat,
+one hotspot's flavour text, one board line — and every buffer that holds
+prose is that size. Anything longer fails the build (§10.8) rather than
+stopping mid-sentence on screen, which is the one content bug with no
+symptom other than a character who trails off.
+
+On screen the rule is the same. Dialogue and cutscene lines that outgrow
+their panel **page** — a chevron appears, a click turns it — and the
+surfaces that must show everything at once (a deduction scroll, the recap, a
+hint note, a button label) step their type down until it fits. Nothing
+clips, at any of the three text sizes.
+
 ### 9.1 Dialogue `.dlg`
 ```
 @node otto_intro
@@ -339,3 +352,8 @@ copy-paste hazard.
 6. **Determinism where seeded** — the same seed must produce the same puzzle
    instance, so re-entering a puzzle shows the instance you left.
 7. **Size** — the shipped binary against the 1,474,560-byte ceiling.
+8. **No truncation** — no authored string exceeds `TEXT_MAX`, measured both
+   per line by bakery and per *joined beat* by the tests, because the
+   interpreter joins wrapped lines and it is the joined paragraph that has to
+   fit. The test prints the longest string in the game against the limit, so
+   the headroom is visible rather than assumed.
