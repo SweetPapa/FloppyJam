@@ -58,6 +58,8 @@ static void start_level(int id) {
     app.fade = 1.0f;      /* fade up from black */
     app.warn_timer = 0;
     app.prev_state = app.sim.state;
+    audio_music_theme(&app, id); /* every level gets its own key & groove */
+    audio_music_intensity(&app, 0.0f);
     app.screen = SCR_PLAYING;
 }
 
@@ -162,6 +164,13 @@ static void update_playing(int demo) {
         app.warn_timer = 0;
     }
 
+    /* music tension tracks danger and momentum */
+    {
+        float lava_t = 1.0f - fminf(1.0f, fmaxf(0.0f, gap) / 700.0f);
+        float want = fmaxf(lava_t, app.speed_norm * 0.6f);
+        audio_music_intensity(&app, want);
+    }
+
     /* HUD score counts up smoothly toward the real value */
     app.score_shown += ((float)app.sim.score - app.score_shown) * fminf(1.0f, raw * 6.0f);
 
@@ -260,7 +269,10 @@ int main(void) {
         case SCR_PAUSED:
             if (IsKeyPressed(KEY_ESCAPE)) app.screen = SCR_PLAYING;
             if (IsKeyPressed(KEY_R)) { audio_play(&app, SFX_UI); start_level(app.level_id); }
-            if (IsKeyPressed(KEY_M)) app.muted = !app.muted;
+            if (IsKeyPressed(KEY_M)) {
+                app.muted = !app.muted;
+                audio_music_volume(&app, app.muted ? 0.0f : 0.75f);
+            }
             if (IsKeyPressed(KEY_Q)) { app.screen = SCR_SELECT; }
             break;
         case SCR_COMPLETE:
