@@ -18,6 +18,7 @@ add_executable(maglava
   src/levels.c
   src/render.c
   src/audio.c
+  src/music.c
   src/ui.c
   src/save.c)
 target_include_directories(maglava PRIVATE src)
