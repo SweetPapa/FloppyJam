@@ -308,11 +308,14 @@ static void draw_trail(App *a) {
         Vector3 p = { a->trail[i].x, a->trail[i].y, a->trail[i].z };
         float f = 1.0f - (float)k / (float)TRAIL_LEN;
         if (have_prev) {
-            float r = (1.5f + 6.0f * f) * WS;
+            /* swells into a comet at speed, thins to almost nothing at rest */
+            float mo = 0.35f + a->speed_norm * 1.5f;
+            float r = (1.5f + 6.0f * f) * WS * mo;
             /* skip degenerate segments (raylib dislikes zero-length cylinders) */
             float dx = p.x - prev.x, dy = p.y - prev.y, dz = p.z - prev.z;
             if (dx*dx + dy*dy + dz*dz > 1e-8f)
-                DrawCylinderEx(prev, p, r, r * 0.85f, 4, with_alpha(base, f * f * 0.7f));
+                DrawCylinderEx(prev, p, r, r * 0.85f, 4,
+                               with_alpha(base, f * f * (0.25f + a->speed_norm * 0.6f)));
         }
         prev = p; have_prev = 1;
     }
@@ -414,6 +417,27 @@ void render_update_fx(App *a, float dt) {
         tp->x = w.x; tp->y = w.y; tp->z = w.z; tp->used = 1;
         a->trail_head = (a->trail_head + 1) % TRAIL_LEN;
     }
+    /* ---- momentum tracking -------------------------------------------
+     * The curve deliberately hugs zero at low speed so hanging on a node
+     * feels like a heavy, static drag, then ramps hard once you commit to a
+     * swing — the contrast is what sells the acceleration. */
+    float speed = sqrtf(a->sim.vx * a->sim.vx + a->sim.vy * a->sim.vy);
+    if (a->sim.state == PS_ATTACHED || a->sim.state == PS_DEAD) speed = 0.0f;
+    float raw_n = clampf((speed - 190.0f) / 460.0f, 0.0f, 1.0f);
+    raw_n = raw_n * raw_n; /* stays low, then rises fast */
+    /* fast attack, slow release: motion blooms instantly and lingers */
+    float rate = (raw_n > a->speed_norm) ? 12.0f : 3.0f;
+    a->speed_norm += (raw_n - a->speed_norm) * fminf(1.0f, dt * rate);
+
+    /* a hard shove of acceleration fires the anime speed lines */
+    float accel = (speed - a->prev_speed);
+    if (accel > 55.0f && speed > 240.0f) {
+        float amt = clampf(accel / 260.0f, 0.25f, 1.0f);
+        if (amt > a->speed_burst) a->speed_burst = amt;
+    }
+    a->prev_speed = speed;
+    a->speed_burst = fmaxf(0.0f, a->speed_burst - dt * 3.2f); /* short and sharp */
+
     /* decay pops/flashes */
     a->land_pop = fmaxf(0.0f, a->land_pop - dt * 3.5f);
     a->death_flash = fmaxf(0.0f, a->death_flash - dt * 2.0f);
@@ -453,6 +477,85 @@ static void draw_embers(App *a) {
     EndBlendMode();
 }
 
+/* In-world rush streaks: short bright dashes scrolling past the player,
+ * aligned to the direction of travel. Gives the shaft itself a sense of
+ * rushing by, so speed is felt in the world and not just the HUD. */
+static void draw_rush(App *a) {
+    float sn = a->speed_norm;
+    if (sn < 0.04f) return;
+    float vx = a->sim.vx, vy = a->sim.vy;
+    float sp = sqrtf(vx * vx + vy * vy);
+    if (sp < 1.0f) return;
+    float ux = vx / sp, uy = vy / sp;
+
+    BeginBlendMode(BLEND_ADDITIVE);
+    for (int i = 0; i < 30; i++) {
+        unsigned int h = (unsigned int)i * 2246822519u + 12345u;
+        float ox = (float)((h >> 8) & 511) / 511.0f * 2.0f - 1.0f;
+        float oy = (float)((h >> 17) & 511) / 511.0f * 2.0f - 1.0f;
+        /* scroll each dash backwards along the travel axis */
+        float scroll = fmodf(a->t * (1.2f + sn * 3.0f) + (float)i * 0.37f, 1.0f);
+        float back = scroll * 640.0f - 320.0f;
+        float gx = a->sim.px + ox * 300.0f - ux * back;
+        float gy = a->sim.py + oy * 340.0f - uy * back;
+        float len = 26.0f + 110.0f * sn;
+        Vector3 p0 = game_to_world(gx, gy, -24.0f);
+        Vector3 p1 = game_to_world(gx - ux * len, gy - uy * len, -24.0f);
+        /* fade in at the ends of the scroll so dashes don't pop */
+        float fade = sinf(scroll * 3.1416f);
+        Color c = (Color){190, 215, 255, (unsigned char)(clampf(120.0f * sn * fade, 0, 255))};
+        DrawLine3D(p0, p1, c);
+    }
+    EndBlendMode();
+}
+
+/* Anime speed lines: screen-space streaks radiating from a focus point just
+ * ahead of the player. They re-scatter ~18x/sec for that hand-inked,
+ * frame-by-frame look, and only really bloom on a burst of acceleration. */
+static void draw_speed_lines(App *a) {
+    /* Weighted hard toward the burst: sustained flight keeps only a whisper
+     * of streaking, so the lines punctuate acceleration instead of becoming
+     * permanent screen furniture. */
+    float intensity = a->speed_norm * 0.20f + a->speed_burst * 0.95f;
+    if (intensity < 0.03f) return;
+    intensity = clampf(intensity, 0.0f, 1.1f);
+
+    int sw = GetScreenWidth(), sh = GetScreenHeight();
+    Vector2 focus = GetWorldToScreen(game_to_world(a->sim.px, a->sim.py, 0), a->cam);
+    /* push the vanishing point ahead of travel so the world streaks past */
+    float sp = sqrtf(a->sim.vx * a->sim.vx + a->sim.vy * a->sim.vy);
+    if (sp > 1.0f) {
+        focus.x += (a->sim.vx / sp) * 70.0f;
+        focus.y += (-a->sim.vy / sp) * -70.0f; /* game y is inverted on screen */
+    }
+
+    float maxr = sqrtf((float)(sw * sw + sh * sh)) * 0.62f;
+    /* the clear centre shrinks as we accelerate, tightening the tunnel */
+    float inner = 190.0f - 90.0f * intensity;
+    Color tint = mag_color(a->sim.color, 1);
+    int tick = (int)(a->t * 18.0f); /* re-scatter for hand-drawn shimmer */
+    int n = 14 + (int)(intensity * 30.0f);
+
+    BeginBlendMode(BLEND_ADDITIVE);
+    for (int i = 0; i < n; i++) {
+        unsigned int h = ((unsigned int)i * 2654435761u) ^ ((unsigned int)tick * 40503u);
+        float ang = (float)((h >> 8) & 1023) / 1024.0f * 6.28318f;
+        float len = 0.30f + (float)((h >> 18) & 255) / 255.0f * 0.70f;
+        float r0 = inner + (float)((h >> 3) & 63);
+        float r1 = r0 + maxr * len * (0.45f + intensity * 0.75f);
+        float ca = cosf(ang), sa = sinf(ang);
+        Vector2 p0 = {focus.x + ca * r0, focus.y + sa * r0};
+        Vector2 p1 = {focus.x + ca * r1, focus.y + sa * r1};
+        float thick = 1.0f + 3.0f * intensity * (0.35f + len * 0.65f);
+        /* mostly white with a wash of the armed colour */
+        Color c = {(unsigned char)((tint.r + 510) / 3), (unsigned char)((tint.g + 510) / 3),
+                   (unsigned char)((tint.b + 510) / 3),
+                   (unsigned char)clampf(170.0f * intensity * (0.35f + len * 0.65f), 0, 255)};
+        DrawLineEx(p0, p1, thick, c);
+    }
+    EndBlendMode();
+}
+
 /* ------------------------------------------------------------------ */
 static void update_camera(App *a) {
     GameSim *g = &a->sim;
@@ -464,15 +567,24 @@ static void update_camera(App *a) {
     float xp = (g->px - g_cx) * WS;
     a->cam_x = lerpf(a->cam_x, xp * 0.45f, 0.07f);
 
-    /* subtle dolly-out with speed for a sense of rush */
-    float speed = sqrtf(g->vx * g->vx + g->vy * g->vy);
-    float want = 8.2f + clampf(speed / 650.0f, 0, 1) * 0.9f;
-    a->cam_dist = lerpf(a->cam_dist, want, 0.05f);
+    /* Dolly + FOV both widen with momentum: pulled in and tight when you're
+     * hanging still, kicked wide the instant you launch. */
+    float want = 7.9f + a->speed_norm * 1.5f + a->speed_burst * 0.5f;
+    a->cam_dist = lerpf(a->cam_dist, want, 0.08f);
+    float want_fov = a->speed_norm * 7.0f + a->speed_burst * 9.0f;
+    a->fov_extra = lerpf(a->fov_extra, want_fov, 0.14f);
+    a->cam.fovy = 58.0f + a->fov_extra;
 
     float sx = 0, sy = 0;
     if (a->cam_shake > 0.001f) {
         sx = sinf(a->t * 90.0f) * a->cam_shake;
         sy = cosf(a->t * 77.0f) * a->cam_shake;
+    }
+    /* high-speed micro-jitter: engine rumble, not a hit */
+    if (a->speed_norm > 0.25f) {
+        float j = (a->speed_norm - 0.25f) * 0.05f;
+        sx += sinf(a->t * 61.0f) * j;
+        sy += cosf(a->t * 53.0f) * j;
     }
     a->cam.target = (Vector3){a->cam_x, a->cam_y + 1.6f, 0};
     a->cam.position = (Vector3){a->cam_x + sx, a->cam_y - 2.6f + sy, a->cam_dist};
@@ -544,12 +656,14 @@ void render_world(App *a) {
         draw_magnets(a);
         draw_targets(a);
         draw_obstacles(a);
+        draw_rush(a);
         draw_ai(a);
         draw_trail(a);
         draw_player(a);
         draw_particles(a);
     EndMode3D();
 
+    draw_speed_lines(a);
     draw_overlays(a);
 
     /* flashlight anomaly (level 12): darken all but a disc around player */
