@@ -82,6 +82,12 @@ typedef struct {
     float warn_timer;    /* spacing for lava warning beeps */
     int   prev_state;    /* detects respawn transitions */
 
+    /* momentum / motion feel */
+    float speed_norm;    /* 0..1 eased speed; stays near 0 until you commit */
+    float speed_burst;   /* 0..1 spike on acceleration, decays fast */
+    float prev_speed;    /* previous frame's speed, for accel detection */
+    float fov_extra;     /* smoothed FOV kick with speed */
+
     /* generated textures */
     Texture2D tex_glow;    /* soft radial glow sprite */
     Texture2D tex_flash;   /* flashlight dark-with-hole overlay */
