@@ -1,0 +1,33 @@
+# Chapter One — the Harbor. Blue comes home here.
+
+scene ch1_dock
+  title "Prismbrook Harbour — the Dock"
+  bg harbor
+  music MOOD_HARBOR
+  walk 110 454 1170 530
+  spawn 180 524
+  on_enter ch1_dock_open
+  actor otto 470 524 stand
+  actor tansy 850 536 stand
+  hot 412 364 120 180 talk otto_intro "Otto Brine, fishmonger"
+  hot 806 416 96 130 talk tansy_intro "Tansy"
+  hot 640 304 120 90 look "A slate by the fish stall: HERRING, MACKEREL, AND A PAIL PUT BY. The last line is not for sale and never has a price beside it."
+  hot 180 304 110 100 look "Nets, mended and mended again. Even in gray you can tell which repairs are Otto's: they are the ugly ones that hold."
+  feather 1010 284 f_ch1a
+  feather 300 204 f_ch1b
+  hot 40 424 90 150 exit p_square "Back to the square"
+  hot 1160 374 110 200 exit ch1_quay "Along to the ferry quay"
+
+scene ch1_quay
+  title "Prismbrook Harbour — the Ferry Quay"
+  bg harbor
+  music MOOD_HARBOR
+  walk 110 454 1170 530
+  spawn 1080 524
+  actor maribel 560 524 stand
+  hot 502 364 120 180 talk maribel_intro "Capt. Maribel Sorge"
+  hot 860 324 140 120 look "The ferry, tied off short. Somebody has painted a name on her stern and then painted over it and then painted it on again."
+  hot 240 334 130 110 look "The ferry log on its hook, open to this week. Capt. Sorge writes the time of every single crossing, to the minute, and pretends this is nothing."
+  feather 720 244 f_ch1c
+  hot 40 424 90 150 exit ch1_dock "Back along the dock"
+  hot 1160 374 110 200 exit p_square "Up to the square"

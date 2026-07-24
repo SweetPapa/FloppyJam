@@ -1,0 +1,21 @@
+# The Prismworks stair. One floor opens per chapter, and each floor is where
+# the player does the actual detecting. Shared between all districts, so this
+# file belongs to nobody's chapter and everybody's.
+
+scene tower
+  title "The Prismworks — the Stair"
+  bg tower
+  music MOOD_TOWER
+  walk 130 464 1150 530
+  spawn 240 534
+  on_enter tower_first
+  hot 500 464 280 90 board p_morning "The ground floor: this morning" if all clue.town_gray clue.prism_missing clue.iris_missing clue.door_locked clue.magpie_blamed
+  hot 470 374 280 84 board ch1_midnight "The first floor: midnight" if all clue.otto_alibi clue.tansy_saw clue.ferry_log clue.fish_pail clue.midnight_figure clue.pip_hungry
+  hot 500 288 280 80 board ch2_opened "The second floor: the door" if all clue.no_forced_lock clue.greta_gossip clue.felix_letters clue.iris_letter clue.shiny_thefts clue.bruno_order
+  hot 470 206 280 76 board ch3_prism "The third floor: the crystal" if all clue.cogg_ledger clue.repair_braces clue.prism_dimming clue.picks_borrowed clue.iris_secret
+  hot 500 128 280 72 board ch4_festival "The fourth floor: the festival" if all clue.three_years clue.bees_remember clue.mayor_dodges clue.town_lowspirits clue.garden_gray clue.lanterns_stored
+  hot 470 54 280 68 board ch5_where "The fifth floor: where she is" if all clue.budget_cut clue.nona_key clue.stair_rotten clue.spare_key clue.mayor_shame clue.nona_grief clue.pip_trusts
+  hot 60 384 110 190 talk tower_wick "Wick, listening to the tower" if not flag board.ch5_where
+  feather 1120 204 f_tower1
+  hot 1150 444 110 130 exit p_square "Back to the square"
+  hot 620 0 140 60 exit f_lantern "Up the mended stair" if flag board.ch5_where

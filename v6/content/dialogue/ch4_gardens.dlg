@@ -1,0 +1,210 @@
+# Chapter Four — the Gardens.
+# Question: why did the Festival of Lanterns stop?
+# Beat: three years, three reasons, and one of them wearing a very good coat.
+
+@node ch4_garden_open
+  The Gardens are the worst of it. Everywhere else the gray looks like weather.
+  Here it looks like something went wrong.
+  A man in a wide hat is watering a bed of pencil-coloured flowers with great
+  care, which is either very sad or very hopeful and is in fact both.
+
+@node sage_intro
+  [if flag ch4.met_sage == 0]
+  SAGE(sad): They came up gray. I want you to know that I did everything
+  right and they came up gray.
+  YOU:
+    * (kind) I believe you. That is not your fault.  -> sage_kind
+    * (curious) Have they ever done that before?  -> sage_before
+    * (dry) You are still watering them.  -> sage_water
+  [else]
+  goto sage_after
+  [end]
+
+@node sage_kind
+  SAGE(moved): ...Thank you. My brother-in-law thinks I have lost my touch.
+  My brother-in-law grows onions.
+  trust sage 1
+  goto sage_before
+
+@node sage_water
+  SAGE(worried): Well. Yes. They are still thirsty. Being gray has not made
+  them not thirsty.
+  trust sage 1
+  goto sage_before
+
+@node sage_before
+  set ch4.met_sage = 1
+  SAGE: Never. Not in my time and not in the book my mother kept.
+  grant clue.garden_gray
+  SAGE(worried): And I will tell you the other thing that has never happened
+  in my time, which is three springs with no lanterns on that green.
+  YOU:
+    * (curious) Three. What happened each year?  -> sage_three
+    * (kind) You counted them. You have been keeping count.  -> sage_count
+    * (dry) Three is a habit, not an accident.  -> sage_three
+
+@node sage_count
+  SAGE(sad): You cannot not count. It is the same week every year. You look
+  up on the Friday and there is nothing on the hill.
+  trust sage 1
+  goto sage_three
+
+@node sage_three
+  SAGE: The first year it rained. Rained like the end of something, all week.
+  Nobody's fault.
+  SAGE(worried): The second year there was a row about the money. I did not
+  follow it. The council said it was postponed.
+  SAGE(sad): The third year nobody said anything at all. That is the one that
+  frightens me. Nobody even argued.
+  grant clue.three_years
+  SAGE(happy): Now. If you want the rest of the Gardens to talk to you, the
+  rill has to run. Half my beds have been dry a fortnight.
+  start_puzzle water_flow
+  SAGE(moved): Look at that. Water where water goes.
+  set ch4.sage_done = 1
+  trust sage 1
+
+@node sage_after
+  [if flag ch4.sage_done == 1]
+  SAGE: Ask Poppy. Half this town has been in her shop this year and she is
+  the only one who knows why.
+  [else]
+  SAGE: The rill, first, if you would.
+  goto sage_three
+  [end]
+
+@node poppy_intro
+  [if flag ch4.met_poppy == 0]
+  POPPY(neutral): You are sleeping badly. It is in your face.
+  YOU:
+    * (dry) It is in my job.  -> poppy_job
+    * (kind) So are half the people in here, by the look of it.  -> poppy_half
+    * (curious) Is everyone sleeping badly?  -> poppy_half
+  [else]
+  goto poppy_after
+  [end]
+
+@node poppy_job
+  POPPY(laughing): It is in your job and your face. Sit down.
+  goto poppy_half
+
+@node poppy_half
+  set ch4.met_poppy = 1
+  POPPY(worried): Everyone. I have made more sleeping tea this year than in
+  the eight before it, and more of the other kind, the getting-up kind.
+  grant clue.town_lowspirits
+  POPPY: It is not an illness. Low spirits are not an illness. But they are a
+  fact, and facts take tea.
+  YOU:
+    * (curious) When did it start?  -> poppy_when
+    * (kind) Including you?  -> poppy_you
+    * (dry) You could bottle it and call it Prismbrook.  -> poppy_when
+
+@node poppy_you
+  POPPY(moved): ...Including me. There. I have said it to a stranger. That
+  will be threepence.
+  trust poppy 1
+  goto poppy_when
+
+@node poppy_when
+  POPPY: Two springs back. Right about when the hill stopped having lights on
+  it, since you are going to make me say it.
+  POPPY(shifty): And there is one customer I will mention because he is not
+  ill and he is not sleeping and he will not tell me why.
+  YOU:
+    * (curious) The Mayor.  -> poppy_mayor
+    * (kind) You are worried about him.  -> poppy_worried
+    * (dry) Let me guess. Very good coat.  -> poppy_mayor
+
+@node poppy_worried
+  POPPY(sad): I am worried about all of them. He is just the loudest about
+  being fine.
+  goto poppy_mayor
+
+@node poppy_mayor
+  POPPY: The Mayor. Twice a week. And every single time, if the tower comes
+  up, he remembers an appointment.
+  grant clue.mayor_dodges
+  POPPY(happy): Now. You want my whole opinion, you can make the tea while I
+  give it. Exactly the recipe. It is not a suggestion.
+  start_puzzle mix_ratio
+  POPPY(moved): Good. Most people guess. You counted.
+  POPPY: My whole opinion is this. Nothing is wrong with this town that a
+  hundred people standing on a hill together would not fix.
+  set ch4.poppy_done = 1
+  trust poppy 1
+
+@node poppy_after
+  [if flag ch4.poppy_done == 1]
+  POPPY: Mo keeps the hives past the hedge. Mo will tell you the bees
+  remember the festival. Mo is not being whimsical. I have checked.
+  [else]
+  POPPY: The tea, first.
+  goto poppy_mayor
+  [end]
+
+@node mo_intro
+  [if flag ch4.met_mo == 0]
+  MO(happy): Stand still a moment. They are deciding about you.
+  YOU:
+    * (kind) Take your time.  -> mo_still
+    * (curious) Deciding what?  -> mo_still
+    * (dry) I will try to be uncontroversial.  -> mo_still
+  [else]
+  goto mo_after
+  [end]
+
+@node mo_still
+  set ch4.met_mo = 1
+  MO(laughing): There. You are furniture. Well done.
+  MO: Now. You are here about the hill.
+  MO(worried): I will tell you something and you will decide whether I am a
+  crank, and I have made my peace with that.
+  YOU:
+    * (kind) I have heard stranger and believed it.  -> mo_believe
+    * (curious) Go on.  -> mo_dance
+    * (dry) I reserve the right to think you are a crank.  -> mo_dance
+
+@node mo_believe
+  MO(moved): ...Right. Good. Right.
+  trust mo 1
+  goto mo_dance
+
+@node mo_dance
+  MO: The bees dance where the good things are. That is not folklore, that is
+  just what they do.
+  MO(worried): Mine still dance a path over the hedge, left at nothing at
+  all, and up the hill to the green. Every summer. To a green with nothing on
+  it for three years.
+  YOU:
+    * (curious) They are dancing to something that is not there.  -> mo_notthere
+    * (kind) They are remembering.  -> mo_notthere
+    * (dry) Bees with a long memory and poor judgement.  -> mo_notthere
+
+@node mo_notthere
+  MO(sad): They are dancing to a night with a hundred lanterns on it. Warm
+  and sweet and full of people. The best night of their year for as long as
+  there have been hives here.
+  MO(happy): Come and read it yourself. They will show you if you watch. Then
+  you walk it back and they will know you meant it.
+  start_puzzle hex_path
+  MO(moved): There. Now you know the way to the festival, and so do they, and
+  so does nobody else in this town.
+  grant clue.bees_remember
+  MO: And since you will ask. The lanterns are not lost. Nothing in
+  Prismbrook is ever lost, it is only put away by somebody being tidy about
+  a feeling.
+  MO: They are in the shed on Tower Green. All hundred and eleven, wicks
+  trimmed, waiting like an argument nobody finished.
+  grant clue.lanterns_stored
+  set ch4.mo_done = 1
+  trust mo 1
+
+@node mo_after
+  [if flag ch4.mo_done == 1]
+  MO: You are going up the hill next, and you should. Everything about this
+  is up the hill.
+  [else]
+  MO: Watch the dance first.
+  goto mo_dance
+  [end]

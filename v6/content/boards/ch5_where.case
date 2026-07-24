@@ -1,0 +1,31 @@
+# Chapter Five board. The synthesis. Every load-bearing answer here has been
+# reachable from two independent directions since the chapter it appeared in.
+
+board ch5_where
+  title "The fifth floor: where is Iris Marlow right now?"
+  requires clue.stair_rotten clue.spare_key clue.nona_key clue.pip_trusts clue.mayor_shame clue.nona_grief clue.budget_cut
+  text "Iris Marlow is {p1}."
+  text "She went up {p2},"
+  text "carrying {p3}"
+  text "borrowed from {p4},"
+  text "meaning to {p5} the Prism"
+  text "that she alone knew was {p6}."
+  text "Behind her, {p7} gave way."
+  text "The only one who saw it happen"
+  text "was {p8}."
+  pool places token.lantern_room token.harbour token.inside token.gone token.tower_shed
+  pool times token.that_night token.after_midnight token.three token.last_spring
+  pool objects token.picks token.braces token.stair token.lantern token.fish_pail
+  pool people token.petra token.nona token.pip token.otto token.mayor token.tansy
+  pool motives token.mend token.steal token.promise token.herself
+  pool states token.cracked token.polished token.locked token.refilled
+  blank p1 answer token.lantern_room pool places from clue.stair_rotten clue.spare_key
+  blank p2 answer token.that_night pool times from clue.ferry_log clue.midnight_figure
+  blank p3 answer token.picks pool objects from clue.picks_borrowed clue.iris_letter
+  blank p4 answer token.petra pool people from clue.picks_borrowed clue.iris_secret
+  blank p5 answer token.mend pool motives from clue.repair_braces clue.cogg_ledger
+  blank p6 answer token.cracked pool states from clue.prism_dimming clue.repair_braces
+  blank p7 answer token.stair pool objects from clue.stair_rotten clue.nona_key
+  blank p8 answer token.pip pool people from clue.tansy_saw clue.pip_trusts clue.shiny_thefts
+  feedback grouped
+  on_solved cut ch5_hue_violet

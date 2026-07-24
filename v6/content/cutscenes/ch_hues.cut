@@ -1,0 +1,164 @@
+# W3-C2..C6 — the five hue restorations. Each is themed to its district and
+# each ends with palette_bloom flooding outward from the tower (CANON 8.2).
+# The bloom is the showpiece; the writing gets out of its way.
+
+cut ch1_hue_blue
+  BG ch1_dock
+  MUSIC MOOD_HARBOR
+  TITLE "Chapter One" "The Harbour"
+  WAIT 2.4
+  ACTOR you 300 534
+  ACTOR otto 560 534
+  ACTOR tansy 780 546
+  EMOTE otto worried
+  SAY otto "So that is it, then. I am not the one."
+  EMOTE you neutral
+  SAY you "You were never the one. You were a man carrying a pail up a hill in the dark."
+  EMOTE otto moved
+  SAY otto "...Do not make a speech of it."
+  EMOTE tansy happy
+  SAY tansy "I TOLD everyone. I told them and told them."
+  WAIT 0.6
+  MOVE you 640 524 1.4
+  SAY you "Somebody went up that tower with a lamp and never came down."
+  WAIT 0.8
+  SFX chime
+  BLOOM 1090 300 1
+  MUSIC MOOD_TOWN
+  WAIT 1.6
+  SAY tansy "...The sea. Look at the SEA."
+  EMOTE otto happy
+  SAY otto "Blue. Would you look at that. Blue."
+  WAIT 1.4
+  DOODLE wave 300 470 26
+  DOODLE wave 900 480 26
+  SAY you "One hue back. Five to go, and a town to ask about all of them."
+  WAIT 1.0
+  EXIT
+
+cut ch2_hue_yellow
+  BG ch2_row
+  MUSIC MOOD_MARKET
+  TITLE "Chapter Two" "Market Row"
+  WAIT 2.4
+  ACTOR you 320 526
+  ACTOR greta 600 524
+  ACTOR felix 840 524
+  EMOTE greta worried
+  SAY greta "Say it out loud, dear. You have been carrying it up the Row all morning."
+  SAY you "Nobody broke into the Prismworks."
+  SAY you "Iris Marlow borrowed a set of picks and let herself in."
+  EMOTE felix worried
+  SAY felix "And locked it again behind her. Which is not what a thief does."
+  EMOTE greta sad
+  SAY greta "It is what somebody does who means to come straight back down."
+  WAIT 1.0
+  SFX chime
+  BLOOM 1120 430 2
+  WAIT 1.6
+  EMOTE greta happy
+  SAY greta "Oh — oh, the bunting. Three years I have kept that up."
+  DOODLE bread 420 520 26
+  DOODLE spool 700 520 24
+  EMOTE felix laughing
+  SAY felix "Yellow. The awnings are yellow. I had forgotten they were anything."
+  WAIT 1.2
+  SAY you "She let herself in. So where did she go?"
+  WAIT 1.0
+  EXIT
+
+cut ch3_hue_red
+  BG ch3_lane
+  MUSIC MOOD_QUARTER
+  TITLE "Chapter Three" "The Old Quarter"
+  WAIT 2.4
+  ACTOR you 340 522
+  ACTOR edwina 620 520
+  ACTOR bartleby 860 518
+  EMOTE edwina sad
+  SAY edwina "Say it kindly. She is my sister's girl."
+  SAY you "The Prism has been cracking for three years."
+  SAY you "Iris knew. She has been mending it herself, at night, out of her own wages."
+  EMOTE bartleby moved
+  SAY bartleby "She sat in my reading room and read exactly why it was failing."
+  EMOTE bartleby sad
+  SAY bartleby "And she did not say one word to me about it. Not one."
+  EMOTE edwina moved
+  SAY edwina "She would not. That is the whole trouble with her. That is the whole of it."
+  WAIT 1.0
+  SFX chime
+  BLOOM 1030 200 3
+  WAIT 1.6
+  DOODLE clock 1030 200 40
+  EMOTE bartleby happy
+  SAY bartleby "Red. Good heavens. The brick is red."
+  SAY you "She was mending it. So she went up there to mend it."
+  EMOTE edwina worried
+  SAY edwina "...And then what."
+  WAIT 1.2
+  EXIT
+
+cut ch4_hue_green
+  BG ch4_garden
+  MUSIC MOOD_GARDEN
+  TITLE "Chapter Four" "The Gardens"
+  WAIT 2.4
+  ACTOR you 340 524
+  ACTOR sage 600 522
+  ACTOR poppy 830 522
+  ACTOR mo 1020 522
+  EMOTE sage worried
+  SAY sage "Go on. I have been watering gray flowers for a month, I can take it."
+  SAY you "The Prism is not a lamp. It is a jar."
+  SAY you "The Festival of Lanterns is how the town fills it."
+  EMOTE poppy neutral
+  SAY poppy "And we have not filled it in three years."
+  EMOTE sage sad
+  SAY sage "Rain. Then money. Then nothing at all."
+  EMOTE mo moved
+  SAY mo "The bees never stopped going. Somebody should say that out loud."
+  SAY you "Somebody just did."
+  WAIT 0.8
+  SFX chime
+  BLOOM 1130 410 4
+  WAIT 1.6
+  DOODLE flower 420 540 22
+  DOODLE flower 700 548 22
+  DOODLE flower 960 536 22
+  EMOTE sage moved
+  SAY sage "...They were scarlet. I told everyone they were scarlet."
+  EMOTE poppy happy
+  SAY poppy "You did. At length. You were right."
+  WAIT 1.4
+  EXIT
+
+cut ch5_hue_violet
+  BG ch5_green
+  MUSIC MOOD_TOWER
+  TITLE "Chapter Five" "Tower Green"
+  WAIT 2.4
+  ACTOR you 340 526
+  ACTOR nona 580 524
+  ACTOR mayor 800 524
+  ACTOR wick 1010 522
+  EMOTE nona worried
+  SAY nona "Third lamp. I said the third lamp."
+  SFX door
+  SAY you "It was under the third lamp. It has been under the third lamp for three years."
+  EMOTE mayor sad
+  SAY mayor "While I cancelled the reason anybody would need it."
+  SAY you "She is in the lantern room. She has been in the lantern room the whole week."
+  EMOTE wick worried
+  SAY wick "The stair went behind her. I said. I said it twice and it went in a folder."
+  EMOTE nona moved
+  SAY nona "Then open it. Open it now."
+  WAIT 0.8
+  SFX chime
+  BLOOM 640 430 5
+  SHAKE 4 0.5
+  WAIT 1.8
+  EMOTE mayor moved
+  SAY mayor "Violet. The hill goes violet at dusk. I had forgotten that entirely."
+  SAY you "Up the stair, then. Mind the third plank."
+  WAIT 1.2
+  EXIT

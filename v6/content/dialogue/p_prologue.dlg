@@ -1,0 +1,194 @@
+# Prologue — hired at the gate, the town seen, the tower shut.
+# Tone rules (CANON 6): warm, wry, gentle. Humour from character, never
+# meanness. The Detective's choices are tone, never morals.
+
+@node p_gate_open
+  The road comes over the hill and Prismbrook is laid out below like a page
+  somebody forgot to colour in.
+  You have seen this town on a postcard. The postcard lied, or the town did.
+  A man in a very good coat is waiting at the arch, holding his hat with both
+  hands, which is not what hats are for.
+
+@node p_mayor_gate
+  [if flag p.hired == 0]
+  MAYOR(worried): You came. Good. Yes. Good.
+  MAYOR(worried): You will want the facts and I will give you the facts and
+  then I would like very much to sit down.
+  MAYOR: Yesterday this town was the brightest thing on this coast. This
+  morning we woke up the colour of a wet newspaper.
+  grant clue.town_gray
+  MAYOR(sad): The Prism is gone out of the lantern room. Gone from its cradle.
+  grant clue.prism_missing
+  YOU:
+    * (kind) That must have been a frightening thing to wake up to.  -> p_mayor_kind
+    * (curious) Gone how? Taken, or simply not there?  -> p_mayor_curious
+    * (dry) And the reward for finding it is the colour back, I take it.  -> p_mayor_dry
+  [else]
+  MAYOR: Whatever you need. Anything at all. Except — well. Whatever you need.
+  YOU:
+    * (curious) Anything except what, Mayor?  -> p_mayor_dodge
+    * (kind) I will come back when I have something.  -> p_mayor_wave
+  [end]
+
+@node p_mayor_kind
+  MAYOR(moved): It was. Thank you for saying so. Nobody has.
+  goto p_mayor_terms
+
+@node p_mayor_curious
+  MAYOR: Not there. The door was shut. The door is still shut.
+  goto p_mayor_terms
+
+@node p_mayor_dry
+  MAYOR(laughing): Ha. Yes. The reward is the colour back, and the council's
+  savings, which I am afraid are mostly the colour back.
+  goto p_mayor_terms
+
+@node p_mayor_terms
+  MAYOR: The council pooled what we had. It is not much and it is all of it.
+  set p.hired = 1
+  MAYOR: Go anywhere. Ask anyone. They will talk to you; they have been
+  talking to each other about nothing else for a day.
+  MAYOR(shifty): Only — start in the square. Not the tower. The tower can
+  wait.
+  YOU:
+    * (curious) Why can the tower wait?  -> p_mayor_dodge
+    * (kind) The square it is.  -> p_mayor_wave
+
+@node p_mayor_dodge
+  MAYOR(shifty): Because there is nothing at the tower but a locked door and
+  an old man talking to it. Because — because it can wait.
+  MAYOR: The square, detective. Please.
+
+@node p_mayor_wave
+  MAYOR(happy): Splendid. Splendid. I shall be here, holding my hat.
+
+@node p_square_open
+  The square is full of people not looking at each other, which in a town this
+  size takes real effort.
+  Something black and white comes off the fountain rim like a thrown stone,
+  and every head in the square snaps up to follow it.
+  It is a magpie. It goes over the roofs towards the tower, fast and low, and
+  it does not look back.
+  Somebody by the baker's says, quite clearly and to nobody, "There he goes.
+  There goes the thief."
+
+@node p_bruno
+  [if flag p.met_bruno == 0]
+  BRUNO(sad): You are the detective. Here. Take a bun.
+  YOU:
+    * (kind) That is very kind of you.  -> p_bruno_kind
+    * (dry) Is this evidence?  -> p_bruno_dry
+    * (curious) Why is everyone looking at the sky?  -> p_bruno_bird
+  [else]
+  BRUNO(happy): Still warm. Take another.
+  goto p_bruno_bird
+  [end]
+
+@node p_bruno_kind
+  BRUNO(moved): It is the only useful thing I know how to do before noon.
+  trust bruno 1
+  goto p_bruno_bird
+
+@node p_bruno_dry
+  BRUNO(laughing): Everything is evidence, that is what I always say. No I
+  do not. Eat the bun.
+  goto p_bruno_bird
+
+@node p_bruno_bird
+  set p.met_bruno = 1
+  BRUNO(worried): The bird. Iris Marlow's magpie. Pip.
+  BRUNO: Half this town has decided he flew off with the Prism in his beak,
+  because he is shiny-minded and because it is easier than thinking.
+  grant clue.magpie_blamed
+  BRUNO(sad): I do not hold with it. He used to sit on my sill and I used to
+  pretend to shoo him.
+  YOU:
+    * (kind) A magpie could not lift a crystal that size.  -> p_bruno_size
+    * (curious) Who is Iris Marlow?  -> p_bruno_iris
+    * (dry) People do like a suspect with feathers.  -> p_bruno_iris
+
+@node p_bruno_size
+  BRUNO(happy): No. He could not. I said so and I was told I was soft.
+  trust bruno 1
+  goto p_bruno_iris
+
+@node p_bruno_iris
+  BRUNO: Our Tinter. She keeps the Prism lit. Kept. Keeps.
+  BRUNO(worried): She has a standing order with me. Two seeded rolls, every
+  second day, forty years between her and her mother.
+  BRUNO(sad): I baked them yesterday and they are still on the shelf.
+
+@node p_wick_square
+  [if flag p.met_wick == 0]
+  WICK: Mm.
+  WICK: You will be the one they wrote away for.
+  YOU:
+    * (kind) I am. And you are the one who keeps the tower.  -> p_wick_keeps
+    * (curious) Has anyone actually been inside the Prismworks today?  -> p_wick_inside
+    * (dry) Word travels.  -> p_wick_keeps
+  [else]
+  WICK: She is still shut. I have asked her twice today.
+  goto p_wick_inside
+  [end]
+
+@node p_wick_keeps
+  WICK(neutral): Forty-one years. She and I get on.
+  set p.met_wick = 1
+  goto p_wick_inside
+
+@node p_wick_inside
+  set p.met_wick = 1
+  WICK(worried): Nobody has been in. Nobody can. She is locked.
+  WICK: And here is the part that has the Mayor holding his hat. She is
+  locked from the inside.
+  grant clue.door_locked
+  YOU:
+    * (curious) Then whoever locked it never left.  -> p_wick_never
+    * (kind) You sound worried about her. The tower, or the Tinter?  -> p_wick_both
+    * (dry) A thief who tidies up after himself.  -> p_wick_never
+
+@node p_wick_never
+  WICK: Mm. That is the shape of it, aye.
+  goto p_wick_iris
+
+@node p_wick_both
+  WICK(moved): ...Both. I am not much good at saying so.
+  trust wick 1
+  goto p_wick_iris
+
+@node p_wick_iris
+  WICK(sad): Iris Marlow has not been seen since the night before last. She
+  goes quiet for a day sometimes. Not two. Never two.
+  grant clue.iris_missing
+  WICK: Go up and look at her yourself. The Prismworks, I mean. The tower.
+  WICK: You can stand on the stair. The stair is sound as far as it goes.
+
+@node p_after_morning
+  You look at what you have written and it does not add up to a theft. It
+  adds up to a locked room with the wrong things missing.
+  A theft takes something valuable. This took something valuable, and a
+  person, and left the door locked behind it.
+  set p.opened = 1
+  MAYOR: Well? Well?
+  YOU:
+    * (kind) Somebody is inside that tower, Mayor. Or was.  -> p_after_kind
+    * (dry) Your thief locked up behind himself and took the caretaker.  -> p_after_dry
+    * (curious) Who saw the tower last night?  -> p_after_curious
+
+@node p_after_kind
+  MAYOR(worried): Inside. Oh dear. Oh dear.
+  goto p_after_send
+
+@node p_after_dry
+  MAYOR(laughing): When you put it like that it does sound less like a
+  magpie.
+  goto p_after_send
+
+@node p_after_curious
+  MAYOR: The harbour, I should think. The harbour is awake at all hours.
+  goto p_after_send
+
+@node p_after_send
+  MAYOR: The harbour. Otto Brine is down there and Otto Brine sees everything
+  and says almost none of it.
+  MAYOR(happy): Go on. Go and be a detective at them.

@@ -1,0 +1,55 @@
+# The Prismworks stair. Shared ground: no chapter owns this file, so nothing
+# here may grant a clue. It teaches the boards and it keeps Wick company.
+
+@node tower_first
+  Inside, the Prismworks smells of cold stone and lamp oil and, faintly, of
+  turpentine.
+  The stair goes up in a slow spiral and stops three floors short of the top,
+  at a landing of raw planks somebody has roped off with a bootlace.
+  Every landing has a wide flat table, scarred with forty years of chalk.
+  Whatever the Tinters used these tables for, they used them for thinking.
+  Your journal has margins. The tables have room. You could lay out what you
+  know here and look at all of it at once, which is the only trick this job
+  has ever had.
+
+@node tower_wick
+  [if flag tw.first == 0]
+  set tw.first = 1
+  WICK: Mm. You found the tables.
+  WICK: Tinters did their arguing on those. With themselves, mostly.
+  YOU:
+    * (curious) How do they work?  -> tower_how
+    * (kind) Do you want to come up and sit with me while I think?  -> tower_sit
+    * (dry) I do my arguing standing up.  -> tower_how
+  [else]
+  [if flag board.ch5_where == 1]
+  WICK(moved): Up you go, then. Mind the third plank. Mind it kindly.
+  [else]
+  WICK: Take your time. She has waited longer than this for company.
+  [end]
+  [end]
+
+@node tower_how
+  WICK: You write the sentence with the holes in it. Then you put your bits
+  of the world in the holes until the sentence stops lying.
+  WICK: When you have filled every hole, you say Deduce, and it tells you how
+  many of them hold. Not which. How many.
+  YOU:
+    * (dry) That is a miserly sort of help.  -> tower_miser
+    * (curious) And if I am wrong?  -> tower_wrong
+    * (kind) That sounds like enough.  -> tower_wrong
+
+@node tower_miser
+  WICK(laughing): It is. It is also the only kind that leaves you the
+  satisfaction.
+  goto tower_wrong
+
+@node tower_wrong
+  WICK: Then you are wrong, and you move a word, and you say it again. Nobody
+  is counting and nothing is taken off you.
+  WICK: Iris used to be up there for hours. Wrong for hours. Happy as anything.
+
+@node tower_sit
+  WICK(moved): ...Aye. All right. I will sit on the bottom step.
+  trust wick 1
+  WICK: I will not be any help. I will just be here.

@@ -1,0 +1,228 @@
+# Chapter Three — the Old Quarter.
+# Question: what was wrong with the Prism before it vanished?
+# Beat: the ledger. Iris ordered repair braces and paid for them herself.
+
+@node ch3_lane_open
+  The Old Quarter is all one lane, and the lane has been leaning companionably
+  against itself since before anyone can remember.
+  In colour it would be red brick and rust and geranium. In gray it is a
+  pencil drawing of somewhere warm.
+
+@node edwina_intro
+  [if flag ch3.met_edwina == 0]
+  EDWINA(shifty): No.
+  YOU:
+    * (dry) I have not asked anything yet.  -> edwina_notyet
+    * (kind) That is all right. I can come back.  -> edwina_soft
+    * (curious) No to which question?  -> edwina_notyet
+  [else]
+  goto edwina_after
+  [end]
+
+@node edwina_soft
+  EDWINA(sad): ...No. Stay. I am sorry. I have said no eleven times today and
+  it has got away from me.
+  trust edwina 1
+  goto edwina_niece
+
+@node edwina_notyet
+  EDWINA(worried): You were going to ask about my niece and I was going to say
+  no, and now we have both saved a great deal of time.
+  goto edwina_niece
+
+@node edwina_niece
+  set ch3.met_edwina = 1
+  EDWINA: Iris is my sister's girl. She has been the Tinter since she was
+  twenty-two and she has never once asked anybody for anything.
+  YOU:
+    * (curious) Did she ask you for something?  -> edwina_ask
+    * (kind) That sounds lonely, rather than admirable.  -> edwina_lonely
+    * (dry) A family trait, I imagine.  -> edwina_lonely
+
+@node edwina_lonely
+  EDWINA(moved): ...It is both. It has always been both. In this family we
+  are very good at both.
+  trust edwina 1
+  goto edwina_ask
+
+@node edwina_ask
+  EDWINA(worried): She asked me for work. Paying work, and she would not have
+  it any other way, and I let her, because I am a fool who thought it was
+  pride.
+  EDWINA: The clock in the window has been stopped a fortnight and I cannot
+  face it. Put the train right and I will open the ledger for you.
+  start_puzzle gear_train
+  EDWINA(happy): Hm. You have a feel for it. Iris had a feel for it.
+  EDWINA(sad): Third page. There. Her hand, my ledger.
+  grant clue.cogg_ledger
+  EDWINA: Four crystal repair braces. Brass, lined, made to a drawing she
+  brought me. Ordered in the spring. Paid for out of her own pocket, in
+  instalments, like a woman buying a coat.
+  grant clue.repair_braces
+  YOU:
+    * (curious) Braces for what? You must have asked.  -> edwina_asked
+    * (kind) You have been carrying this by yourself.  -> edwina_carry
+    * (dry) A coat would have been cheaper.  -> edwina_asked
+
+@node edwina_carry
+  EDWINA(moved): Since Tuesday. Since they started saying it was the bird and
+  I knew it was not the bird and I said nothing because she asked me not to.
+  trust edwina 1
+  goto edwina_asked
+
+@node edwina_asked
+  EDWINA(sad): I asked. She said, a thing that has a crack in it. She said it
+  the way you say a thing you have decided not to cry about.
+  set ch3.edwina_done = 1
+  trust edwina 1
+
+@node edwina_after
+  [if flag ch3.edwina_done == 1]
+  EDWINA: Bartleby has the histories. He will be unbearable about it and he
+  will also be right.
+  [else]
+  EDWINA: The clock, first.
+  goto edwina_ask
+  [end]
+
+@node bartleby_intro
+  [if flag ch3.met_bartleby == 0]
+  BARTLEBY(happy): A detective! In the reading room! I shall be insufferable
+  about this for a year.
+  YOU:
+    * (kind) Be insufferable. I am in no hurry.  -> bartleby_indulge
+    * (curious) I need the history of the Prism.  -> bartleby_history
+    * (dry) You have about ten minutes of insufferable in you. Use it well.  -> bartleby_indulge
+  [else]
+  goto bartleby_after
+  [end]
+
+@node bartleby_indulge
+  BARTLEBY(laughing): Oh, I like you. Nobody lets me finish.
+  trust bartleby 1
+  goto bartleby_history
+
+@node bartleby_history
+  set ch3.met_bartleby = 1
+  BARTLEBY: The Prism does not make the colour. Everyone in this town will
+  tell you it makes the colour. Everyone in this town is repeating their
+  grandmother.
+  BARTLEBY(worried): The Prism holds light. It is a jar, not a lamp. And a
+  jar that is never filled is a jar that goes empty, slowly, over years, in a
+  way nobody notices until a Tuesday.
+  grant clue.prism_dimming
+  YOU:
+    * (curious) Filled by what?  -> bartleby_filled
+    * (kind) Somebody noticed. Somebody always notices first.  -> bartleby_noticed
+    * (dry) A jar. You have been waiting years to say that.  -> bartleby_filled
+
+@node bartleby_noticed
+  BARTLEBY(moved): ...Yes. And she sat in that chair, and she read what I have
+  just told you, and she did not say one word about it to me.
+  trust bartleby 1
+  goto bartleby_filled
+
+@node bartleby_filled
+  BARTLEBY: By the Festival of Lanterns. The whole town on the green with a
+  light each. That is the filling. That is the entire mechanism.
+  BARTLEBY(worried): Which brings me to the shelf, and to my catalogue, and to
+  a small joke played on me by my predecessor.
+  BARTLEBY: The festival ledgers are shelved by a shifted alphabet. Turn the
+  dial until the spine says something and I will hand you the gap.
+  start_puzzle cipher_shelf
+  BARTLEBY(happy): There. Reading is mostly turning things until they mean
+  something.
+  BARTLEBY(sad): And here is the gap. Forty years of ledgers in a row and then
+  nothing. Three winters of nothing.
+  grant clue.festival_lapsed
+  set ch3.bartleby_done = 1
+  trust bartleby 1
+
+@node bartleby_after
+  [if flag ch3.bartleby_done == 1]
+  BARTLEBY: Petra Ward. Two doors down. She will tell you nothing at
+  considerable length and you should listen to every word of the nothing.
+  [else]
+  BARTLEBY: The shelf, first.
+  goto bartleby_filled
+  [end]
+
+@node petra_intro
+  [if flag ch3.met_petra == 0]
+  PETRA(neutral): Detective.
+  PETRA: I know what you want and the answer is that I am not going to tell
+  you.
+  YOU:
+    * (kind) Then I will not ask. Is that all right?  -> petra_notask
+    * (curious) Your picks are missing and you reported nothing.  -> petra_picks
+    * (dry) You have rehearsed that.  -> petra_rehearsed
+  [else]
+  goto petra_after
+  [end]
+
+@node petra_rehearsed
+  PETRA(laughing): Twice. In the mirror. It came out better then.
+  goto petra_picks
+
+@node petra_notask
+  PETRA(moved): ...That is not fair. That is much harder than being asked.
+  trust petra 1
+  goto petra_picks
+
+@node petra_picks
+  set ch3.met_petra = 1
+  PETRA: My picks are not missing. There is a difference between a thing that
+  is missing and a thing that is lent.
+  grant clue.picks_borrowed
+  YOU:
+    * (curious) Lent to whom?  -> petra_whom
+    * (kind) And you let the town call her a thief instead.  -> petra_town
+    * (dry) You have let this whole street think you were robbed.  -> petra_town
+
+@node petra_town
+  PETRA(sad): The town is calling a bird a thief. Nobody has said her name
+  once. I have listened for it.
+  goto petra_whom
+
+@node petra_whom
+  PETRA(shifty): I gave my word. I gave it out loud, at that counter, and she
+  did not even ask me to.
+  grant clue.iris_secret
+  PETRA: You may work it out. Working it out is not me telling you. I have
+  thought about this a great deal in two days.
+  PETRA(happy): And if you want to be able to work anything out, you should
+  understand a lock properly. Sit down. This one is for teaching.
+  start_puzzle tumbler_logic
+  PETRA(moved): Good. Now you know that a lock is not a secret. It is a
+  sentence you have not read yet.
+  PETRA: She came in on the Thursday. She would not sit down. She asked to
+  borrow the picks and she asked me not to tell anyone, and she was not
+  frightened, she was embarrassed.
+  YOU:
+    * (curious) Embarrassed about what?  -> petra_embar
+    * (kind) You have kept a hard promise for two days.  -> petra_hard
+    * (dry) Embarrassed. Not the usual burglar's mood.  -> petra_embar
+
+@node petra_hard
+  PETRA(moved): I would keep it for twenty years. That is what a promise is.
+  PETRA(sad): I would just rather somebody found her first.
+  trust petra 1
+  goto petra_done
+
+@node petra_embar
+  PETRA: I did not ask. She was holding the door frame with one hand and
+  looking at the floor and I have known her since she was six.
+  goto petra_done
+
+@node petra_done
+  set ch3.petra_done = 1
+  trust petra 1
+
+@node petra_after
+  [if flag ch3.petra_done == 1]
+  PETRA: You want to know why nobody has gathered on that green in three
+  years. So do I. Ask the Gardens. Sage Fern says more than he means to.
+  [else]
+  PETRA: The teaching lock, first.
+  goto petra_whom
+  [end]

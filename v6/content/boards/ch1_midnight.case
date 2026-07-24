@@ -1,0 +1,23 @@
+# Chapter One board. Clears Otto, and turns the town's only suspect into the
+# town's only witness.
+
+board ch1_midnight
+  title "The first floor: who was at the tower at midnight?"
+  requires clue.otto_alibi clue.tansy_saw clue.ferry_log clue.fish_pail clue.midnight_figure clue.pip_hungry
+  text "At midnight, {p1} climbed Tower Green"
+  text "carrying {p2}."
+  text "Not to steal, but to {p3}."
+  text "The ferry log puts him there {p4},"
+  text "and {p5} watched the whole of it"
+  text "from the harbour wall."
+  pool people token.otto token.tansy token.iris token.maribel token.nona
+  pool objects token.fish_pail token.picks token.lantern token.ledger
+  pool motives token.feed_pip token.steal token.mend token.promise
+  pool times token.after_midnight token.that_night token.last_spring token.three
+  blank p1 answer token.otto pool people from clue.otto_alibi clue.midnight_figure
+  blank p2 answer token.fish_pail pool objects from clue.fish_pail clue.otto_alibi
+  blank p3 answer token.feed_pip pool motives from clue.pip_hungry clue.tansy_saw
+  blank p4 answer token.after_midnight pool times from clue.ferry_log clue.midnight_figure
+  blank p5 answer token.tansy pool people from clue.tansy_saw clue.pip_hungry
+  feedback grouped
+  on_solved cut ch1_hue_blue

@@ -1,0 +1,114 @@
+# W3-C7 and C8 — Iris Found, and the Festival of Lanterns.
+# The finale gets the double budget (CANON 15). Nobody done it. Everybody
+# fixes it.
+
+cut f_iris_found
+  BG f_lantern
+  MUSIC MOOD_SILENT
+  FADE out 0.1
+  WAIT 0.4
+  FADE in 2.0
+  MUSIC MOOD_SAD
+  ACTOR you 220 544
+  WAIT 1.2
+  SAY you "The lantern room is smaller than the town thinks it is."
+  MOVE you 420 540 2.4
+  WAIT 1.6
+  DOODLE prism 640 470 44
+  SAY you "The Prism is in its cradle. Dark. And cracked, exactly the way her aunt's ledger said."
+  WAIT 1.0
+  ACTOR iris 760 536
+  EMOTE iris worried
+  SFX page
+  SAY iris "...Is somebody there?"
+  WAIT 0.8
+  EMOTE iris sad
+  SAY iris "I have been saying that for seven days. I have got quite good at it."
+  MOVE you 620 538 2.0
+  WAIT 2.0
+  EMOTE you moved
+  SAY you "Iris Marlow. The whole town has been looking for you."
+  EMOTE iris shifty
+  SAY iris "Have they. Well. That is mortifying."
+  WAIT 0.8
+  EMOTE iris moved
+  SAY iris "I was going to be down in an hour. That was the plan. An hour, and nobody any the wiser."
+  SAY you "That was a week ago."
+  EMOTE iris sad
+  SAY iris "...Yes."
+  WAIT 1.2
+  MUSIC MOOD_TOWER
+  EXIT
+
+cut f_festival
+  BG ch5_green
+  MUSIC MOOD_SILENT
+  FADE out 1.0
+  WAIT 1.2
+  TITLE "The Festival of Lanterns" "for the first time in three years"
+  FADE in 1.6
+  WAIT 2.6
+  MUSIC MOOD_FESTIVAL
+  ACTOR nona 480 524
+  ACTOR mayor 620 524
+  ACTOR you 760 524
+  ACTOR tansy 900 536
+  EMOTE nona moved
+  SAY nona "I have carried this match in my apron for three years."
+  SFX sparkle
+  DOODLE lantern 480 500 26
+  SAY nona "Somebody light theirs off mine. That is the whole of the ceremony. That is all it ever was."
+  WAIT 1.0
+  SFX feather
+  DOODLE lantern 620 496 26
+  DOODLE lantern 760 502 26
+  DOODLE lantern 900 498 26
+  EMOTE mayor worried
+  SAY mayor "Eleven. It was eleven, the last time. I have been counting since six o'clock."
+  EMOTE tansy laughing
+  SAY tansy "Count again! Count AGAIN!"
+  WAIT 0.8
+  EMOTE mayor moved
+  SAY mayor "...Four hundred. And six. And a bird."
+  WAIT 1.0
+  DOODLE lantern 260 506 24
+  DOODLE lantern 380 500 24
+  DOODLE lantern 1040 504 24
+  DOODLE lantern 1160 498 24
+  DOODLE bird 700 300 30
+  MOVE you 640 520 2.0
+  SAY you "Up you go, then. All of you. She has been waiting a week."
+  WAIT 1.6
+  SFX mend
+  SHAKE 5 0.8
+  BLOOM 640 300 6
+  WAIT 2.4
+  HUE 6 1.0
+  MUSIC MOOD_FESTIVAL
+  SAY you "The Prism drinks it the way dry ground drinks rain."
+  WAIT 1.4
+  ACTOR iris 500 522
+  EMOTE iris moved
+  SAY iris "You could have done this any year. Any single year."
+  EMOTE mayor sad
+  SAY mayor "We know. We are very sorry. We are going to be tiresome about it for a while."
+  EMOTE iris laughing
+  SAY iris "Good."
+  WAIT 1.2
+  EMOTE nona moved
+  SAY nona "Next year, Tinter. Say something next year. Anything at all. We will come."
+  EMOTE iris moved
+  SAY iris "...I will try. I am not promising I will be graceful about it."
+  WAIT 1.6
+  TITLE "Prismbrook" "in colour, and in a great deal of noise"
+  WAIT 3.0
+  SAY you "Nobody done it."
+  SAY you "Everybody fixed it."
+  WAIT 1.0
+  SAY tansy "Also Pip is a Deputy Detective now. The Mayor said. Everyone HEARD him say it."
+  EMOTE mayor laughing
+  SAY mayor "I did say it. It is minuted. It is, I am told, now the law."
+  WAIT 1.6
+  FADE out 2.4
+  WAIT 2.6
+  EXIT
