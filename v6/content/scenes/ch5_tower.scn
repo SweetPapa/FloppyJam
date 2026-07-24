@@ -1,0 +1,33 @@
+# Chapter Five — Tower Green. Violet comes home here, and so does the key.
+
+scene ch5_green
+  title "Tower Green"
+  bg towergreen
+  music MOOD_TOWER
+  walk 110 449 1170 530
+  spawn 180 520
+  on_enter ch5_green_open
+  actor mayor 400 520 stand
+  actor wick 900 518 busy
+  hot 342 356 120 180 talk mayor_intro "Mayor Aurelius Grand"
+  hot 842 356 120 180 talk wick_intro "Wick, groundskeeper"
+  hot 620 284 130 140 look "The Prismworks door, close up. No scratches at the plate, no splinters at the frame, and a keyhole that has been oiled by somebody who cared about it."
+  hot 1020 374 130 110 look "The lantern shed. Three years of cobwebs, and underneath them, a hundred and eleven lanterns stacked with their wicks trimmed ready."
+  feather 250 254 f_ch5a
+  feather 1100 304 f_ch5b
+  hot 40 424 90 150 exit p_square "Back to the square"
+  hot 1160 374 110 200 exit ch5_lodge "Round to the lamplighter's lodge"
+
+scene ch5_lodge
+  title "Tower Green — the Lamplighter's Lodge"
+  bg towergreen
+  music MOOD_SAD
+  walk 110 449 1170 530
+  spawn 1080 520
+  actor nona 540 520 stand
+  hot 482 356 120 180 talk nona_intro "Nona Ember"
+  hot 860 334 140 120 look "Forty years of lamplighting kit, cleaned and hung up in order, as though somebody might still come and ask."
+  hot 220 344 130 120 look "A photograph of the green under a hundred lanterns. Everybody in it is looking up. Nona has it turned very slightly towards the wall."
+  feather 700 234 f_ch5c
+  hot 40 424 90 150 exit ch5_green "Back to the green"
+  hot 1160 374 110 200 exit p_square "Up to the square"

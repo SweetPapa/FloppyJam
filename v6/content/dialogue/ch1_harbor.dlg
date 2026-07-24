@@ -1,0 +1,221 @@
+# Chapter One — the Harbour.
+# Question: who was at the tower at midnight, and why?
+# Red herring: Otto, seen on the green at midnight, resolving warmly.
+
+@node ch1_dock_open
+  The harbour is the only part of Prismbrook that has not noticed it is gray,
+  because the harbour was never the colourful bit.
+  Even so, the sea has gone the shade of a dropped coin, and two women on the
+  wall are looking at it and not saying anything at all.
+
+@node otto_intro
+  [if flag ch1.met_otto == 0]
+  OTTO(worried): Cold morning, detective. Colder without the blue, if you ask
+  me.
+  YOU:
+    * (kind) Everyone misses it, Mr. Brine.  -> otto_warm
+    * (dry) The fish seem to be coping.  -> otto_chuckle
+    * (curious) You were up on Tower Green last night.  -> otto_accused
+  [else]
+  goto otto_after
+  [end]
+
+@node otto_warm
+  OTTO(moved): ...Aye. Well. Ask your questions.
+  trust otto 1
+  goto otto_midnight
+
+@node otto_chuckle
+  OTTO(laughing): The fish have never once given a fig about anything. Ask
+  your questions.
+  goto otto_midnight
+
+@node otto_accused
+  OTTO(shifty): Who says that.
+  OTTO(shifty): No. Do not tell me. I know who says that. Everybody says that.
+  goto otto_midnight
+
+@node otto_midnight
+  set ch1.met_otto = 1
+  OTTO(worried): You will have heard I was on the green after midnight. I
+  was. I have been every night this week.
+  grant clue.midnight_figure
+  YOU:
+    * (kind) You do not have to tell me why.  -> otto_free
+    * (curious) Doing what, at midnight, on the green?  -> otto_why
+    * (dry) A man could get himself talked about.  -> otto_why
+
+@node otto_free
+  OTTO(moved): I know. That is why I am going to.
+  trust otto 1
+  goto otto_why
+
+@node otto_why
+  OTTO(sad): There is a bird up that tower that has not eaten properly in a
+  week, because this town decided he was a thief and this town stopped
+  putting things out.
+  grant clue.pip_hungry
+  OTTO: So I take a pail up. Fish heads, mostly. He does not come down while
+  I am there. He waits until I have gone off the green.
+  grant clue.fish_pail
+  YOU:
+    * (kind) That is a decent thing to do for a suspect.  -> otto_decent
+    * (curious) Why not just tell people?  -> otto_tell
+    * (dry) Feeding the accused. Very irregular.  -> otto_decent
+
+@node otto_decent
+  OTTO(shifty): It is a pail of heads. Do not make a speech of it.
+  OTTO(moved): Nobody should go hungry. Not even a thief. Especially not a
+  thief who is nine ounces.
+  trust otto 1
+  goto otto_task
+
+@node otto_tell
+  OTTO(worried): And have them laugh? Or worse, have them stop me?
+  goto otto_task
+
+@node otto_task
+  OTTO: Right. If you want the whole of my night you will have to earn it,
+  and I have got crates to order before the ice goes.
+  OTTO(happy): Five crates, no marks on them, one balance. Sort me those and
+  I will give you the lot, times and all.
+  start_puzzle weights_sorting
+  OTTO(moved): Lightest to heaviest and not a scale in sight. You have a head
+  on you.
+  OTTO: I went up at half eleven. I was off the green before one. I saw
+  nobody go in and nobody come out, and I would have.
+  set ch1.otto_done = 1
+  trust otto 1
+
+@node otto_after
+  [if flag ch1.otto_done == 1]
+  OTTO: Ask Tansy. She is nine and she watches everything and nobody has
+  thought to ask her a single question.
+  [else]
+  OTTO(worried): Come back when you have a minute for the crates.
+  goto otto_task
+  [end]
+
+@node tansy_intro
+  [if flag ch1.met_tansy == 0]
+  TANSY(happy): Are you the detective? You do not look like one.
+  YOU:
+    * (kind) What is a detective supposed to look like?  -> tansy_look
+    * (dry) Neither do you, and yet here we are.  -> tansy_look
+    * (curious) I hear you are the one who watches the tower.  -> tansy_watch
+  [else]
+  goto tansy_after
+  [end]
+
+@node tansy_look
+  TANSY(laughing): Taller. And with a big coat that goes out at the bottom
+  when you turn round fast.
+  TANSY: I have thought about it a lot.
+  trust tansy 1
+  goto tansy_watch
+
+@node tansy_watch
+  set ch1.met_tansy = 1
+  TANSY(worried): Everyone says Pip took the shiny thing. Everyone is wrong.
+  YOU:
+    * (curious) Tell me what you saw.  -> tansy_saw_it
+    * (kind) You sound very sure. Why?  -> tansy_sure
+    * (dry) Everyone is usually wrong. Go on.  -> tansy_saw_it
+
+@node tansy_sure
+  TANSY(sad): Because he is not being a thief. He is being sad. They look
+  completely different and grown-ups cannot tell.
+  TANSY: He is not bad. He is just sad.
+  trust tansy 1
+  goto tansy_saw_it
+
+@node tansy_saw_it
+  TANSY: I was on the wall late because of the crabs. Crabs are late.
+  TANSY(worried): He came down at the fish stall and then he went up at the
+  tower and then he came down again and then he went up again. Loads of times.
+  YOU:
+    * (curious) Like he was going back and forth on purpose?  -> tansy_purpose
+    * (kind) That sounds tiring, for a bird.  -> tansy_purpose
+    * (dry) Busy night for a master criminal.  -> tansy_purpose
+
+@node tansy_purpose
+  TANSY(happy): Like when you pull someone's sleeve. Exactly like that.
+  TANSY: If you want the whole of it you have to play shells with me. That is
+  the rule. It has always been the rule.
+  start_puzzle shell_memory
+  TANSY(laughing): You are quite good at that for a grown-up.
+  TANSY(sad): He was not carrying anything. Not once. Not going up and not
+  coming down. I looked, because I wanted him not to be.
+  set ch1.tansy_done = 1
+  trust tansy 1
+
+@node tansy_after
+  [if flag ch1.tansy_done == 1]
+  TANSY(happy): Captain Sorge writes down every single boat. Every one. She
+  is worse than me.
+  [else]
+  TANSY: Shells first. Rules are rules.
+  goto tansy_purpose
+  [end]
+
+@node maribel_intro
+  [if flag ch1.met_maribel == 0]
+  MARIBEL(neutral): You will be wanting the log.
+  YOU:
+    * (curious) I will be wanting the log.  -> maribel_log
+    * (kind) I will be wanting whatever you can spare, Captain.  -> maribel_spare
+    * (dry) Am I that obvious?  -> maribel_obvious
+  [else]
+  goto maribel_after
+  [end]
+
+@node maribel_obvious
+  MARIBEL(laughing): You are a coat with a notebook in it. Yes.
+  goto maribel_log
+
+@node maribel_spare
+  MARIBEL(moved): ...That is a kinder way of asking than I am used to.
+  trust maribel 1
+  goto maribel_log
+
+@node maribel_log
+  set ch1.met_maribel = 1
+  MARIBEL: I write every crossing. Time out, time in, to the minute. Forty
+  years of it, and my mother's before.
+  MARIBEL(shifty): It is not sentiment. It is a log.
+  YOU:
+    * (kind) It is a little bit sentiment.  -> maribel_sentiment
+    * (curious) Then you will know who was moving after midnight.  -> maribel_task
+    * (dry) Forty years of nothing happening, minuted.  -> maribel_task
+
+@node maribel_sentiment
+  MARIBEL(moved): ...It is a little bit sentiment. My mother's hand is in the
+  front of it and mine is in the back and I do not intend to explain that
+  further.
+  trust maribel 1
+  goto maribel_task
+
+@node maribel_task
+  MARIBEL: I will read you the small hours. First, the ferry is loose and I
+  will not have her loose.
+  MARIBEL: Run me a line from the bollard to the ferry and take in every
+  cleat on the way. A rope that skips a cleat is a rope that lets go.
+  start_puzzle rope_knot
+  MARIBEL(happy): Hm. Seaman's hands on a paper-pusher.
+  MARIBEL: Small hours, then. Nothing crossed. Nothing at all until the milk
+  boat at four.
+  MARIBEL(worried): But I was on deck. And I will tell you what I saw on the
+  green, because you asked properly.
+  MARIBEL: A lamp going up the outside stair a little after midnight, and no
+  lamp coming down. I assumed it was Iris. It is always Iris.
+  set ch1.maribel_done = 1
+  trust maribel 1
+
+@node maribel_after
+  [if flag ch1.maribel_done == 1]
+  MARIBEL: A lamp that goes up and does not come down is a lamp that is still
+  up there, detective. Draw your own conclusion. I have drawn mine twice.
+  [else]
+  MARIBEL: The rope first.
+  goto maribel_task
+  [end]

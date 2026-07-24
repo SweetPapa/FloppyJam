@@ -1,0 +1,31 @@
+# Chapter Four board. Three years, three reasons, and the mechanism nobody
+# knew they had switched off.
+
+board ch4_festival
+  title "The fourth floor: why did the Festival of Lanterns stop?"
+  requires clue.three_years clue.bees_remember clue.mayor_dodges clue.town_lowspirits clue.garden_gray clue.lanterns_stored clue.festival_lapsed clue.prism_dimming
+  text "The lanterns have not been lit for"
+  text "{p1} years."
+  text "The first year it was {p2}."
+  text "The second, the money was {p3}."
+  text "The third, the town was simply {p4}."
+  text "The one who will not discuss any of"
+  text "it is {p5}."
+  text "Without the gathering the Prism was"
+  text "never {p6},"
+  text "and the lanterns are still stacked in"
+  text "{p7}."
+  pool times token.three token.that_night token.after_midnight token.last_spring
+  pool reasons token.rain token.quietly_cut token.tired token.forgotten
+  pool people token.mayor token.nona token.iris token.the_town token.petra
+  pool states token.refilled token.cracked token.polished token.locked
+  pool places token.tower_shed token.inside token.harbour token.lantern_room
+  blank p1 answer token.three pool times from clue.three_years clue.festival_lapsed
+  blank p2 answer token.rain pool reasons from clue.three_years clue.festival_lapsed
+  blank p3 answer token.quietly_cut pool reasons from clue.mayor_dodges clue.three_years
+  blank p4 answer token.tired pool reasons from clue.town_lowspirits clue.garden_gray
+  blank p5 answer token.mayor pool people from clue.mayor_dodges clue.town_lowspirits
+  blank p6 answer token.refilled pool states from clue.prism_dimming clue.bees_remember
+  blank p7 answer token.tower_shed pool places from clue.lanterns_stored clue.bees_remember
+  feedback grouped
+  on_solved cut ch4_hue_green

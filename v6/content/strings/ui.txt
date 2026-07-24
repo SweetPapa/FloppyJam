@@ -1,0 +1,170 @@
+# HUEDUNIT — every word of chrome the game says, in one place.
+# key = value. A missing key shows as the key itself, on purpose: silence is
+# harder to notice than a shout.
+
+title.sub = a warm mystery in ink and paper
+title.foot = One town, one bird, one tower, no villains.
+
+name.prompt = The council's letter is addressed to a detective. What shall we call you?
+name.begin = Take the case
+name.back = Not yet
+
+recap.title = Previously, in Prismbrook...
+recap.go = Carry on
+
+hud.journal = Journal
+hud.menu = Menu
+
+set.title = Settings
+set.back = Back
+set.note = Reduce motion turns off screen shake and fast pans everywhere, cutscenes included.
+
+journal.close = Close the book
+
+cut.skip = ESC to skip
+
+pz.hint = Ask a feather
+pz.skip = Let it go
+pz.leave = Come back later
+pz.solved = There. That is exactly it.
+pz.skipped = Never mind it. You have what you needed anyway.
+pz.tryit = Take your time. Nothing here is timed and nothing is lost.
+pz.skiphint = Three honest tries is plenty. You may let this one go, for free.
+
+hint.tier1 = The answer sits in the pool called
+hint.tier2 = Think back to this:
+hint.tier3 = There. Written in for you.
+hint.exhausted = That blank has told you everything it knows.
+hint.nofeathers = No feathers left. Pip drops them everywhere; go and look.
+hint.none = No hint here, which is a bug and not a riddle.
+
+board.deduce = Deduce!
+board.hint = Ask a feather
+board.leave = Step back
+board.fillall = Fill every blank before you commit. Wrong guesses cost nothing.
+board.ready = Commit them all and see how many hold.
+board.solved = Every line of it holds. Write it down.
+
+feather.found = A magpie feather, black and blue-green at the edge. Pip has been here. He is always somewhere just above you.
+
+# --------------------------------------------------------------- clue labels
+clue.town_gray = The whole town woke gray
+clue.prism_missing = The Prism is gone from its cradle
+clue.iris_missing = Iris Marlow has not been seen
+clue.door_locked = The Prismworks is locked from the inside
+clue.magpie_blamed = The town has decided the magpie did it
+
+clue.otto_alibi = Otto was on Tower Green at midnight
+clue.tansy_saw = Tansy saw a bird, not a thief
+clue.ferry_log = The ferry log's small hours
+clue.fish_pail = A pail of fish left on the step
+clue.midnight_figure = A figure on the green after midnight
+clue.pip_hungry = Pip has been going hungry
+
+clue.bruno_order = Iris's standing bread order stopped
+clue.greta_gossip = Greta's account of the lock
+clue.felix_letters = Who wrote to whom this month
+clue.no_forced_lock = Nothing about that door was forced
+clue.iris_letter = A letter in Iris's hand
+clue.shiny_thefts = Small shiny things going missing
+
+clue.cogg_ledger = Edwina's ledger, third page
+clue.festival_lapsed = The festival has lapsed three years
+clue.picks_borrowed = Petra's picks were borrowed, not stolen
+clue.repair_braces = An order for crystal repair braces
+clue.prism_dimming = The Prism had been dimming for years
+clue.iris_secret = A promise Petra will not break
+
+clue.garden_gray = Flowers that come up gray
+clue.bees_remember = The bees still dance the festival path
+clue.town_lowspirits = Half the town is quietly low
+clue.three_years = Three years of reasons not to gather
+clue.mayor_dodges = The Mayor will not discuss the tower
+clue.lanterns_stored = Where the lanterns were put away
+
+clue.budget_cut = The festival budget, quietly cut
+clue.nona_key = Nona's spare key, and where it went
+clue.stair_rotten = The upper stair was rotten through
+clue.spare_key = There was always a second key
+clue.mayor_shame = What the Mayor is actually ashamed of
+clue.nona_grief = Why Nona hid the key at all
+clue.pip_trusts = Pip will land on your arm now
+
+# --------------------------------------------------------------- board tokens
+token.prism = the Prism
+token.iris = Iris Marlow
+token.pip = Pip
+token.otto = Otto Brine
+token.tansy = Tansy
+token.petra = Petra Ward
+token.felix = Felix Route
+token.nona = Nona Ember
+token.mayor = the Mayor
+token.maribel = Capt. Sorge
+token.the_town = the whole town
+
+token.lantern_oil = a can of lantern oil
+token.ledger = the clockmaker's ledger
+token.picks = a set of lockpicks
+token.fish_pail = a pail of fish
+token.braces = repair braces
+token.stair = the upper stair
+token.lantern = a lit lantern
+token.letter = a letter
+
+token.feed_pip = feed a frightened bird
+token.mend = mend it
+token.promise = her word to keep a secret
+token.herself = out of her own pocket
+token.steal = take it and run
+
+token.forced = forced
+token.picked = picked
+token.locked = locked
+token.cracked = cracked
+token.refilled = refilled by the town
+token.polished = polished
+
+token.inside = the inside
+token.lantern_room = in the lantern room
+token.tower_shed = the shed on Tower Green
+token.harbour = down at the harbour
+token.gone = gone from Prismbrook
+
+token.after_midnight = a little after midnight
+token.that_night = that same night
+token.three = three
+token.last_spring = last spring
+
+token.rain = rained out
+token.quietly_cut = quietly cut
+token.tired = too tired to try
+token.forgotten = forgotten on purpose
+
+# ---------------------------------------------------------------- board names
+boardname.p_morning = What happened this morning?
+boardname.ch1_midnight = Who was at the tower at midnight, and why?
+boardname.ch2_opened = How was the Prismworks opened without its key?
+boardname.ch3_prism = What was wrong with the Prism before it vanished?
+boardname.ch4_festival = Why did the Festival of Lanterns stop?
+boardname.ch5_where = Where is Iris Marlow right now?
+
+# ------------------------------------------------------------- people, journal
+who.you = A travelling detective, hired by a town that pooled its savings to do it.
+who.maribel = Ferry captain. Keeps a log to the minute and pretends that is nothing.
+who.otto = Fishmonger. Gruff about everything except who deserves to eat.
+who.tansy = Nine, catches crabs, and was the first in town to feel sorry for the bird.
+who.bruno = Baker. Believes there is no feeling a warm thing cannot help.
+who.greta = Seamstress. Knows everything about everyone and is kind with all of it.
+who.felix = Postmaster. Knows who wrote to whom, and will tell you only the shape of it.
+who.edwina = Clockmaker, and Iris's aunt. Her ledger is more honest than she is.
+who.bartleby = Librarian. Keeper of the festival's history, and of one shifted spine.
+who.petra = Locksmith. Keeps promises the way other people keep receipts.
+who.sage = Gardener. Grieves gray flowers out loud, which is braver than it sounds.
+who.mo = Beekeeper. Says the bees remember the festival. The bees do.
+who.poppy = Apothecary. Treats low spirits with tea and unusual bluntness.
+who.mayor = Mayor of Prismbrook. Will discuss anything at all except the tower.
+who.nona = Retired lamplighter. Lit the Prism for forty years, then stopped being asked.
+who.wick = Groundskeeper. Talks to the tower more comfortably than he talks to people.
+who.iris = The Tinter. Tends the Prism, tells nobody anything, and is missed enormously.
+who.pip = Iris's magpie. Has been trying to tell the whole town something for a week.

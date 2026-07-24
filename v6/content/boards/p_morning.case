@@ -1,0 +1,17 @@
+# Prologue board. Three blanks, deliberately easy: this one teaches the
+# mechanic more than it tests it (CANON 3.3).
+
+board p_morning
+  title "The ground floor: what happened this morning?"
+  requires clue.town_gray clue.prism_missing clue.iris_missing clue.door_locked clue.magpie_blamed
+  text "The town woke gray. Gone from the"
+  text "lantern room: {p1}."
+  text "Gone with it: {p2}."
+  text "Blamed for both, by everyone: {p3}."
+  pool things token.prism token.lantern_oil token.ledger token.picks
+  pool people token.iris token.otto token.pip token.nona
+  blank p1 answer token.prism pool things from clue.prism_missing clue.town_gray
+  blank p2 answer token.iris pool people from clue.iris_missing clue.door_locked
+  blank p3 answer token.pip pool people from clue.magpie_blamed clue.town_gray
+  feedback grouped
+  on_solved goto p_after_morning

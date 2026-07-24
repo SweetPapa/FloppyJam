@@ -1,0 +1,257 @@
+# Chapter Five — Tower Green.
+# Question: where is Iris Marlow right now?
+# Beats: the Mayor's shame, Nona's hidden key, and a bird who lands on you.
+
+@node ch5_green_open
+  Up close the Prismworks is not grand. It is a working building with forty
+  years of small repairs on it, all of them done by somebody who meant it.
+  The Mayor is standing on the green with his hat in his hands again, at the
+  exact distance from the door that means he does not want to be nearer.
+
+@node mayor_intro
+  [if flag ch5.met_mayor == 0]
+  MAYOR(shifty): Detective! Splendid. Splendid. Nothing to report, I expect.
+  YOU:
+    * (curious) A great deal to report. You have been avoiding this hill.  -> mayor_avoid
+    * (kind) You do not have to stand out here if it upsets you.  -> mayor_upset
+    * (dry) I have four days of your town's savings and a great deal to say.  -> mayor_avoid
+  [else]
+  goto mayor_after
+  [end]
+
+@node mayor_upset
+  MAYOR(moved): ...That is the first kind thing anybody has said to me since
+  Tuesday. I shall probably be unbearable about it later.
+  trust mayor 1
+  goto mayor_avoid
+
+@node mayor_avoid
+  set ch5.met_mayor = 1
+  MAYOR(worried): I have not been avoiding it. I have been extremely busy
+  with — with municipal —
+  MAYOR(sad): I have been avoiding it.
+  YOU:
+    * (kind) Why?  -> mayor_why
+    * (curious) Since the festival stopped, I think.  -> mayor_since
+    * (dry) Municipal what, Mayor?  -> mayor_why
+
+@node mayor_since
+  MAYOR(sad): ...Yes. Since the festival stopped.
+  goto mayor_why
+
+@node mayor_why
+  MAYOR: You will want the ledger. To see the ledger you must stamp the
+  forms, and I am afraid that is not me being obstructive, that is genuinely
+  the law and I have read it twice hoping it was not.
+  start_puzzle stamp_order
+  MAYOR(laughing): Six forms. Nobody has ever done that in one go. I am
+  delighted and slightly frightened.
+  MAYOR(sad): There. Line eleven. Festival of Lanterns, provision for.
+  grant clue.budget_cut
+  MAYOR: I cut it. Not postponed. Cut. Second year running, quietly, in a
+  meeting with three people in it, and then I let the town believe it was the
+  weather and then the apathy.
+  YOU:
+    * (kind) Why does that frighten you so much? It is a budget line.  -> mayor_shame_a
+    * (curious) Why cut it at all?  -> mayor_shame_b
+    * (dry) That is a very small crime to be this frightened of.  -> mayor_shame_a
+
+@node mayor_shame_b
+  MAYOR: Because the harbour wall needed doing and I had one pot of money and
+  I made a choice a mayor makes.
+  goto mayor_shame_a
+
+@node mayor_shame_a
+  MAYOR(sad): Because it was not the money. I could have found the money.
+  MAYOR(sad): It was that only eleven people came the year before, and I did
+  not want to stand on this hill and watch it be eleven again. So I cancelled
+  it rather than watch it fail.
+  grant clue.mayor_shame
+  YOU:
+    * (kind) That is not a crime. That is just being frightened.  -> mayor_forgive
+    * (curious) And then the colour started going.  -> mayor_then
+    * (dry) You cancelled a party out of stage fright.  -> mayor_forgive
+
+@node mayor_then
+  MAYOR(worried): And then the colour started going, and I told myself that
+  had nothing to do with anything, every day, for two years.
+  goto mayor_forgive
+
+@node mayor_forgive
+  MAYOR(moved): You are being very decent about this and I would rather you
+  shouted.
+  set ch5.mayor_done = 1
+  trust mayor 1
+
+@node mayor_after
+  [if flag ch5.mayor_done == 1]
+  [if not flag ch5.pip_done]
+  [if all clue.fish_pail clue.tansy_saw clue.shiny_thefts]
+  goto ch5_pip
+  [end]
+  [end]
+  MAYOR: Nona Ember. The lodge, round the side. She lit that Prism for forty
+  years and I stopped sending anybody to ask her. Start there. Please.
+  [else]
+  MAYOR: The forms, detective. I am sorry. I truly am.
+  goto mayor_why
+  [end]
+
+@node wick_intro
+  [if flag ch5.met_wick == 0]
+  WICK: Mm. You have got up here at last.
+  WICK: She has been talking about it. The tower, I mean. She creaks
+  differently when she has got something in her.
+  YOU:
+    * (kind) What is she saying?  -> wick_saying
+    * (curious) There is a second key, is there not?  -> wick_key
+    * (dry) The tower is talking. Excellent. Everyone else has.  -> wick_saying
+  [else]
+  goto wick_after
+  [end]
+
+@node wick_saying
+  WICK(sad): That her top stair is gone. I have known it a year. I put a
+  bootlace across it and I told the council twice and it went in a folder.
+  goto wick_key
+
+@node wick_key
+  set ch5.met_wick = 1
+  WICK: There were always two keys. Tinter's and lamplighter's. Everyone in
+  this town has forgotten the second one because the second one stopped being
+  needed.
+  grant clue.spare_key
+  WICK: And the door has a word on it before the key does. The rings on the
+  lintel. Old work, and it wants doing properly.
+  start_puzzle mechanism_key
+  WICK(moved): Aye. That is the word. She has said it to me a thousand times
+  and I have never once said it back.
+  WICK(worried): Now go and look at the stair with me, because I want a
+  witness to what I am about to be right about.
+  WICK: Rotten through, two-thirds up. The whole upper flight. If you went
+  up that in the dark carrying something, you would not be coming down it.
+  grant clue.stair_rotten
+  set ch5.wick_done = 1
+  trust wick 1
+
+@node wick_after
+  [if flag ch5.wick_done == 1]
+  [if not flag ch5.pip_done]
+  [if all clue.fish_pail clue.tansy_saw clue.shiny_thefts]
+  goto ch5_pip
+  [end]
+  [end]
+  WICK: Nona has the second key or she has not. Either way she knows where it
+  went. Ask her gently.
+  [else]
+  WICK: Mm. The lintel first.
+  goto wick_key
+  [end]
+
+@node ch5_pip
+  [if flag ch5.pip_done == 1]
+  Pip is on the low wall with his head tipped sideways, waiting to see what
+  you do next. He has decided about you. It took a week and a pail of fish.
+  [else]
+  Something lands on the wall beside you, hard, the way a thing lands when it
+  has been deciding for a long time and then stopped deciding.
+  It is Pip. Up close he is smaller than the town's opinion of him, and he is
+  holding something in his beak, and he is watching your hands.
+  YOU:
+    * (kind) Hold out your hand and wait.  -> pip_hand
+    * (curious) Stay very still and look at what he is holding.  -> pip_look
+    * (dry) Say nothing. He has heard quite enough talking.  -> pip_hand
+  [end]
+
+@node pip_look
+  It is a brass letter-opener. Felix's. He is not hiding it. He is showing it
+  to you, and then he is looking at the tower, and then back at you.
+  goto pip_trust
+
+@node pip_hand
+  He hops onto your wrist. He is nine ounces of nerve and his feet are cold.
+  He puts a brass letter-opener into your palm, which is not a gift; it is an
+  argument he has been trying to make to this town for a week.
+  goto pip_trust
+
+@node pip_trust
+  He goes up. Not away — up, to the roped-off landing, and back, and up
+  again, exactly the way Tansy said, exactly the way you pull somebody's
+  sleeve.
+  grant clue.pip_trusts
+  trust pip 3
+  set ch5.pip_done = 1
+  You have been in this town four days and the only witness has been trying
+  to give evidence the entire time.
+
+@node nona_intro
+  [if flag ch5.met_nona == 0]
+  NONA(worried): I know why you are here and I have already said it. It is
+  lost.
+  YOU:
+    * (kind) I did not come about the key.  -> nona_notkey
+    * (curious) Lost is a strange word for a woman who hangs her kit in order.  -> nona_order
+    * (dry) Lost. In this house.  -> nona_order
+  [else]
+  goto nona_after
+  [end]
+
+@node nona_notkey
+  NONA(moved): ...Then why did you come?
+  YOU:
+    * (kind) Because nobody has been up here in three years.  -> nona_three
+    * (curious) Because you lit that Prism for forty years and nobody has asked you about it.  -> nona_three
+
+@node nona_order
+  NONA(shifty): Everything in this house is in order. That is not the same as
+  everything in this house being findable.
+  goto nona_three
+
+@node nona_three
+  set ch5.met_nona = 1
+  NONA(sad): Forty years. My mother did it before me and hers before her, and
+  then one year the council did not write, and I waited to be asked, and I am
+  still waiting, and I am eighty-one.
+  YOU:
+    * (kind) You could have gone up anyway.  -> nona_anyway
+    * (curious) So you hid the key.  -> nona_hid
+    * (dry) You have been sulking magnificently.  -> nona_anyway
+
+@node nona_anyway
+  NONA(sad): I could. Yes. It was not a lock that stopped me, it was not
+  being wanted, and those feel the same from inside.
+  goto nona_hid
+
+@node nona_hid
+  NONA(worried): I put it somewhere. On purpose. I could not bear it hanging
+  by the door being not needed.
+  grant clue.nona_grief
+  NONA: And now I cannot say where, because saying where means saying why,
+  and I have not said why out loud in three years.
+  NONA(happy): But I will show you the trick, if you like. The lamp trick.
+  Everyone should know one useless beautiful thing.
+  start_puzzle mirror_light
+  NONA(moved): There. Light where light does not go. That is the whole job,
+  really. Forty years of it.
+  NONA(sad): It is under the third lamp on the green. I put it under the
+  third lamp because that is where I used to stand, and I wanted it to be
+  standing there too.
+  grant clue.nona_key
+  set ch5.nona_done = 1
+  trust nona 1
+
+@node nona_after
+  [if flag ch5.nona_done == 1]
+  [if not flag ch5.pip_done]
+  [if all clue.fish_pail clue.tansy_saw clue.shiny_thefts]
+  goto ch5_pip
+  [end]
+  [end]
+  NONA(worried): Do not go up alone in the dark. And take the bootlace off
+  the landing before you do, or you will trip on the warning.
+  NONA: And there is a bird on that wall who has been waiting for somebody to
+  hold their hand out. It will not be me. My hands shake.
+  [else]
+  NONA: The lamp trick first. Humour an old woman.
+  goto nona_hid
+  [end]

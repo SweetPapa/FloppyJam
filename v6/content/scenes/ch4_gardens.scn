@@ -1,0 +1,33 @@
+# Chapter Four — the Gardens. Green comes home here.
+
+scene ch4_garden
+  title "The Gardens"
+  bg garden
+  music MOOD_GARDEN
+  walk 110 449 1170 530
+  spawn 180 520
+  on_enter ch4_garden_open
+  actor sage 460 520 stand
+  actor poppy 840 520 stand
+  hot 402 356 120 180 talk sage_intro "Sage Fern, gardener"
+  hot 782 358 120 180 talk poppy_intro "Dr. Poppy Bloom, apothecary"
+  hot 640 374 130 100 look "A bed of what Sage insists are scarlet poppies. They have come up the colour of a pencil sketch and he has watered them anyway, every day."
+  hot 1010 324 120 110 look "Poppy's board of remedies. Half of them this month are for sleeping, and the other half are for getting up."
+  feather 260 244 f_ch4a
+  feather 1090 264 f_ch4b
+  hot 40 424 90 150 exit p_square "Back to the square"
+  hot 1160 374 110 200 exit ch4_hives "Out to the hives"
+
+scene ch4_hives
+  title "The Gardens — the Hives"
+  bg garden
+  music MOOD_GARDEN
+  walk 110 449 1170 530
+  spawn 1080 520
+  actor mo 540 520 stand
+  hot 482 358 120 180 talk mo_intro "Mo Hum, beekeeper"
+  hot 860 324 140 130 look "Eleven hives in a row, each with a number burned into the lid, and a twelfth lid propped against the wall with LANTERNS written on it in chalk."
+  hot 220 334 130 120 look "The bees go out over the hedge, turn left at nothing at all, and come back. They have done it every summer of their short lives and their mothers' before them."
+  feather 700 234 f_ch4c
+  hot 40 424 90 150 exit ch4_garden "Back to the beds"
+  hot 1160 374 110 200 exit p_square "Up to the square"

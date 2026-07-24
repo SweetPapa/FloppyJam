@@ -1,0 +1,25 @@
+# Chapter Three board. The linchpin: the Prism was already broken, and one
+# person had been quietly paying to mend it.
+
+board ch3_prism
+  title "The third floor: what was wrong with the Prism?"
+  requires clue.cogg_ledger clue.repair_braces clue.prism_dimming clue.picks_borrowed clue.iris_secret clue.bruno_order
+  text "Long before it vanished, the Prism"
+  text "was {p1}."
+  text "{p2} ordered {p3}"
+  text "from the clockmaker and paid for them"
+  text "{p4}."
+  text "She told {p5} nothing about it,"
+  text "and asked {p6} to keep the secret."
+  pool states token.cracked token.polished token.locked token.refilled
+  pool people token.iris token.the_town token.petra token.nona token.mayor
+  pool objects token.braces token.picks token.ledger token.lantern
+  pool motives token.herself token.promise token.steal token.mend
+  blank p1 answer token.cracked pool states from clue.repair_braces clue.prism_dimming
+  blank p2 answer token.iris pool people from clue.cogg_ledger clue.repair_braces
+  blank p3 answer token.braces pool objects from clue.cogg_ledger clue.repair_braces
+  blank p4 answer token.herself pool motives from clue.cogg_ledger clue.bruno_order
+  blank p5 answer token.the_town pool people from clue.prism_dimming clue.iris_secret
+  blank p6 answer token.petra pool people from clue.iris_secret clue.picks_borrowed
+  feedback grouped
+  on_solved cut ch3_hue_red

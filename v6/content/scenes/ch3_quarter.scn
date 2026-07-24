@@ -1,0 +1,33 @@
+# Chapter Three — the Old Quarter. Red comes home here.
+
+scene ch3_lane
+  title "The Old Quarter — Cogg's Lane"
+  bg quarter
+  music MOOD_QUARTER
+  walk 110 449 1170 530
+  spawn 180 520
+  on_enter ch3_lane_open
+  actor edwina 470 518 stand
+  actor petra 840 520 stand
+  hot 412 356 120 180 talk edwina_intro "Edwina Cogg, clockmaker"
+  hot 782 358 120 180 talk petra_intro "Petra Ward, locksmith"
+  hot 640 344 120 110 look "Every clock in the window says a different time and Edwina insists that all of them are right, given where you are standing."
+  hot 1000 334 130 110 look "Petra's board of blanks and keys. There is one hook with nothing on it, and the dust says the nothing is recent."
+  feather 250 224 f_ch3a
+  feather 1080 284 f_ch3b
+  hot 40 424 90 150 exit p_square "Back to the square"
+  hot 1160 374 110 200 exit ch3_library "On to the library"
+
+scene ch3_library
+  title "The Old Quarter — the Library"
+  bg quarter
+  music MOOD_QUARTER
+  walk 110 449 1170 530
+  spawn 1080 520
+  actor bartleby 560 516 stand
+  hot 502 352 120 190 talk bartleby_intro "Bartleby Shelf, librarian"
+  hot 870 304 150 150 look "Forty years of Festival of Lanterns ledgers, in order, and then a gap on the shelf the width of three winters."
+  hot 200 324 140 130 look "A reading desk with one chair pulled out and never pushed back in. Bartleby says it is Iris's chair. He says it as though it is simply a fact about furniture."
+  feather 700 224 f_ch3c
+  hot 40 424 90 150 exit ch3_lane "Back down the lane"
+  hot 1160 374 110 200 exit p_square "Up to the square"

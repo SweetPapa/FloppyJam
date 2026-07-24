@@ -1,0 +1,216 @@
+# Chapter Two — Market Row.
+# Question: how was the Prismworks opened without its key?
+# Beat: the picks. And the fact that nothing about that door was forced.
+
+@node ch2_row_open
+  Market Row in gray is a strange thing. All the shapes of a busy street and
+  none of the noise it is supposed to make.
+  The stalls are open. People are buying. Nobody is haggling, which in
+  Prismbrook is the same as a minute's silence.
+
+@node bruno_market
+  [if flag ch2.met_bruno == 0]
+  BRUNO(sad): Detective. You will have come about the order book.
+  YOU:
+    * (curious) Should I have come about the order book?  -> bruno_book
+    * (kind) I came about you, actually. You look tired.  -> bruno_tired
+    * (dry) I have come about everything. It saves time.  -> bruno_book
+  [else]
+  goto bruno_after
+  [end]
+
+@node bruno_tired
+  BRUNO(moved): I am. I keep baking her rolls. I keep thinking today she will
+  come for them and then it will have been silly of me to worry.
+  trust bruno 1
+  goto bruno_book
+
+@node bruno_book
+  set ch2.met_bruno = 1
+  BRUNO: Iris Marlow, two seeded rolls, every second day. Forty years, her
+  and her mother.
+  BRUNO(worried): Three days ago she came in early, before I had the shutters
+  up, and cancelled it. For a fortnight, she said. Away on work, she said.
+  YOU:
+    * (curious) Did she say what work?  -> bruno_work
+    * (kind) How did she seem?  -> bruno_seem
+    * (dry) A fortnight. Very precise, for a woman going nowhere.  -> bruno_work
+
+@node bruno_seem
+  BRUNO(sad): Like somebody who had decided something on her own and did not
+  want to be talked out of it.
+  BRUNO: I know that face. I have baked for this town for thirty years. I see
+  that face about four times a year and it is never about bread.
+  trust bruno 1
+  goto bruno_work
+
+@node bruno_work
+  BRUNO: She did not say. She paid to the end of the month and she would not
+  take the change.
+  grant clue.bruno_order
+  BRUNO(happy): Now. If you want the Row to talk to you, you carry one of my
+  trays down it. That is how it works here.
+  BRUNO: Six tarts, all the wrong shapes, one tray, and I do not cut pastry
+  to make it fit. Never have.
+  start_puzzle tart_tiling
+  BRUNO(laughing): You have done that before. Do not tell me where.
+  set ch2.bruno_done = 1
+  trust bruno 1
+
+@node bruno_after
+  [if flag ch2.bruno_done == 1]
+  BRUNO(happy): Greta next. She sees the whole Row from that window and she
+  is kind about all of it, which is rarer than the seeing.
+  [else]
+  BRUNO: The tray, detective.
+  goto bruno_work
+  [end]
+
+@node greta_intro
+  [if flag ch2.met_greta == 0]
+  GRETA(happy): Sit down, you are making the whole street nervous.
+  GRETA: Now. You want the door.
+  YOU:
+    * (curious) I want the door.  -> greta_door
+    * (dry) Everyone in this town is ahead of me.  -> greta_ahead
+    * (kind) I want whatever you feel like telling me.  -> greta_kind
+  [else]
+  goto greta_after
+  [end]
+
+@node greta_ahead
+  GRETA(laughing): We have had a day and a half with nothing else to do. You
+  are doing very well considering.
+  goto greta_door
+
+@node greta_kind
+  GRETA(moved): Oh, that is a nice way to be asked. Most people just want the
+  bit that suits them.
+  trust greta 1
+  goto greta_door
+
+@node greta_door
+  set ch2.met_greta = 1
+  GRETA: I sit at that window eleven hours a day. I saw the constable go over
+  the Prismworks door on the morning it happened.
+  GRETA(worried): Not a scratch on the plate. Not a splinter at the frame.
+  Not one mark, and that door is soft old oak. You would leave marks opening
+  it with a cross word.
+  grant clue.no_forced_lock
+  YOU:
+    * (curious) So it was unlocked, or it was picked.  -> greta_picked
+    * (kind) You have a very good eye, Mrs. Spool.  -> greta_eye
+    * (dry) A gentle burglar. How refreshing.  -> greta_picked
+
+@node greta_eye
+  GRETA(moved): I have a very good window. The eye is just practice.
+  trust greta 1
+  goto greta_picked
+
+@node greta_picked
+  GRETA: Picked. Neatly. And I will tell you the other half of that if you
+  will do me a kindness first, because I am behind and my hands are old.
+  GRETA: The bunting pattern. Rows and columns, and the numbers are the runs
+  of stitches, in order. Iris worked it out for me years ago.
+  start_puzzle thread_grid
+  GRETA(happy): There. That is the festival pattern. I have kept it up on the
+  Row for three years and nobody has once asked me to take it down.
+  GRETA(worried): Now. The other half. Things have been going missing all
+  month. Small things. Shiny things.
+  grant clue.shiny_thefts
+  GRETA: Felix's brass letter-opener. My good thimble. A spoon off the
+  fountain rail, which I did not know was a thing you could lose.
+  YOU:
+    * (dry) I feel I know who the town blames.  -> greta_blame
+    * (curious) All before the Prism went?  -> greta_before
+    * (kind) And you do not blame the bird.  -> greta_blame
+
+@node greta_before
+  GRETA: All month. Weeks before.
+  goto greta_blame
+
+@node greta_blame
+  GRETA(sad): Of course they blame the bird. He is the only one in town who
+  cannot say a word for himself.
+  GRETA: But a magpie that steals hides things, dear. He was not hiding them.
+  He was dropping them. On doorsteps. In front of people.
+  set ch2.greta_done = 1
+  grant clue.greta_gossip
+  trust greta 1
+
+@node greta_after
+  [if flag ch2.greta_done == 1]
+  GRETA(happy): Felix has the letters. He will not tell you what is in them.
+  He will tell you the shape of them, which is nearly as good and much more
+  legal.
+  [else]
+  GRETA: The bunting first, dear.
+  goto greta_picked
+  [end]
+
+@node felix_intro
+  [if flag ch2.met_felix == 0]
+  FELIX(shifty): Before you ask. I do not read the post.
+  FELIX: I sort it. There is a difference and I am very attached to it.
+  YOU:
+    * (kind) I would not ask you to break that.  -> felix_respect
+    * (curious) Then tell me who wrote to whom. Not what.  -> felix_shape
+    * (dry) You sort it in a very memorable way, I expect.  -> felix_shape
+  [else]
+  goto felix_after
+  [end]
+
+@node felix_respect
+  FELIX(moved): ...Thank you. Nobody ever says that. They just lean over the
+  counter and hope.
+  trust felix 1
+  goto felix_shape
+
+@node felix_shape
+  set ch2.met_felix = 1
+  FELIX: The shape. Yes. That I can do, and I will, because Iris Marlow is a
+  friend of mine and I am frightened.
+  FELIX(worried): Four letters this month, all in her hand. One to the
+  clockmaker. One to the library. Two to the locksmith.
+  grant clue.iris_letter
+  YOU:
+    * (curious) Two to the locksmith. In a town this size.  -> felix_two
+    * (kind) Four letters is a lot for a woman who lives up a hill.  -> felix_two
+    * (dry) Nothing to the Mayor, I notice.  -> felix_mayor
+
+@node felix_mayor
+  FELIX(laughing): Nothing to the Mayor in nine years. That is not evidence,
+  that is just Prismbrook.
+  goto felix_two
+
+@node felix_two
+  FELIX: Two. A week apart. And the second one came back to me marked, in
+  Petra Ward's hand, with one word on it.
+  YOU:
+    * (curious) What word?  -> felix_word
+    * (kind) You do not have to tell me.  -> felix_word
+    * (dry) I am on the edge of my seat, Mr. Route.  -> felix_word
+
+@node felix_word
+  FELIX(moved): Yes.
+  FELIX: Just that. Yes. On the outside, where anybody could see it, which is
+  Petra all over. She would not write it in a letter. She would not hide it
+  either.
+  FELIX(happy): Now. My round is late and my knees are worse than my round.
+  Walk it for me and I will show you the frame.
+  start_puzzle parcel_route
+  FELIX(happy): One round, every house once. Nobody has done that first go in
+  four years.
+  FELIX(worried): Her pigeonhole has a week of post in it. Nobody has touched
+  it. Nobody in this town has post that waits a week.
+  set ch2.felix_done = 1
+  trust felix 1
+
+@node felix_after
+  [if flag ch2.felix_done == 1]
+  FELIX: The Old Quarter, if you are going. Her aunt is the clockmaker there,
+  and her aunt has a ledger, and her aunt does not like being asked about it.
+  [else]
+  FELIX: The round first, if you would.
+  goto felix_word
+  [end]

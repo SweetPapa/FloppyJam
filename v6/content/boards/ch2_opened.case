@@ -1,0 +1,26 @@
+# Chapter Two board. The door was not forced, and the person who opened it
+# had every right to be there.
+
+board ch2_opened
+  title "The second floor: how was the Prismworks opened?"
+  requires clue.no_forced_lock clue.greta_gossip clue.felix_letters clue.iris_letter clue.shiny_thefts clue.bruno_order
+  text "The Prismworks door was never {p1}."
+  text "It was opened with {p2},"
+  text "and then locked again from {p3}."
+  text "{p4} carried the letter that asked"
+  text "to borrow them, and the letter was"
+  text "written by {p5}."
+  text "Nobody has seen her since {p6}."
+  pool states token.forced token.picked token.locked token.polished
+  pool objects token.picks token.fish_pail token.ledger token.lantern
+  pool places token.inside token.harbour token.tower_shed token.gone
+  pool people token.felix token.iris token.greta token.petra token.otto
+  pool times token.that_night token.after_midnight token.last_spring token.three
+  blank p1 answer token.forced pool states from clue.no_forced_lock clue.greta_gossip
+  blank p2 answer token.picks pool objects from clue.greta_gossip clue.no_forced_lock
+  blank p3 answer token.inside pool places from clue.greta_gossip clue.felix_letters
+  blank p4 answer token.felix pool people from clue.felix_letters clue.shiny_thefts
+  blank p5 answer token.iris pool people from clue.iris_letter clue.felix_letters
+  blank p6 answer token.that_night pool times from clue.bruno_order clue.iris_letter
+  feedback grouped
+  on_solved cut ch2_hue_yellow

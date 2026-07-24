@@ -1,0 +1,33 @@
+# Chapter Two — Market Row. Yellow comes home here.
+
+scene ch2_row
+  title "Market Row"
+  bg market
+  music MOOD_MARKET
+  walk 110 449 1170 530
+  spawn 180 520
+  on_enter ch2_row_open
+  actor bruno 420 522 stand
+  actor greta 800 520 stand
+  hot 362 360 120 180 talk bruno_market "Bruno Crumb, baker"
+  hot 742 358 120 180 talk greta_intro "Greta Spool, seamstress"
+  hot 600 374 130 90 look "Bruno's order book, propped open where anyone can read it, which is the point. One line has been crossed out gently, twice, as though he keeps hoping."
+  hot 980 304 120 110 look "Bunting for a festival that has not happened in three years. Greta has never taken it down and nobody has ever asked her to."
+  feather 1090 254 f_ch2a
+  feather 250 234 f_ch2b
+  hot 40 424 90 150 exit p_square "Back to the square"
+  hot 1160 374 110 200 exit ch2_post "To the post office"
+
+scene ch2_post
+  title "Market Row — the Post Office"
+  bg market
+  music MOOD_MARKET
+  walk 110 449 1170 530
+  spawn 1080 520
+  actor felix 540 520 stand
+  hot 482 358 120 180 talk felix_intro "Felix Route, postmaster"
+  hot 860 334 140 120 look "The sorting frame. Every pigeonhole in Prismbrook has a name over it. One of them, near the top, has a week of post in it and no fingerprints in the dust."
+  hot 210 344 130 110 look "A brass letter-opener's empty stand. There is a very small feather in the dust where it used to lie."
+  feather 720 234 f_ch2c
+  hot 40 424 90 150 exit ch2_row "Back along the Row"
+  hot 1160 374 110 200 exit p_square "Up to the square"

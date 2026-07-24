@@ -1,0 +1,40 @@
+# Prologue — the town gate and the square. Fifteen minutes, and the hook
+# (a town the colour of newspaper) lands in the first three.
+
+scene p_gate
+  title "The Prismbrook Road"
+  bg gate
+  music MOOD_SAD
+  walk 120 449 1160 530
+  spawn 180 524
+  on_enter_cut p_grayfall
+  on_enter p_gate_open
+  actor mayor 760 520 stand
+  hot 700 356 130 180 talk p_mayor_gate "Mayor Aurelius Grand"
+  hot 240 104 150 130 look "The town sign. PRISMBROOK, it says, and under it, in smaller and much prouder letters: THE TOWN THEY CAN SEE FROM THE SEA."
+  hot 430 114 350 60 look "Festival lanterns still strung across the arch. The paper has gone soft with three winters of rain."
+  feather 1020 304 f_gate1
+  hot 1120 424 110 150 exit p_square "Into the square"
+
+scene p_square
+  title "Prismbrook Square"
+  bg square
+  music MOOD_TOWN
+  walk 110 449 1170 530
+  spawn 200 524
+  on_enter p_square_open
+  actor bruno 430 522 stand
+  actor wick 980 516 busy
+  hot 372 360 120 180 talk p_bruno "Bruno Crumb, baker"
+  hot 924 356 116 180 talk p_wick_square "Wick, groundskeeper"
+  hot 560 404 170 120 look "The fountain. Somebody has scrubbed it lately, hoping the colour was only dirt. It was not only dirt."
+  hot 604 390 70 60 look "A small glass prism set into the fountain rim, the town's badge. Today it throws no rainbow at all, just a smear of light the colour of dishwater."
+  feather 300 284 f_sq1
+  feather 1080 234 f_sq2
+  hot 40 424 90 150 exit p_gate "Back to the road"
+  hot 1150 374 110 200 exit tower "The Prismworks"
+  hot 620 204 120 170 exit ch1_dock "Down to the harbour" if flag board.p_morning
+  hot 190 204 120 170 exit ch2_row "Along Market Row" if flag board.ch1_midnight
+  hot 830 204 120 170 exit ch3_lane "Into the Old Quarter" if flag board.ch2_opened
+  hot 420 204 120 170 exit ch4_garden "Out to the Gardens" if flag board.ch3_prism
+  hot 1000 204 120 170 exit ch5_green "Up to Tower Green" if flag board.ch4_festival

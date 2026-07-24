@@ -1,0 +1,13 @@
+huedunit
+huedunit.exe
+huedunit*.sav
+huedunit.cfg
+tools/bakery/bakery
+src/generated/
+src/*/*.o
+hd_test_flags
+hd_test_content
+hd_test_puzzles
+*.dSYM/
+shot_*.png
+huedunit_shot.png
