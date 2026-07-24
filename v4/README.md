@@ -75,10 +75,23 @@ polish layered on top of it (no gameplay rules were changed):
   timeout.
 - **Slow motion** — death drops to 0.3× and checkpoints hitch to 0.55×,
   easing back to full speed.
+- **Momentum** — a single eased speed curve drives the whole presentation. It
+  deliberately hugs zero while you hang on a node (heavy, coiled, waiting)
+  and ramps hard once you commit, so acceleration reads as a release. It has
+  a fast attack and slow release, so motion blooms instantly and lingers.
+- **Anime speed lines** — screen-space streaks radiating from a vanishing
+  point thrown ahead of your travel, re-scattering ~18×/sec for a hand-inked
+  look. Weighted hard toward *acceleration* rather than raw speed, so they
+  punctuate each launch and fade, instead of becoming permanent furniture.
+- **Rush streaks** — in-world dashes scrolling past along the travel axis, so
+  speed is felt in the shaft itself.
 - **Motion ribbon** — a tapering trail follows the player, tinted by the
-  armed color.
-- **Camera** — velocity look-ahead, gentle horizontal follow, and a subtle
-  dolly-out with speed; shakes on landings, deaths, and lava surges.
+  armed color; swells into a comet at speed and thins to almost nothing at
+  rest.
+- **Camera** — velocity look-ahead, gentle horizontal follow, and a dolly +
+  FOV kick that widens with momentum (tight when still, thrown wide on
+  launch), plus high-speed micro-jitter; shakes on landings, deaths, and lava
+  surges.
 - **Lava tension** — an edge-only danger vignette (never the center), a
   rumble cue that quickens as it closes, red-hot shaft walls, a wavy crust,
   and rising embers.
