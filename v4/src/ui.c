@@ -12,49 +12,89 @@ static void text_c(const char *s, int cx, int y, int size, Color c) {
     DrawText(s, cx - w / 2, y, size, c);
 }
 
-/* small colored key hint for the 4 directions */
+/* One key cap. Always sits on an opaque dark plate so it stays readable over
+ * any background; the active key fills with its magnet color. */
 static void draw_key(int x, int y, const char *k, MagColor mc, int active) {
     Color c = mag_color(mc, active);
-    DrawRectangle(x, y, 26, 26, (Color){c.r, c.g, c.b, active ? 255 : 90});
-    DrawRectangleLines(x, y, 26, 26, COL_UI);
+    Rectangle r = {(float)x, (float)y, 26, 26};
+    /* solid dark cap so busy 3D behind it never bleeds through */
+    DrawRectangleRounded(r, 0.25f, 4, (Color){12, 14, 24, 255});
+    if (active) {
+        DrawRectangleRounded(r, 0.25f, 4, (Color){c.r, c.g, c.b, 255});
+    } else {
+        /* dim tint + saturated border keeps the color legible when idle */
+        DrawRectangleRounded(r, 0.25f, 4, (Color){c.r, c.g, c.b, 55});
+    }
+    DrawRectangleRoundedLines(r, 0.25f, 4, active ? (Color){255,255,255,255} : c);
     int w = MeasureText(k, 14);
-    DrawText(k, x + 13 - w / 2, y + 6, 14, (Color){10, 10, 20, 255});
+    Color tc = active ? (Color){10, 10, 20, 255} : (Color){235, 240, 255, 255};
+    DrawText(k, x + 13 - w / 2, y + 6, 14, tc);
+}
+
+/* soft dark plate behind HUD text so it reads over the bright 3D scene */
+static void plate(int x, int y, int w, int h, float alpha) {
+    DrawRectangleRounded((Rectangle){(float)x, (float)y, (float)w, (float)h},
+                         0.28f, 5, (Color){6, 8, 16, (unsigned char)(alpha * 255)});
 }
 
 void ui_hud(App *a) {
     GameSim *g = &a->sim;
     char buf[64];
+    int sw = GetScreenWidth();
 
-    /* top-left: level + score */
+    /* top-left: level + score on a dark plate */
+    plate(10, 8, 300, g->combo > 1 ? 92 : 62, 0.55f);
     snprintf(buf, sizeof buf, "LEVEL %s  %s", LEVEL_LABELS[g->level_id - 1], g->lv->name);
-    DrawText(buf, 16, 12, 20, COL_UI);
-    snprintf(buf, sizeof buf, "SCORE %d", g->score);
-    DrawText(buf, 16, 38, 24, (Color){255, 221, 100, 255});
+    DrawText(buf, 18, 12, 20, COL_UI);
+    snprintf(buf, sizeof buf, "SCORE %d", (int)(a->score_shown + 0.5f));
+    DrawText(buf, 18, 36, 24, (Color){255, 221, 100, 255});
 
-    /* combo */
+    /* combo with a draining timeout bar */
     if (g->combo > 1) {
         int mult = g->combo < COMBO_MAX ? g->combo : COMBO_MAX;
         snprintf(buf, sizeof buf, "COMBO x%d", mult);
         float pulse = 1.0f + 0.1f * sinf(a->t * 12.0f);
-        int sz = (int)(22 * pulse);
-        DrawText(buf, 16, 66, sz, (Color){255, 120, 200, 255});
+        DrawText(buf, 18, 66, (int)(22 * pulse), (Color){255, 120, 200, 255});
+        float frac = g->combo_timer / COMBO_TIMEOUT;
+        if (frac < 0) frac = 0; else if (frac > 1) frac = 1;
+        DrawRectangle(140, 74, 150, 6, (Color){40, 20, 40, 200});
+        DrawRectangle(140, 74, (int)(150 * frac), 6, (Color){255, 120, 200, 230});
     }
 
     /* top-right: timer + height + par */
-    int sw = GetScreenWidth();
+    plate(sw - 190, 8, 180, g->deaths > 0 ? 96 : 76, 0.55f);
     snprintf(buf, sizeof buf, "%.1fs", g->elapsed);
     int tw = MeasureText(buf, 24);
-    DrawText(buf, sw - 16 - tw, 12, 24, g->elapsed <= g->lv->par_time ? COL_UI : (Color){255,120,80,255});
+    DrawText(buf, sw - 18 - tw, 12, 24, g->elapsed <= g->lv->par_time ? COL_UI : (Color){255,120,80,255});
     snprintf(buf, sizeof buf, "PAR %.0fs", g->lv->par_time);
     tw = MeasureText(buf, 16);
-    DrawText(buf, sw - 16 - tw, 40, 16, COL_DIM);
+    DrawText(buf, sw - 18 - tw, 40, 16, COL_DIM);
     snprintf(buf, sizeof buf, "HEIGHT %.0f", sim_height(g));
     tw = MeasureText(buf, 16);
-    DrawText(buf, sw - 16 - tw, 60, 16, COL_DIM);
+    DrawText(buf, sw - 18 - tw, 60, 16, COL_DIM);
     if (g->deaths > 0) {
         snprintf(buf, sizeof buf, "DEATHS %d", g->deaths);
         tw = MeasureText(buf, 16);
-        DrawText(buf, sw - 16 - tw, 80, 16, (Color){255,120,120,255});
+        DrawText(buf, sw - 18 - tw, 80, 16, (Color){255,120,120,255});
+    }
+
+    /* climb progress rail down the right edge */
+    {
+        float start_y = g->lv->mag[0].y, top_y = g->lv->mag[g->lv->n_mag - 1].y;
+        float span = start_y - top_y;
+        float prog = span > 1 ? (start_y - g->py) / span : 0;
+        if (prog < 0) prog = 0; else if (prog > 1) prog = 1;
+        int rx = sw - 16, ry0 = 120, ry1 = GetScreenHeight() - 120;
+        DrawRectangle(rx, ry0, 4, ry1 - ry0, (Color){30, 34, 54, 180});
+        int py = ry1 - (int)((ry1 - ry0) * prog);
+        DrawRectangle(rx, py, 4, ry1 - py, (Color){120, 200, 255, 200});
+        DrawCircle(rx + 2, py, 5, (Color){190, 230, 255, 255});
+        /* lava marker on the same rail */
+        float lprog = span > 1 ? (start_y - g->lava_y) / span : 0;
+        if (lprog < -0.1f) lprog = -0.1f; else if (lprog > 1) lprog = 1;
+        int ly = ry1 - (int)((ry1 - ry0) * lprog);
+        if (ly >= ry0 - 10 && ly <= ry1 + 10)
+            DrawCircle(rx + 2, ly, 5, (Color){255, 90, 30, 230});
     }
 
     /* bottom-center: control keys laid out in the real WASD keyboard shape
@@ -65,6 +105,8 @@ void ui_hud(App *a) {
     int by = GetScreenHeight() - 36; /* bottom row */
     int ty = by - step;              /* top row (W) */
     int lft = cx - 13;               /* left edge of a centered key */
+    /* backdrop so the cluster stays legible over a bright/busy scene */
+    plate(cx - 60, ty - 8, 120, 2 * step + 16, 0.72f);
     draw_key(lft,        ty, "W", COL_RED,    g->color == COL_RED);    /* up    */
     draw_key(lft - step, by, "A", COL_YELLOW, g->color == COL_YELLOW); /* left  */
     draw_key(lft,        by, "S", COL_BLUE,   g->color == COL_BLUE);   /* down  */
@@ -82,6 +124,22 @@ void ui_hud(App *a) {
         text_c(msg, sw / 2, 130, 20, c);
     }
     if (g->race_lost) text_c("RIVAL REACHED THE TOP!", sw / 2, GetScreenHeight()/2 - 40, 30, (Color){255,80,120,255});
+
+    /* level intro card: slides in, holds, then fades */
+    if (a->intro_t < 2.6f) {
+        float t = a->intro_t;
+        float alpha = (t < 0.35f) ? (t / 0.35f) : (t > 2.0f ? 1.0f - (t - 2.0f) / 0.6f : 1.0f);
+        if (alpha < 0) alpha = 0; else if (alpha > 1) alpha = 1;
+        float slide = (t < 0.35f) ? (1.0f - t / 0.35f) * 40.0f : 0.0f;
+        int cy2 = GetScreenHeight() / 2 - 70;
+        unsigned char al = (unsigned char)(alpha * 255);
+        plate(sw / 2 - 250, cy2 - 14, 500, 96, alpha * 0.6f);
+        snprintf(buf, sizeof buf, "LEVEL %s", LEVEL_LABELS[g->level_id - 1]);
+        text_c(buf, sw / 2 + (int)slide, cy2, 26, (Color){180, 210, 255, al});
+        text_c(g->lv->name, sw / 2 - (int)slide, cy2 + 30, 40,
+               (Color){255, 235, 200, al});
+        text_c("RISE OR BURN", sw / 2, cy2 + 74, 16, (Color){255, 140, 90, al});
+    }
 }
 
 /* ---- star row ---------------------------------------------------- */
