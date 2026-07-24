@@ -17,7 +17,12 @@ typedef struct {
     unsigned char  vol_master, vol_music, vol_sfx;  /* 0..10             */
     unsigned char  fullscreen;
     unsigned char  tips_used;             /* bitmask, max 5 tips (S.15)  */
-    unsigned char  pad[3];
+    /* Trajectory assist, 0 = off. Takes one of the old pad bytes, which were
+     * already written as zero, so existing saves load with it off and the
+     * struct size and version are unchanged. */
+    unsigned char  preview;
+    unsigned char  invert_aim;            /* swap A/D, 0 = normal        */
+    unsigned char  pad[1];
 } BpSave;
 
 void bp_save_defaults(BpSave *s);

@@ -34,6 +34,8 @@ void bp_render_init(void);
 void bp_render_hole_begin(void);
 void bp_render_update(const BpWorld *w, float dt);
 void bp_render_trail(const BpWorld *w, float tx, float ty, float dt);
+void bp_render_preview(const BpWorld *w, const BpPreview *pv, float t);
+void bp_render_preview_readout(const BpPreview *pv, int sw, int sh, int live);
 
 void bp_render_world(const BpWorld *w, int hole, const BpShot *sh,
                      int show_guide, int show_cue, float t);
@@ -42,7 +44,8 @@ void bp_render_scorecard(const BpHud *h, int sw, int sh, int final_page);
 void bp_render_title(int sw, int sh, int sel, float t, const BpHud *h);
 void bp_render_select(int sw, int sh, int sel, float t);
 void bp_render_pause(int sw, int sh, int sel, const BpHud *h);
-void bp_render_options(int sw, int sh, int sel, int vm, int vmu, int vs, int fs);
+void bp_render_options(int sw, int sh, int sel, int vm, int vmu, int vs, int fs,
+                       int preview, int invert);
 
 /* golf/pool flavour text for a hole result */
 const char *bp_score_name(int strokes, int par);

@@ -88,4 +88,10 @@ static inline float bp_angdiff(float a, float b) {
 
 #define BP_STROKE_CAP 8
 
+/* How long a single shot may run before the game calls it settled. The
+ * trajectory preview uses the same number, so the line it draws ends exactly
+ * where the real shot will end — including on the rare kicker-pad loop that
+ * rides the whole cap out. */
+#define BP_RIDE_TICKS 12000
+
 #endif /* BP_CORE_H */

@@ -85,7 +85,8 @@ test:
 
 testcourse:
 	$(CC) -std=c11 -O2 $(WARN) -I$(SRCDIR) -I. tests/test_course.c \
-	      $(SRCDIR)/course.c $(SRCDIR)/physics.c -lm -o bp_test_course
+	      $(SRCDIR)/course.c $(SRCDIR)/physics.c $(SRCDIR)/shot.c \
+	      -lm -o bp_test_course
 	./bp_test_course
 
 testcamera:
