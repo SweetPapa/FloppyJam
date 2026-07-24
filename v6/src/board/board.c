@@ -4,6 +4,7 @@
 #include "art/artkit.h"
 #include "audio/synth.h"
 #include "save/save.h"
+#include "puzzle/puzzle.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -166,9 +167,8 @@ static int blank_by_name(const char *n)
     return -1;
 }
 
-static void layout_and_draw_text(Rectangle area, bool draw)
+static float layout_and_draw_text(Rectangle area, bool draw, float size)
 {
-    float size = 21.0f;
     float x = area.x, y = area.y;
     float lh = size * text_scale() * 1.75f;
 
@@ -229,6 +229,46 @@ static void layout_and_draw_text(Rectangle area, bool draw)
         }
         y += lh;
     }
+    return y - area.y;
+}
+
+/* Lays the evidence chips out at `size`; returns the height they need. With
+ * `draw` false it only measures, which is how the caller finds a size that
+ * fits before anything is on screen. */
+static float layout_pools(Rectangle pools, float size, bool draw)
+{
+    float row = size * text_scale() + 16.0f;
+    float y = pools.y + 56;
+    for (int p = 0; p < g_npools; p++) {
+        if (draw) art_text(g_pool[p].name, pools.x + 22, y, size - 1, col_ink_soft());
+        y += size * text_scale() + 8.0f;
+        float x = pools.x + 22;
+        for (int t = 0; t < g_pool[p].n; t++) {
+            const char *lab = ui_str(g_pool[p].tok[t]);
+            float w = art_text_w(lab, size) + 20;
+            if (x + w > pools.x + pools.width - 22) { x = pools.x + 22; y += row + 6.0f; }
+            Rectangle r = { x, y, w, row };
+            g_tok_rect[p][t] = r;
+
+            if (draw) {
+                bool used = false;
+                for (int i = 0; i < g_nblanks; i++)
+                    if (eq(g_blank[i].pool, g_pool[p].name) && g_blank[i].filled == t)
+                        used = true;
+                bool hot = art_hover(r);
+                Vector2 q[4] = { { r.x, r.y }, { r.x + r.width, r.y },
+                                 { r.x + r.width, r.y + r.height }, { r.x, r.y + r.height } };
+                ink_fill(q, 4, used ? HATCH_DIAG : HATCH_NONE, 700 + p * 20 + t,
+                         used ? col_paper_dark() : (hot ? col_accent_a()
+                                                        : (Color){ 232, 224, 206, 255 }));
+                ink_rect(r, 1.8f, 0.7f, 720 + p * 20 + t, col_ink_soft());
+                art_text(lab, r.x + 10, r.y + 6, size, used ? col_ink_soft() : col_ink());
+            }
+            x += w + 8;
+        }
+        y += row + 14.0f;
+    }
+    return y - pools.y;
 }
 
 /* --------------------------------------------------------------- hints */
@@ -348,21 +388,6 @@ board_status board_update(float dt)
 }
 
 /* ----------------------------------------------------------------- draw */
-static void draw_button(Rectangle r, const char *label, bool enabled, int seed)
-{
-    bool hot = enabled && art_hover(r);
-    Vector2 p[4] = { { r.x, r.y }, { r.x + r.width, r.y },
-                     { r.x + r.width, r.y + r.height }, { r.x, r.y + r.height } };
-    Color fill = !enabled ? col_paper_dark()
-               : hot      ? col_accent_a()
-                          : (Color){ 228, 216, 192, 255 };
-    ink_fill(p, 4, HATCH_NONE, seed, fill);
-    ink_rect(r, 2.2f, 0.8f, seed + 1, enabled ? col_ink() : col_ink_soft());
-    float w = art_text_w(label, 19);
-    art_text(label, r.x + (r.width - w) * 0.5f, r.y + r.height * 0.5f - 12, 19,
-             enabled ? col_ink() : col_ink_soft());
-}
-
 void board_draw(void)
 {
     paper_grain(0.5f);
@@ -370,47 +395,32 @@ void board_draw(void)
     Rectangle scroll = { 52, 60, 700, 520 };
     paper_panel(scroll, 5.0f, 8181);
 
-    art_text(g_title[0] ? g_title : "Case Board", scroll.x + 26, scroll.y + 22, 24,
-             col_ink());
+    const char *btitle = g_title[0] ? g_title : "Case Board";
+    art_text(btitle, scroll.x + 26, scroll.y + 22,
+             art_text_size_for(btitle, scroll.width - 52, 24), col_ink());
     ink_line(scroll.x + 24, scroll.y + 60, scroll.x + scroll.width - 24,
              scroll.y + 60, 2.0f, 1.2f, 8182, col_ink_soft());
 
-    Rectangle text_area = { scroll.x + 30, scroll.y + 86, scroll.width - 60, 380 };
-    layout_and_draw_text(text_area, true);
+    Rectangle text_area = { scroll.x + 30, scroll.y + 86, scroll.width - 60, 396 };
+    /* Every blank has to be on screen at once or the sentence is unreadable,
+     * so the scroll shrinks its type rather than paging or clipping. */
+    float size = 21.0f;
+    while (size > 12.0f && layout_and_draw_text(text_area, false, size) > text_area.height)
+        size -= 1.0f;
+    layout_and_draw_text(text_area, true, size);
 
-    /* --- the pools --- */
+    /* --- the pools ---
+     * Every token has to be visible at once or the player cannot deduce, so
+     * the chips step their type down until the whole set fits the panel. */
     Rectangle pools = { 786, 60, 442, 520 };
     paper_panel(pools, 4.0f, 8183);
-    art_text("Evidence", pools.x + 22, pools.y + 18, 20, col_ink());
+    art_text("Evidence", pools.x + 22, pools.y + 18,
+             art_text_size_for("Evidence", pools.width - 44, 20), col_ink());
 
-    float y = pools.y + 56;
-    for (int p = 0; p < g_npools; p++) {
-        art_text(g_pool[p].name, pools.x + 22, y, 15, col_ink_soft());
-        y += 24;
-        float x = pools.x + 22;
-        for (int t = 0; t < g_pool[p].n; t++) {
-            const char *lab = ui_str(g_pool[p].tok[t]);
-            float w = art_text_w(lab, 16) + 20;
-            if (x + w > pools.x + pools.width - 22) { x = pools.x + 22; y += 38; }
-            Rectangle r = { x, y, w, 32 };
-            g_tok_rect[p][t] = r;
-
-            bool used = false;
-            for (int i = 0; i < g_nblanks; i++)
-                if (eq(g_blank[i].pool, g_pool[p].name) && g_blank[i].filled == t)
-                    used = true;
-            bool hot = art_hover(r);
-            Vector2 q[4] = { { r.x, r.y }, { r.x + r.width, r.y },
-                             { r.x + r.width, r.y + r.height }, { r.x, r.y + r.height } };
-            ink_fill(q, 4, used ? HATCH_DIAG : HATCH_NONE, 700 + p * 20 + t,
-                     used ? col_paper_dark() : (hot ? col_accent_a()
-                                                    : (Color){ 232, 224, 206, 255 }));
-            ink_rect(r, 1.8f, 0.7f, 720 + p * 20 + t, col_ink_soft());
-            art_text(lab, r.x + 10, r.y + 6, 16, used ? col_ink_soft() : col_ink());
-            x += w + 8;
-        }
-        y += 46;
-    }
+    float chip = 16.0f;
+    while (chip > 10.0f && layout_pools(pools, chip, false) > pools.height - 70)
+        chip -= 1.0f;
+    layout_pools(pools, chip, true);
 
     /* --- controls --- */
     bool ready = filled_count() == g_nblanks;
@@ -418,11 +428,11 @@ void board_draw(void)
     g_hint_rect   = (Rectangle){ 312, 606, 210, 60 };
     g_leave_rect  = (Rectangle){ 1060, 606, 168, 60 };
 
-    draw_button(g_deduce_rect, ui_str("board.deduce"), ready, 8190);
+    pz_button(g_deduce_rect, ui_str("board.deduce"), ready, 8190);
     char hb[64];
     snprintf(hb, sizeof hb, "%s (%d)", ui_str("board.hint"), flag_get("feathers"));
-    draw_button(g_hint_rect, hb, g_sel >= 0 && flag_get("feathers") > 0, 8192);
-    draw_button(g_leave_rect, ui_str("board.leave"), true, 8194);
+    pz_button(g_hint_rect, hb, g_sel >= 0 && flag_get("feathers") > 0, 8192);
+    pz_button(g_leave_rect, ui_str("board.leave"), true, 8194);
 
     /* --- feedback: enough to keep momentum, not enough to guess through --- */
     char msg[192];
@@ -439,7 +449,7 @@ void board_draw(void)
     }
     Color mc = g_solved ? col_cool() : (g_flash > 0 && g_last_correct >= 0
                                         ? col_accent_b() : col_ink());
-    art_text_wrap(msg, 548, 614, 490, 18, mc, -1);
+    art_text_fit(msg, (Rectangle){ 542, 600, 500, 46 }, 18, mc);
 
     if (g_attempts > 0 && !g_solved) {
         char a[48];

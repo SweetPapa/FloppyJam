@@ -31,7 +31,7 @@ static Rectangle tab_rect(int i)
 {
     return (Rectangle){ 96 + i * 150.0f, 52, 140, 44 };
 }
-static Rectangle close_rect(void) { return (Rectangle){ 1074, 52, 110, 44 }; }
+static Rectangle close_rect(void) { return (Rectangle){ 1016, 52, 168, 44 }; }
 
 bool journal_update(float dt)
 {
@@ -97,12 +97,14 @@ static void draw_people(Rectangle page)
         Rectangle port = { page.x + 12, y, 84, 84 };
         npc_bust(i, port, EM_NEUTRAL, g_t);
         ink_rect(port, 1.8f, 0.7f, 2000 + i, col_ink_soft());
-        art_text(npc_display(i), page.x + 110, y + 2, 19, col_ink());
+        art_text(npc_display(i), page.x + 110, y + 2,
+                 art_text_size_for(npc_display(i), page.width - 130, 19), col_ink());
 
         char skey[FLAG_MAX_KEY];
         snprintf(skey, sizeof skey, "who.%s", npc_key(i));
-        art_text_wrap(ui_str(skey), page.x + 110, y + 30, page.width - 130, 15,
-                      col_ink_soft(), -1);
+        art_text_fit(ui_str(skey), (Rectangle){ page.x + 110, y + 28,
+                                               page.width - 130, 44 }, 15,
+                     col_ink_soft());
 
         int tr = trust_get(npc_key(i));
         for (int f = 0; f < 5; f++)
@@ -126,7 +128,8 @@ static void draw_clues(Rectangle page)
         if (y > page.y + page.height - 40) break;
         const char *id = clue_at(i);
         doodle(D_STAR, page.x + 24, y + 12, 10, 0, col_accent_a());
-        art_text(ui_str(id), page.x + 44, y, 17, col_ink());
+        art_text(ui_str(id), page.x + 44, y,
+                 art_text_size_for(ui_str(id), page.width - 70, 17), col_ink());
 
         char skey[FLAG_MAX_KEY];
         snprintf(skey, sizeof skey, "src.%s", id);
@@ -157,7 +160,9 @@ static void draw_boards(Rectangle page)
         snprintf(tkey, sizeof tkey, "boardname.%s", id);
         doodle(solved ? D_STAR : D_BOOK, page.x + 26, y + 12, 12, 0,
                solved ? col_cool() : col_ink_soft());
-        art_text(ui_str(tkey), page.x + 50, y, 18, solved ? col_ink() : col_ink_soft());
+        art_text(ui_str(tkey), page.x + 50, y,
+                 art_text_size_for(ui_str(tkey), page.width - 80, 18),
+                 solved ? col_ink() : col_ink_soft());
         art_text(solved ? "solved" : "not yet", page.x + 52, y + 24, 13,
                  col_ink_soft());
         y += 48;
@@ -245,8 +250,9 @@ void journal_draw(void)
                  on ? col_accent_a() : (Color){ 226, 214, 192, 255 });
         ink_stroke((Vector2[]){ q[0], q[1], q[2], q[3], q[0] }, 5, 2.0f, 0.7f,
                    5170 + i, col_ink());
-        float w = art_text_w(TAB_NAME[i], 17);
-        art_text(TAB_NAME[i], r.x + (r.width - w) * 0.5f, r.y + 11, 17, col_ink());
+        float ts = art_text_size_for(TAB_NAME[i], r.width - 16, 17);
+        float w = art_text_w(TAB_NAME[i], ts);
+        art_text(TAB_NAME[i], r.x + (r.width - w) * 0.5f, r.y + 11, ts, col_ink());
     }
     Rectangle cr = close_rect();
     pz_button(cr, ui_str("journal.close"), true, 5180);

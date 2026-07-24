@@ -288,10 +288,17 @@ void npc_draw(int id, float x, float y, float scale, int pose, int emote, float 
 void npc_bust(int id, Rectangle r, int emote, float t)
 {
     if (id < 0 || id >= CAST_N) return;
-    /* the same puppet, framed at the shoulders and clipped to the portrait */
+    /* The same puppet, framed at the shoulders. The frame is derived from
+     * THIS character's height, not a fixed one: a nine-year-old and a
+     * librarian are different lengths, and a fixed crop put the short ones
+     * entirely below the portrait — an empty box where Tansy should be. */
+    float h = g_cast[id].height;
+    if (h < 0.2f) h = 0.2f;
+    float scale = r.height / (45.0f * h);
+    float body = 150.0f * scale * h;
+    float feet = r.y + r.height + body * 0.68f;
+
     BeginScissorMode((int)r.x, (int)r.y, (int)r.width, (int)r.height);
-    float scale = r.height / 62.0f;
-    float feet = r.y + r.height + 150.0f * scale * 0.80f;
     npc_draw(id, r.x + r.width * 0.5f, feet, scale, POSE_STAND, emote, t);
     EndScissorMode();
 }

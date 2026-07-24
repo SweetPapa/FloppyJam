@@ -12,7 +12,7 @@
 #include <math.h>
 
 #define MAX_CHOICES 4
-#define LINE_CAP    320
+#define LINE_CAP    TEXT_MAX
 
 typedef struct {
     char text[LINE_CAP];
@@ -32,6 +32,22 @@ static int   g_speaker = -1;
 static int   g_emote;
 static float g_reveal;
 static float g_blip_acc;
+
+/* Paging. A beat longer than the panel is shown a page at a time rather than
+ * clipped, which is what keeps a long line readable at the largest text size
+ * instead of just ending. Set by dlg_draw, read by dlg_update. */
+static int g_page;        /* first character of the visible page */
+static int g_page_next;   /* first character that did not fit, or -1 */
+static int g_page_len;    /* characters on this page */
+
+static void page_reset(void)
+{
+    g_page = 0;
+    g_page_next = -1;
+    g_page_len = 0;
+    g_reveal = 0;
+    g_blip_acc = 0;
+}
 
 static Choice g_choice[MAX_CHOICES];
 static int    g_nchoice;
@@ -65,6 +81,7 @@ bool dlg_start(const char *node_id)
     g_speaker = -1;
     g_request[0] = 0;
     g_pending_goto[0] = 0;
+    page_reset();
     music_duck(true);
     return true;
 }
@@ -120,8 +137,7 @@ static bool parse_say(const char *line)
         flag_set(key, 1);
     }
     rest(colon + 1, g_say, LINE_CAP);
-    g_reveal = 0;
-    g_blip_acc = 0;
+    page_reset();
     return true;
 }
 
@@ -178,11 +194,13 @@ static void absorb_continuations(void)
         if (!is_continuation(line)) return;
         if (sentence_closed && isupper((unsigned char)line[0])) return;
 
+        /* Refuse rather than swallow: consuming a line we cannot store would
+         * drop the rest of the paragraph on the floor with nothing to show
+         * for it. Leaving it unconsumed makes it the next beat instead. */
+        if (n + strlen(line) + 2 >= LINE_CAP) return;
         g_cur = probe;
-        if (n + 2 < LINE_CAP) {
-            g_say[n] = ' ';
-            snprintf(g_say + n + 1, (size_t)LINE_CAP - n - 1, "%s", line);
-        }
+        g_say[n] = ' ';
+        snprintf(g_say + n + 1, (size_t)LINE_CAP - n - 1, "%s", line);
     }
 }
 
@@ -343,8 +361,7 @@ static void exec(void)
         g_emote = EM_NEUTRAL;
         snprintf(g_say, LINE_CAP, "%s", line);
         absorb_continuations();
-        g_reveal = 0;
-        g_blip_acc = 0;
+        page_reset();
         g_state = S_TYPING;
         return;
     }
@@ -365,7 +382,8 @@ dlg_status dlg_update(float dt)
     case S_IDLE: return DLG_DONE;
     case S_EXEC: exec(); return dlg_update(0);
     case S_TYPING: {
-        int len = (int)strlen(g_say);
+        int len = g_page_len > 0 ? g_page_len : (int)strlen(g_say) - g_page;
+        if (len < 0) len = 0;
         if (g_reveal < len) {
             float speed = settings()->reduce_motion ? 9999.0f : 52.0f;
             g_reveal += dt * speed;
@@ -373,8 +391,15 @@ dlg_status dlg_update(float dt)
             while (g_blip_acc > 2.4f) { g_blip_acc -= 2.4f; sfx_blip(g_speaker); }
             if (advanced()) g_reveal = (float)len;    /* impatience is allowed */
         } else if (advanced()) {
-            g_state = S_EXEC;
-            return dlg_update(0);
+            if (g_page_next >= 0) {          /* more of this beat to read */
+                g_page = g_page_next;
+                g_reveal = 0;
+                g_blip_acc = 0;
+                sfx_play(SFX_PAGE);
+            } else {
+                g_state = S_EXEC;
+                return dlg_update(0);
+            }
         }
         return DLG_RUNNING;
     }
@@ -420,7 +445,16 @@ void dlg_draw(void)
         Vector2 m = art_mouse();
         g_hover = -1;
         for (int i = 0; i < g_nchoice; i++) {
-            float h = 34 + text_scale() * 8;
+            char probe[LINE_CAP + 24];
+            if (g_choice[i].tone[0])
+                snprintf(probe, sizeof probe, "(%s)  %s", g_choice[i].tone,
+                         g_choice[i].text);
+            else
+                snprintf(probe, sizeof probe, "%s", g_choice[i].text);
+            float th = 0;
+            art_text_flow(probe, 0, tx + 4, y + 6, wide - 8, 1.0e6f, 17,
+                          col_ink(), -1, false, &th);
+            float h = th + 14;
             Rectangle r = { tx, y, wide, h };
             bool hot = CheckCollisionPointRec(m, r);
             if (hot) g_hover = i;
@@ -430,12 +464,8 @@ void dlg_draw(void)
                                   { r.x + r.width, r.y + r.height }, { r.x - 6, r.y + r.height } };
                 ink_fill(bg, 4, HATCH_NONE, 900 + i, (Color){ 232, 222, 200, 190 });
             }
-            char buf[LINE_CAP + 24];
-            if (g_choice[i].tone[0])
-                snprintf(buf, sizeof buf, "(%s)  %s", g_choice[i].tone, g_choice[i].text);
-            else
-                snprintf(buf, sizeof buf, "%s", g_choice[i].text);
-            art_text(buf, r.x + 4, r.y + 6, 17, c);
+            art_text_flow(probe, 0, r.x + 4, r.y + 6, wide - 8, 1.0e6f, 17, c,
+                          -1, true, NULL);
             y += h + 4;
         }
         if (g_hover >= 0 && clicked()) {
@@ -451,13 +481,21 @@ void dlg_draw(void)
     if (g_speaker < 0)
         art_text(settings()->detective, tx, py, 15, col_ink_soft());
 
-    art_text_wrap(g_say, tx, py + (g_speaker < 0 ? 24 : 0), wide, 19, col_ink(),
-                  (int)g_reveal);
+    float ty = py + (g_speaker < 0 ? 24 : 0);
+    float room = panel.y + panel.height - ty - 22;
+    g_page_next = art_text_flow(g_say, g_page, tx, ty, wide, room, 19, col_ink(),
+                                (int)g_reveal, true, NULL);
+    g_page_len = (g_page_next < 0 ? (int)strlen(g_say) : g_page_next) - g_page;
 
-    if (g_reveal >= (float)strlen(g_say)) {
+    if (g_reveal >= (float)g_page_len) {
         float t = (float)GetTime();
         float bob = settings()->reduce_motion ? 0.0f : sinf(t * 4.0f) * 3.0f;
-        doodle(D_FEATHER, panel.x + panel.width - 40, panel.y + panel.height - 34 + bob,
-               13, 0.5f, col_ink_soft());
+        float mx = panel.x + panel.width - 40, my = panel.y + panel.height - 34 + bob;
+        if (g_page_next >= 0) {              /* there is more of this to read */
+            ink_line(mx - 9, my - 4, mx, my + 5, 2.6f, 0.5f, 78, col_accent_b());
+            ink_line(mx + 9, my - 4, mx, my + 5, 2.6f, 0.5f, 79, col_accent_b());
+        } else {
+            doodle(D_FEATHER, mx, my, 13, 0.5f, col_ink_soft());
+        }
     }
 }

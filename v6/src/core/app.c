@@ -102,11 +102,16 @@ static void title_draw(void)
 
     Rectangle plate = { 300, 90, VW - 600, 190 };
     paper_panel(plate, 7.0f, 11111);
-    float w = art_text_w("HUEDUNIT", 60);
-    art_text("HUEDUNIT", plate.x + (plate.width - w) * 0.5f, plate.y + 40, 60, col_ink());
+    /* the title keeps clear of the prism and the magpie at every text size */
+    float ts = art_text_size_for("HUEDUNIT", plate.width - 260, 60);
+    float w = art_text_w("HUEDUNIT", ts);
+    art_text("HUEDUNIT", plate.x + (plate.width - w) * 0.5f,
+             plate.y + 40 + (60 - ts) * 0.5f, ts, col_ink());
     const char *sub = ui_str("title.sub");
-    float w2 = art_text_w(sub, 18);
-    art_text(sub, plate.x + (plate.width - w2) * 0.5f, plate.y + 126, 18, col_ink_soft());
+    float ss = art_text_size_for(sub, plate.width - 80, 18);
+    float w2 = art_text_w(sub, ss);
+    art_text(sub, plate.x + (plate.width - w2) * 0.5f, plate.y + 126, ss,
+             col_ink_soft());
     doodle(D_PRISM, plate.x + 76, plate.y + 96, 36, -0.2f, (Color){ 168, 140, 210, 255 });
     doodle(D_BIRD, plate.x + plate.width - 78, plate.y + 96, 34, 0.1f, col_ink());
 
@@ -150,7 +155,8 @@ static void name_draw(void)
     DrawRectangle(0, 0, VW, VH, (Color){ 24, 22, 26, 140 });
     Rectangle r = { 340, 250, 600, 230 };
     paper_panel(r, 5.0f, 13000);
-    art_text(ui_str("name.prompt"), r.x + 30, r.y + 28, 20, col_ink());
+    art_text_fit(ui_str("name.prompt"),
+                 (Rectangle){ r.x + 30, r.y + 22, r.width - 60, 56 }, 20, col_ink());
 
     Rectangle field = { r.x + 30, r.y + 84, r.width - 60, 54 };
     ink_rect(field, 2.2f, 0.8f, 13001, col_ink_soft());
@@ -193,10 +199,12 @@ static void recap_draw(void)
     DrawRectangle(0, 0, VW, VH, (Color){ 240, 234, 220, 170 });
     Rectangle r = { 190, 150, VW - 380, 380 };
     paper_panel(r, 6.0f, 14000);
-    art_text(ui_str("recap.title"), r.x + 34, r.y + 30, 28, col_ink());
+    art_text(ui_str("recap.title"), r.x + 34, r.y + 30,
+             art_text_size_for(ui_str("recap.title"), r.width - 68, 28), col_ink());
     ink_line(r.x + 32, r.y + 76, r.x + r.width - 32, r.y + 76, 2.0f, 1.4f, 14001,
              col_ink_soft());
-    art_text_wrap(g_recap, r.x + 34, r.y + 100, r.width - 68, 19, col_ink(), -1);
+    art_text_fit(g_recap, (Rectangle){ r.x + 34, r.y + 100, r.width - 68,
+                                      r.height - 200 }, 19, col_ink());
     pz_button((Rectangle){ r.x + r.width * 0.5f - 130, r.y + r.height - 82, 260, 56 },
               ui_str("recap.go"), true, 14002);
     doodle(D_FEATHER, r.x + r.width - 70, r.y + r.height - 60, 18, -0.5f,
@@ -221,7 +229,8 @@ static void settings_screen_draw(void)
     DrawRectangle(0, 0, VW, VH, (Color){ 26, 22, 26, 140 });
     Rectangle r = { 300, 70, VW - 600, VH - 150 };
     paper_panel(r, 5.0f, 15000);
-    art_text(ui_str("set.title"), r.x + 30, r.y + 24, 26, col_ink());
+    art_text(ui_str("set.title"), r.x + 30, r.y + 24,
+             art_text_size_for(ui_str("set.title"), r.width - 60, 26), col_ink());
 
     Settings *s = settings();
     static const char *textnames[3] = { "normal", "large", "largest" };
@@ -237,12 +246,14 @@ static void settings_screen_draw(void)
     rows[0] = b0; rows[1] = b1; rows[2] = b2; rows[3] = b3; rows[4] = b4; rows[5] = b5;
 
     for (int i = 0; i < 6; i++)
-        pz_button((Rectangle){ r.x + 40, r.y + 80 + i * 68.0f, r.width - 80, 54 },
+        pz_button((Rectangle){ r.x + 40, r.y + 74 + i * 62.0f, r.width - 80, 50 },
                   rows[i], true, 15010 + i * 2);
     snprintf(buf, sizeof buf, "%s", ui_str("set.back"));
-    pz_button((Rectangle){ r.x + r.width * 0.5f - 120, r.y + r.height - 74, 240, 54 },
+    pz_button((Rectangle){ r.x + r.width * 0.5f - 120, r.y + 452, 240, 50 },
               buf, true, 15040);
-    art_text(ui_str("set.note"), r.x + 40, r.y + r.height - 116, 13, col_ink_soft());
+    art_text_fit(ui_str("set.note"),
+                 (Rectangle){ r.x + 40, r.y + 512, r.width - 80, 50 },
+                 13, col_ink_soft());
 }
 
 static void settings_screen_update(void)
@@ -250,8 +261,8 @@ static void settings_screen_update(void)
     Rectangle r = { 300, 70, VW - 600, VH - 150 };
     Settings *s = settings();
     for (int i = 0; i < 6; i++) {
-        if (!pz_button_clicked((Rectangle){ r.x + 40, r.y + 80 + i * 68.0f,
-                                            r.width - 80, 54 }, true)) continue;
+        if (!pz_button_clicked((Rectangle){ r.x + 40, r.y + 74 + i * 62.0f,
+                                            r.width - 80, 50 }, true)) continue;
         switch (i) {
         case 0: s->text_size = (s->text_size + 1) % 3; break;
         case 1: s->highlight = !s->highlight; break;
@@ -263,7 +274,7 @@ static void settings_screen_update(void)
         settings_store();
     }
     if (pz_button_clicked((Rectangle){ r.x + r.width * 0.5f - 120,
-                                       r.y + r.height - 74, 240, 54 }, true) ||
+                                       r.y + 452, 240, 50 }, true) ||
         IsKeyPressed(KEY_ESCAPE))
         g_state = scene_current()[0] ? A_TOWN : A_TITLE;
 }
@@ -273,7 +284,8 @@ static void settings_screen_update(void)
  * ========================================================================== */
 static void hud_draw(void)
 {
-    art_text(scene_title(), 26, 20, 20, col_ink());
+    art_text(scene_title(), 26, 20,
+             art_text_size_for(scene_title(), 950, 20), col_ink());
 
     char fb[32];
     snprintf(fb, sizeof fb, "%d", flag_get("feathers"));
@@ -435,6 +447,37 @@ bool app_debug_goto(const char *spec)
     snprintf(settings()->detective, sizeof settings()->detective, "%s", "Quill");
 
     if (eq(kind, "title")) { g_state = A_TITLE; return true; }
+    if (eq(kind, "settings")) { g_state = A_SETTINGS; return true; }
+    if (eq(kind, "name")) { g_state = A_NAME; return true; }
+    if (eq(kind, "journal")) {
+        for (int i = 0; i < npc_count(); i++) {
+            char k[FLAG_MAX_KEY];
+            snprintf(k, sizeof k, "met.%s", npc_key(i));
+            flag_set(k, 1);
+            trust_add(npc_key(i), 2);
+        }
+        for (int i = 0; i < content_block_count("@node"); i++) {
+            char nid[48];
+            Block b;
+            if (!content_block_at("@node", i, nid, sizeof nid, &b)) continue;
+            Cursor c;
+            cur_open(&c, &b);
+            char line[512];
+            while (cur_line(&c, line, sizeof line)) {
+                const char *p2 = line;
+                char kw[32];
+                word(&p2, kw, sizeof kw);
+                if (!eq(kw, "grant")) continue;
+                char t[64];
+                while (word(&p2, t, sizeof t) && t[0]) clue_grant(t);
+            }
+        }
+        palette_set_stage(3);
+        scene_load("p_square");
+        journal_open();
+        g_state = A_JOURNAL;
+        return true;
+    }
     if (eq(kind, "scene")) {
         if (!scene_load(id)) return false;
         /* light the town up to whichever chapter this screen belongs to */
@@ -471,8 +514,15 @@ bool app_debug_goto(const char *spec)
         return true;
     }
     if (eq(kind, "puzzle")) {
+        /* "puzzle:<id>+hint" photographs the hint note, which is the widest
+         * prose a puzzle ever shows and therefore the one worth checking */
+        char pid[48];
+        snprintf(pid, sizeof pid, "%s", id);
+        char *want_hint = strchr(pid, '+');
+        if (want_hint) *want_hint = 0;
         palette_set_stage(3);
-        if (!puzzle_start(id, 1, 1234)) return false;
+        if (!puzzle_start(pid, 1, 1234)) return false;
+        if (want_hint) { puzzle_spend_hint(); puzzle_spend_hint(); }
         g_state = A_PUZZLE;
         return true;
     }

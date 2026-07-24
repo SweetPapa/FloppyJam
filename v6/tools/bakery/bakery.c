@@ -603,6 +603,75 @@ static void gate_clue_closure(void)
     }
 }
 
+/* No string may be longer than the engine can hold.
+ *
+ * This gate exists because the failure it catches is invisible: an overlong
+ * line does not crash, it just stops mid-sentence on screen, and nobody
+ * notices until a player asks why a character trails off. TEXT_MAX here must
+ * match src/content/content.h. */
+#define TEXT_MAX 512
+
+static void check_len(const char *file, int line, const char *what,
+                      const char *text)
+{
+    int n = (int)strlen(text);
+    if (n < TEXT_MAX) return;
+    err(file, line, "%s is %d characters; the engine holds %d and would cut it "
+        "off mid-sentence. Split it into two beats.", what, n, TEXT_MAX - 1);
+}
+
+static void gate_string_lengths(void)
+{
+    for (int i = 0; i < g_files; i++) {
+        CFile *f = &g_file[i];
+        LineIt it = { f->text, 0 };
+        char raw[2048];
+
+        while (nextline(&it, raw, sizeof raw)) {
+            const char *p = skipws(raw);
+            if (!*p || *p == '#') continue;
+
+            if (is_ext(f, ".cut")) {
+                char kw[64];
+                const char *q = p;
+                takeword(&q, kw, sizeof kw);
+                if (strcmp(kw, "SAY") == 0) {
+                    char who[64], said[2048];
+                    takeword(&q, who, sizeof who);
+                    q = skipws(q);
+                    snprintf(said, sizeof said, "%s", q);
+                    int n = (int)strlen(said);
+                    if (n >= 2 && said[0] == '"' && said[n - 1] == '"') {
+                        said[n - 1] = 0;
+                        check_len(f->name, it.line, "a spoken line", said + 1);
+                    } else {
+                        err(f->name, it.line, "SAY needs its line in quotes");
+                    }
+                }
+            } else if (is_ext(f, ".scn")) {
+                const char *a = strchr(p, '"');
+                if (a) {
+                    const char *b = strchr(a + 1, '"');
+                    if (b) {
+                        char lab[2048];
+                        int n = (int)(b - a - 1);
+                        if (n > (int)sizeof lab - 1) n = (int)sizeof lab - 1;
+                        memcpy(lab, a + 1, (size_t)n);
+                        lab[n] = 0;
+                        check_len(f->name, it.line, "a hotspot's text", lab);
+                    }
+                }
+            } else if (is_ext(f, ".dlg")) {
+                const char *colon = strchr(p, ':');
+                const char *body = colon ? colon + 1 : p;
+                check_len(f->name, it.line, "a line of dialogue", body);
+            } else if (is_ext(f, ".case") || is_ext(f, ".txt")) {
+                check_len(f->name, it.line, "this line", p);
+            }
+        }
+    }
+}
+
 /* every puzzle's chapter must have dialogue that starts it before its board */
 static void gate_puzzle_reach(void)
 {
@@ -685,6 +754,7 @@ int main(int argc, char **argv)
     gate_orphan_clues();
     gate_clue_closure();
     gate_puzzle_reach();
+    gate_string_lengths();
 
     printf("bakery: %d files, %d nodes, %d scenes, %d boards, %d cutscenes, "
            "%d puzzles, %d feathers\n",

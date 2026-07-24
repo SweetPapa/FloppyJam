@@ -517,64 +517,98 @@ float art_text_w(const char *s, float size)
     return MeasureTextEx(GetFontDefault(), s, sz, sz / 10.0f).x;
 }
 
-float art_text_wrap(const char *s, float x, float y, float wide, float size,
-                    Color c, int reveal)
+int art_text_flow(const char *s, int start, float x, float y, float wide,
+                  float maxh, float size, Color c, int reveal, bool draw,
+                  float *out_h)
 {
     float sz = size * text_scale();
     Font f = GetFontDefault();
     float lh = sz * 1.42f;
-    char line[256] = ""; int ln = 0;
-    char word_buf[64]; int wn = 0;
-    float ty = y;
-    int emitted = 0;
+    float spacing = sz / 10.0f;
+    int n = (int)strlen(s);
+    if (start < 0) start = 0;
+    if (out_h) *out_h = 0;
+    if (start >= n) return -1;
 
-    for (const char *p = s;; p++) {
-        if (*p && *p != ' ' && *p != '\n') {
-            if (wn < 63) word_buf[wn++] = *p;
-            continue;
+    char probe[TEXT_MAX];
+    float ty = y;
+    int i = start;
+
+    while (i < n) {
+        while (i < n && s[i] == ' ') i++;            /* eat the wrap's space */
+        if (i >= n) break;
+        if (ty + lh > y + maxh + 0.5f) {             /* no room for this line */
+            if (out_h) *out_h = ty - y;
+            return i;
         }
-        word_buf[wn] = 0;
-        if (wn) {
-            char probe[256];
-            snprintf(probe, sizeof probe, "%s%s%s", line, ln ? " " : "", word_buf);
-            if (MeasureTextEx(f, probe, sz, sz / 10.0f).x > wide && ln) {
-                if (reveal < 0 || emitted < reveal) {
-                    char cut[256];
-                    snprintf(cut, sizeof cut, "%s", line);
-                    if (reveal >= 0 && emitted + ln > reveal) cut[reveal - emitted] = 0;
-                    DrawTextEx(f, cut, (Vector2){ x, ty }, sz, sz / 10.0f, c);
-                }
-                emitted += ln + 1;
-                ty += lh;
-                snprintf(line, sizeof line, "%s", word_buf);
-                ln = (int)strlen(line);
-            } else {
-                snprintf(line, sizeof line, "%s", probe);
-                ln = (int)strlen(line);
+
+        /* how much of the paragraph fits on one line */
+        int line_start = i, end = -1, j = i;
+        while (j < n && s[j] != '\n') {
+            int k = j;
+            while (k < n && s[k] != ' ' && s[k] != '\n') k++;
+            int len = k - line_start;
+            if (len > TEXT_MAX - 1) len = TEXT_MAX - 1;
+            memcpy(probe, s + line_start, (size_t)len);
+            probe[len] = 0;
+            if (end >= 0 && MeasureTextEx(f, probe, sz, spacing).x > wide) break;
+            end = k;
+            j = k;
+            while (j < n && s[j] == ' ') j++;
+        }
+        if (end < 0) {                               /* one unbreakable word */
+            end = i;
+            while (end < n && s[end] != ' ' && s[end] != '\n') end++;
+            if (end == i) end = i + 1;
+        }
+
+        int len = end - line_start;
+        if (len > TEXT_MAX - 1) len = TEXT_MAX - 1;
+        int since_start = line_start - start;
+        if (draw && (reveal < 0 || since_start < reveal)) {
+            int cut = len;
+            if (reveal >= 0 && since_start + len > reveal) cut = reveal - since_start;
+            if (cut > 0) {
+                memcpy(probe, s + line_start, (size_t)cut);
+                probe[cut] = 0;
+                DrawTextEx(f, probe, (Vector2){ x, ty }, sz, spacing, c);
             }
-            wn = 0;
         }
-        if (*p == '\n') {
-            if (reveal < 0 || emitted < reveal) {
-                char cut[256];
-                snprintf(cut, sizeof cut, "%s", line);
-                if (reveal >= 0 && emitted + ln > reveal) cut[reveal - emitted] = 0;
-                DrawTextEx(f, cut, (Vector2){ x, ty }, sz, sz / 10.0f, c);
-            }
-            emitted += ln + 1;
-            ty += lh;
-            line[0] = 0; ln = 0;
-        }
-        if (!*p) break;
+        ty += lh;
+        i = end;
+        if (i < n && s[i] == '\n') i++;
     }
-    if (ln && (reveal < 0 || emitted < reveal)) {
-        char cut[256];
-        snprintf(cut, sizeof cut, "%s", line);
-        if (reveal >= 0 && emitted + ln > reveal) cut[reveal - emitted] = 0;
-        DrawTextEx(f, cut, (Vector2){ x, ty }, sz, sz / 10.0f, c);
+    if (out_h) *out_h = ty - y;
+    return -1;
+}
+
+float art_text_wrap(const char *s, float x, float y, float wide, float size,
+                    Color c, int reveal)
+{
+    float h = 0;
+    art_text_flow(s, 0, x, y, wide, 1.0e6f, size, c, reveal, true, &h);
+    return h;
+}
+
+float art_text_size_for(const char *s, float wide, float size)
+{
+    float sz = size;
+    while (sz > 9.0f && art_text_w(s, sz) > wide) sz -= 1.0f;
+    return sz;
+}
+
+float art_text_fit(const char *s, Rectangle box, float size, Color c)
+{
+    float sz = size;
+    for (int step = 0; step < 8; step++) {
+        if (art_text_flow(s, 0, box.x, box.y, box.width, box.height, sz, c,
+                          -1, false, NULL) < 0)
+            break;                        /* it all fits at this size */
+        sz -= 1.0f;
+        if (sz < 9.0f) { sz = 9.0f; break; }
     }
-    if (ln) ty += lh;
-    return ty - y;
+    art_text_flow(s, 0, box.x, box.y, box.width, box.height, sz, c, -1, true, NULL);
+    return sz;
 }
 
 /* ==========================================================================
