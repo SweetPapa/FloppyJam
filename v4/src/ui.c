@@ -57,13 +57,18 @@ void ui_hud(App *a) {
         DrawText(buf, sw - 16 - tw, 80, 16, (Color){255,120,120,255});
     }
 
-    /* bottom-center: control key hints, highlighting current color */
-    int cy = GetScreenHeight() - 40;
-    int bx = sw / 2 - 74;
-    draw_key(bx,      cy, "W", COL_RED,    g->color == COL_RED);
-    draw_key(bx + 38, cy, "S", COL_BLUE,   g->color == COL_BLUE);
-    draw_key(bx + 76, cy, "A", COL_YELLOW, g->color == COL_YELLOW);
-    draw_key(bx + 114, cy, "D", COL_GREEN, g->color == COL_GREEN);
+    /* bottom-center: control keys laid out in the real WASD keyboard shape
+     * (W on top, A/S/D below) so the direction->color mapping reads at a
+     * glance. Key box is 26px; step 30 leaves a 4px gap. */
+    int step = 30;
+    int cx = sw / 2;
+    int by = GetScreenHeight() - 36; /* bottom row */
+    int ty = by - step;              /* top row (W) */
+    int lft = cx - 13;               /* left edge of a centered key */
+    draw_key(lft,        ty, "W", COL_RED,    g->color == COL_RED);    /* up    */
+    draw_key(lft - step, by, "A", COL_YELLOW, g->color == COL_YELLOW); /* left  */
+    draw_key(lft,        by, "S", COL_BLUE,   g->color == COL_BLUE);   /* down  */
+    draw_key(lft + step, by, "D", COL_GREEN,  g->color == COL_GREEN);  /* right */
 
     /* lava warning banner */
     if (g->lava_y - g->py < LAVA_WARNING_DIST && g->state != PS_DEAD) {
