@@ -1,0 +1,394 @@
+{
+  "id": 23,
+  "name": "New Level",
+  "parTime": 180,
+  "lavaSpeed": 25,
+  "lavaAcceleration": 0,
+  "checkpoints": [
+    {
+      "id": "cp1",
+      "y": 4240,
+      "respawnPlatformId": "m1"
+    },
+    {
+      "id": "cp2",
+      "y": 3360,
+      "respawnPlatformId": "m1"
+    },
+    {
+      "id": "cp3",
+      "y": 2780,
+      "respawnPlatformId": "m16"
+    },
+    {
+      "id": "cp4",
+      "y": 2120,
+      "respawnPlatformId": "m22"
+    }
+  ],
+  "magnets": [
+    {
+      "id": "m1",
+      "x": 280,
+      "y": 4680,
+      "color": "blue"
+    },
+    {
+      "id": "m2",
+      "x": 360,
+      "y": 3100,
+      "color": "green"
+    },
+    {
+      "id": "m3",
+      "x": 80,
+      "y": 4520,
+      "color": "red"
+    },
+    {
+      "id": "m4",
+      "x": 460,
+      "y": 4500,
+      "color": "yellow"
+    },
+    {
+      "id": "m5",
+      "x": 260,
+      "y": 4320,
+      "color": "green"
+    },
+    {
+      "id": "m6",
+      "x": 260,
+      "y": 4140,
+      "color": "blue"
+    },
+    {
+      "id": "m7",
+      "x": 260,
+      "y": 3960,
+      "color": "yellow"
+    },
+    {
+      "id": "m8",
+      "x": 260,
+      "y": 3700,
+      "color": "red"
+    },
+    {
+      "id": "m9",
+      "x": 260,
+      "y": 3540,
+      "color": "green"
+    },
+    {
+      "id": "m10",
+      "x": 260,
+      "y": 3400,
+      "color": "yellow"
+    },
+    {
+      "id": "m11",
+      "x": 120,
+      "y": 3200,
+      "color": "blue"
+    },
+    {
+      "id": "m12",
+      "x": 360,
+      "y": 3300,
+      "color": "red"
+    },
+    {
+      "id": "m13",
+      "x": 200,
+      "y": 2980,
+      "color": "yellow"
+    },
+    {
+      "id": "m14",
+      "x": 160,
+      "y": 2820,
+      "color": "blue"
+    },
+    {
+      "id": "m15",
+      "x": 240,
+      "y": 2880,
+      "color": "blue"
+    },
+    {
+      "id": "m16",
+      "x": 260,
+      "y": 2740,
+      "color": "red"
+    },
+    {
+      "id": "m17",
+      "x": 380,
+      "y": 2640,
+      "color": "yellow"
+    },
+    {
+      "id": "m18",
+      "x": 160,
+      "y": 2640,
+      "color": "yellow"
+    },
+    {
+      "id": "m19",
+      "x": 240,
+      "y": 2420,
+      "color": "green"
+    },
+    {
+      "id": "m22",
+      "x": 240,
+      "y": 1840,
+      "color": "red"
+    },
+    {
+      "id": "m20",
+      "x": 240,
+      "y": 2300,
+      "color": "blue"
+    },
+    {
+      "id": "m21",
+      "x": 240,
+      "y": 2040,
+      "color": "blue"
+    },
+    {
+      "id": "m23",
+      "x": 240,
+      "y": 1680,
+      "color": "green"
+    }
+  ],
+  "obstacles": [
+    {
+      "id": "obs1",
+      "type": "roamer",
+      "x": 160,
+      "y": 4600,
+      "speed": 60
+    },
+    {
+      "id": "obs2",
+      "type": "roamer",
+      "x": 380,
+      "y": 4600,
+      "speed": 60
+    },
+    {
+      "id": "obs3",
+      "type": "roamer",
+      "x": 260,
+      "y": 4460,
+      "speed": 60
+    },
+    {
+      "id": "obs4",
+      "type": "roamer",
+      "x": 360,
+      "y": 4300,
+      "speed": 60
+    },
+    {
+      "id": "obs5",
+      "type": "roamer",
+      "x": 160,
+      "y": 4300,
+      "speed": 60
+    },
+    {
+      "id": "obs6",
+      "type": "magnet_mine",
+      "x": 260,
+      "y": 4060
+    },
+    {
+      "id": "obs7",
+      "type": "magnet_mine",
+      "x": 260,
+      "y": 3780
+    },
+    {
+      "id": "obs8",
+      "type": "magnet_mine",
+      "x": 260,
+      "y": 3500
+    },
+    {
+      "id": "obs9",
+      "type": "laser_gate",
+      "x": 20,
+      "y": 3260,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs10",
+      "type": "laser_gate",
+      "x": 180,
+      "y": 3260,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs11",
+      "type": "laser_gate",
+      "x": 320,
+      "y": 3260,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs12",
+      "type": "laser_gate",
+      "x": 460,
+      "y": 3260,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs13",
+      "type": "laser_gate",
+      "x": 160,
+      "y": 3040,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs14",
+      "type": "laser_gate",
+      "x": 340,
+      "y": 3040,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs15",
+      "type": "laser_gate",
+      "x": 140,
+      "y": 2920,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs16",
+      "type": "sweeper",
+      "x": 100,
+      "y": 2640,
+      "length": 100,
+      "speed": 60
+    },
+    {
+      "id": "obs17",
+      "type": "sweeper",
+      "x": 320,
+      "y": 2640,
+      "length": 100,
+      "speed": 60
+    },
+    {
+      "id": "obs18",
+      "type": "magnet_mine",
+      "x": 140,
+      "y": 2400
+    },
+    {
+      "id": "obs19",
+      "type": "magnet_mine",
+      "x": 140,
+      "y": 2280
+    },
+    {
+      "id": "obs21",
+      "type": "magnet_mine",
+      "x": 360,
+      "y": 2400
+    },
+    {
+      "id": "obs22",
+      "type": "magnet_mine",
+      "x": 360,
+      "y": 2280
+    },
+    {
+      "id": "obs23",
+      "type": "magnet_mine",
+      "x": 300,
+      "y": 2200
+    },
+    {
+      "id": "obs20",
+      "type": "magnet_mine",
+      "x": 200,
+      "y": 2200
+    },
+    {
+      "id": "obs24",
+      "type": "laser_gate",
+      "x": 340,
+      "y": 2920,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs25",
+      "type": "roamer",
+      "x": 40,
+      "y": 2520,
+      "speed": 60
+    },
+    {
+      "id": "obs26",
+      "type": "roamer",
+      "x": 480,
+      "y": 2520,
+      "speed": 60
+    },
+    {
+      "id": "obs27",
+      "type": "roamer",
+      "x": 60,
+      "y": 2320,
+      "speed": 60
+    },
+    {
+      "id": "obs28",
+      "type": "roamer",
+      "x": 100,
+      "y": 2180,
+      "speed": 60
+    },
+    {
+      "id": "obs30",
+      "type": "roamer",
+      "x": 380,
+      "y": 2160,
+      "speed": 60
+    },
+    {
+      "id": "obs31",
+      "type": "roamer",
+      "x": 440,
+      "y": 2320,
+      "speed": 60
+    }
+  ],
+  "background": {
+    "color": "#ce383b"
+  },
+  "coordinateFormat": "540px"
+}

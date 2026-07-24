@@ -1,0 +1,124 @@
+{
+  "id": 5,
+  "name": "Careful Hands",
+  "parTime": 180,
+  "lavaSpeed": 25,
+  "lavaAcceleration": 0,
+  "checkpoints": [],
+  "magnets": [
+    {
+      "id": "m1",
+      "x": 140,
+      "y": 4300,
+      "color": "red"
+    },
+    {
+      "id": "m3",
+      "x": 320,
+      "y": 3880,
+      "color": "green"
+    },
+    {
+      "id": "m5",
+      "x": 240,
+      "y": 4080,
+      "color": "blue"
+    },
+    {
+      "id": "m6",
+      "x": 360,
+      "y": 3660,
+      "color": "yellow"
+    },
+    {
+      "id": "m7",
+      "x": 260,
+      "y": 3500,
+      "color": "red"
+    },
+    {
+      "id": "m8",
+      "x": 180,
+      "y": 3320,
+      "color": "blue"
+    },
+    {
+      "id": "m10",
+      "x": 240,
+      "y": 3160,
+      "color": "yellow"
+    },
+    {
+      "id": "m11",
+      "x": 280,
+      "y": 2860,
+      "color": "green"
+    },
+    {
+      "id": "m12",
+      "x": 180,
+      "y": 2640,
+      "color": "blue"
+    },
+    {
+      "id": "m13",
+      "x": 380,
+      "y": 2640,
+      "color": "red"
+    },
+    {
+      "id": "m14",
+      "x": 280,
+      "y": 2460,
+      "color": "green"
+    },
+    {
+      "id": "m15",
+      "x": 280,
+      "y": 2240,
+      "color": "yellow"
+    },
+    {
+      "id": "m16",
+      "x": 280,
+      "y": 3020,
+      "color": "red"
+    },
+    {
+      "id": "m17",
+      "x": 280,
+      "y": 2020,
+      "color": "blue"
+    }
+  ],
+  "obstacles": [
+    {
+      "id": "obs1",
+      "type": "sweeper",
+      "x": 280,
+      "y": 2720,
+      "length": 100,
+      "speed": 60
+    },
+    {
+      "id": "obs2",
+      "type": "sweeper",
+      "x": 280,
+      "y": 3780,
+      "length": 100,
+      "speed": 60
+    },
+    {
+      "id": "obs3",
+      "type": "sweeper",
+      "x": 110.79789974273802,
+      "y": 3264.411712747074,
+      "length": 100,
+      "speed": 60
+    }
+  ],
+  "background": {
+    "color": "#0a0a1a"
+  },
+  "coordinateFormat": "540px"
+}
