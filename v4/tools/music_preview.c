@@ -19,6 +19,8 @@ int main(int argc, char **argv) {
     int seed = argc > 1 ? atoi(argv[1]) : 1;
     double secs = argc > 2 ? atof(argv[2]) : 30.0;
     const char *path = argc > 3 ? argv[3] : "music_preview.wav";
+    /* optional: cross-fade into another theme halfway through */
+    int switch_seed = argc > 4 ? atoi(argv[4]) : 0;
 
     int frames = (int)(SR * secs);
     short *buf = malloc(sizeof(short) * 2 * frames);
@@ -29,11 +31,18 @@ int main(int argc, char **argv) {
     music_describe(desc, sizeof desc);
     printf("theme: %s\n", desc);
     /* render in chunks, like the audio callback does */
-    int done = 0;
+    int done = 0, switched = 0;
     while (done < frames) {
         int n = frames - done; if (n > 1024) n = 1024;
         /* sweep tension across the render so both moods are audible */
         music_set_intensity((float)done / (float)frames);
+        if (switch_seed && !switched && done >= frames / 2) {
+            music_set_theme(switch_seed);
+            switched = 1;
+            char d2[160];
+            music_describe(d2, sizeof d2);
+            printf("cross-fade at %.1fs -> %s\n", (double)done / SR, d2);
+        }
         music_render(buf + done * 2, n);
         done += n;
     }
@@ -49,6 +58,32 @@ int main(int argc, char **argv) {
     double rms = sqrt(sum / (frames * 2.0));
     printf("seed=%d  %.1fs  rms=%.0f (%.1f%% FS)  peak=%d (%.1f%% FS)  clipped=%d\n",
            seed, secs, rms, rms / 327.68, peak, peak / 327.68, clipped);
+
+    /* biggest sample-to-sample step: a hard cut or a click shows up here */
+    int max_jump = 0;
+    for (int i = 2; i < frames * 2; i++) {
+        int d = buf[i] - buf[i - 2]; /* same channel */
+        if (d < 0) d = -d;
+        if (d > max_jump) max_jump = d;
+    }
+    printf("max sample step = %d (%.1f%% FS)\n", max_jump, max_jump / 327.68);
+
+    if (switch_seed) {
+        /* windowed loudness across the transition: an equal-power cross-fade
+         * should hold roughly steady, with no gap and no pile-up */
+        printf("loudness through the transition (0.25s windows):\n  ");
+        int w = SR / 4;
+        int start = frames / 2 - 3 * w, end = frames / 2 + 8 * w;
+        if (start < 0) start = 0;
+        if (end > frames) end = frames;
+        for (int s = start; s + w <= end; s += w) {
+            double ws = 0;
+            for (int i = s * 2; i < (s + w) * 2; i++) ws += (double)buf[i] * buf[i];
+            double wr = sqrt(ws / (w * 2.0));
+            printf("%4.1f ", wr / 327.68);
+        }
+        printf("(%% FS)\n");
+    }
 
     FILE *f = fopen(path, "wb");
     if (!f) { free(buf); return 1; }
