@@ -104,6 +104,51 @@ polish layered on top of it (no gameplay rules were changed):
 Note: all environment geometry (lava, walls, embers) is kept *behind* the
 play plane so it can never occlude the player.
 
+## The world
+
+The shaft is generated, not authored. A per-level palette (a base hue plus
+its complement) colours a duct assembled bay by bay from `hash(level, bay)`,
+so every level looks like its own place while staying one coherent world:
+
+- **Panelled walls** with per-bay shading, and mirrored service hatches
+- **Ventilation fans** turning slowly deep in the wall, light spilling from
+  their housings — the motif the whole look hangs on
+- **Light conduits** running the full height of both walls with pulses
+  travelling up them
+- **Chevrons** stencilled on the walls, pointing the way up
+- **Drifting motes** at mixed depths for genuine parallax
+- **Depth fade** so the duct recedes into darkness above and below
+
+Everything is mirrored left/right, so it reads as engineered and symmetrical.
+
+## Soundtrack
+
+The music is generated live — there are no audio files anywhere in the
+project. `src/music.c` is a small tracker: a 16th-note sequencer driving
+kick, snare, hat, bass, a plucked arp and a six-oscillator pad through a
+tempo-synced ping-pong delay and a `tanh` saturator.
+
+The formula that keeps it musical for *any* seed:
+
+> **root note + 7-note scale + a hand-picked diatonic chord progression**
+
+Every melodic voice draws only from the current chord's tones, so it can
+never land on a wrong note. The seed (the level id) picks the key, scale,
+progression, tempo, groove and arp pattern — never whether the harmony is
+valid. Per-bar variation is re-derived from `hash(seed, bar)`, so it keeps
+evolving and never audibly loops. Lava proximity and your own speed drive an
+intensity control that opens the filter and thickens the percussion.
+
+Audition any level's theme without launching the game:
+
+```sh
+cc -O2 -I src tools/music_preview.c src/music.c -lm -o music_preview
+./music_preview 12 40 level12.wav     # seed, seconds, output
+```
+
+It prints the theme it generated, e.g.
+`key=B dorian  prog=[0 6 3 4]  bpm=102  groove=1  arp=1`.
+
 ## Architecture
 
 The core simulation is deliberately isolated from rendering so it can be
@@ -115,7 +160,8 @@ unit-tested headlessly (no GPU):
 | `src/sim.c` | Authoritative gameplay: swing physics, lava, hazards, scoring, checkpoints, anomalies (no raylib) |
 | `src/levels_gen.h` | The 25 levels, baked from the JSON files by `tools/gen_levels.py` |
 | `src/render.c` | 3D presentation — projects the 2D play plane into a neon shaft |
-| `src/audio.c` | Fully synthesized sound effects (no audio files) |
+| `src/audio.c` | Synthesized sound effects + the music stream (no audio files) |
+| `src/music.c` | Procedural soundtrack generator (pure C, renderable offline) |
 | `src/ui.c` | HUD, title, level select, pause, and results screens |
 | `src/save.c` | Persistent star/unlock progress |
 | `src/main.c` | Window, fixed-60 Hz loop, input, screen state machine |
