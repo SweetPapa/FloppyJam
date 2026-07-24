@@ -23,7 +23,7 @@ typedef enum {
     ST_RESULT, ST_CARD, ST_FINAL, ST_PAUSE, ST_OPTIONS, ST_REPLAY
 } GameState;
 
-#define RIDE_TICK_CAP 12000        /* 50 s, then we force the ball to rest */
+#define RIDE_TICK_CAP BP_RIDE_TICKS   /* shared with the preview (core.h) */
 
 typedef struct {
     BpWorld  w;
@@ -48,6 +48,14 @@ typedef struct {
     int   pending_ace;
     float result_t;
     float pow_flash, pow_value;    /* strike readout by the meter         */
+
+    /* trajectory preview (optional assist) */
+    BpPreview preview;
+    BpPlanner planner;
+    int   preview_dirty;
+    float preview_settle;
+    float last_aim, last_tx, last_ty;
+    float plan_power;
     float t;                       /* presentation clock (never sim)      */
 
     /* best-moment heuristics for the final card (Section 8) */
@@ -198,6 +206,12 @@ static void start_hole(int index, int fresh)
     bp_cam_init(&G.cam, G.w.balls[0].p);
     G.hud.sealed = G.w.cup_sealed;
     G.pow_flash = 0.0f;
+    G.preview.valid = 0;
+    G.preview_dirty = 1;
+    G.preview_settle = 0.0f;
+    G.plan_power = 0.5f;
+    G.planner.done = 1;
+    G.last_aim = G.shot.aim + 1.0f;      /* force a first recompute */
     /* A settled breeze per hole: deterministic from the index so a hole always
      * feels the same, and cosmetic only so it can never affect a shot. */
     bp_wind_set((float)(((unsigned)index * 2654435761u) % 628u) * 0.01f,
@@ -326,6 +340,11 @@ static void resolve_shot(void)
     if (G.strokes >= BP_STROKE_CAP) { G.strokes = BP_STROKE_CAP; finish_hole(); return; }
 
     bp_shot_reset(&G.shot, 1);            /* leaving english dialled is the trap */
+    G.preview.valid = 0;
+    G.preview_dirty = 1;
+    G.preview_settle = 0.0f;
+    G.planner.done = 1;
+    G.last_aim = G.shot.aim + 1.0f;
     G.state = ST_AIM;
     bp_cam_set_mode(&G.cam, CAM_SURVEY, &G.w, G.w.balls[0].p, cup_pos(&G.w));
 }
@@ -380,9 +399,13 @@ static void skip_to_rest(void)
 
 /* Aiming is detented: every DETENT of rotation lands with an audible and
  * visible click, so a player can count clicks to a line instead of eyeballing
- * a continuous slider. Fine aim subdivides the same detent. */
-#define AIM_DETENT      (1.25f * BP_DEG)
-#define AIM_DETENT_FINE (0.25f * BP_DEG)
+ * a continuous slider. Fine aim subdivides the same detent.
+ *
+ * Sizes chosen for precision at range: a 0.60 deg detent 14 m from the cup is
+ * ~15 cm of aim at the target (was 26 cm), and fine at 0.10 deg is ~2.5 cm —
+ * tight enough to thread a gap or split a ball on the far side of the hole. */
+#define AIM_DETENT      (0.60f * BP_DEG)
+#define AIM_DETENT_FINE (0.10f * BP_DEG)
 
 static float aim_click_acc = 0.0f;
 
@@ -428,16 +451,21 @@ static void camera_input(float dt)
 static void aim_input(float dt)
 {
     int fine = (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT));
-    /* 0.60 rad/s coarse is ~34 deg/s: slow enough to place a line by hand.
-     * Fine aim is 12x slower again for surgical banks (4.1). */
-    float rate = fine ? 0.050f : 0.60f;
+    /* 0.35 rad/s coarse is ~20 deg/s: unhurried, so the finer detents don't
+     * make a full swing take forever. Fine aim is ~7x slower again (4.1). */
+    float rate = fine ? 0.050f : 0.35f;
+    /* invert: A/D still mean "counterclockwise/clockwise" as drawn on the HUD,
+     * this just flips which key does which for players who read it the other
+     * way. left is the sign applied to a press of A. */
+    float left = G.save.invert_aim ? 1.0f : -1.0f;
+    float step = fine ? AIM_DETENT_FINE : AIM_DETENT;
     float p;
 
-    if (IsKeyDown(KEY_A)) aim_click(-rate * dt, fine);
-    if (IsKeyDown(KEY_D)) aim_click( rate * dt, fine);
+    if (IsKeyDown(KEY_A)) aim_click(left * rate * dt, fine);
+    if (IsKeyDown(KEY_D)) aim_click(-left * rate * dt, fine);
     /* tap-nudge exactly one detent, for counting clicks off a known line */
-    if (IsKeyPressed(KEY_A)) aim_click(-(fine ? AIM_DETENT_FINE : AIM_DETENT), fine);
-    if (IsKeyPressed(KEY_D)) aim_click( (fine ? AIM_DETENT_FINE : AIM_DETENT), fine);
+    if (IsKeyPressed(KEY_A)) aim_click(left * step, fine);
+    if (IsKeyPressed(KEY_D)) aim_click(-left * step, fine);
 
     camera_input(dt);
 
@@ -456,6 +484,17 @@ static void aim_input(float dt)
                 G.shot.ty *= BP_TIP_MAX / mag;
             }
         }
+    }
+
+    if (IsKeyPressed(KEY_P)) {
+        G.save.preview = (unsigned char)!G.save.preview;
+        G.preview_dirty = 1;
+        G.preview_settle = 1.0f;
+        G.preview.valid = 0;
+        bp_sfx(SFX_UI, G.save.preview ? 1.5f : 0.9f, 0.5f);
+        bp_toast(G.save.preview ? "TRAJECTORY PREVIEW ON"
+                                : "TRAJECTORY PREVIEW OFF", 1.8f);
+        bp_save_store(&G.save);
     }
 
     p = bp_shot_charge(&G.shot, IsKeyDown(KEY_SPACE), dt);
@@ -480,6 +519,47 @@ static void sim_ride(float dt)
     }
 }
 
+/* The preview is exact, not estimated: it replays the shot on a copy of the
+ * world with the real solver. Recompute policy keeps it cheap —
+ *   charging   : every frame, at the power you would release at right now;
+ *   aim moving : every frame, at the last planned power, so the line tracks;
+ *   aim still  : once, a ~20-sim search for the power that finishes nearest
+ *                the objective. That is the "hit it optimally" line. */
+static void update_preview(float dt)
+{
+    int changed;
+    if (!G.save.preview) { G.preview.valid = 0; return; }
+
+    changed = (G.shot.aim != G.last_aim) || (G.shot.tx != G.last_tx) ||
+              (G.shot.ty != G.last_ty);
+    if (changed) {
+        G.last_aim = G.shot.aim; G.last_tx = G.shot.tx; G.last_ty = G.shot.ty;
+        G.preview_settle = 0.0f;
+        G.preview_dirty = 1;
+    } else {
+        G.preview_settle += dt;
+    }
+
+    if (G.shot.charging) {
+        /* live: the exact path for the power you would release at right now */
+        bp_predict(&G.w, G.shot.aim, G.shot.meter, G.shot.tx, G.shot.ty, &G.preview);
+        G.preview_dirty = 1;          /* re-plan once the meter is released */
+        G.planner.done = 1;
+    } else if (changed || !G.preview.valid) {
+        /* the aim is moving: keep the line glued to it at the planned power */
+        bp_predict(&G.w, G.shot.aim, G.plan_power, G.shot.tx, G.shot.ty, &G.preview);
+    } else if (G.preview_dirty && G.preview_settle > 0.18f) {
+        /* the aim has settled: hunt for the best power a few candidates per
+         * frame so the search never costs a dropped frame */
+        if (G.planner.done || G.planner.aim != G.shot.aim)
+            bp_plan_begin(&G.planner, G.shot.aim, G.shot.tx, G.shot.ty);
+        if (bp_plan_step(&G.w, &G.planner, 3, &G.preview)) {
+            G.plan_power = G.planner.best_p;
+            G.preview_dirty = 0;
+        }
+    }
+}
+
 static void update_play(float dt)
 {
     const BpBall *cb = &G.w.balls[0];
@@ -497,6 +577,7 @@ static void update_play(float dt)
     case ST_AIM:
         aim_input(dt);
         bp_shot_update_guide(&G.shot, &G.w);
+        update_preview(dt);
         bp_music_duck(0.0f);
         bp_roll(0.0f, 0);
         break;
@@ -651,6 +732,7 @@ static void draw_howto(int sw, int sh)
         "",
         "AIM      A / D.  Every click is one detent, so you can count clicks to a line.",
         "         Tap for exactly one click, hold to sweep.  SHIFT for fine detents.",
+        "         OPTIONS can swap A / D if you read left/right the other way.",
         "POWER    hold SPACE.  The meter climbs, then falls, then climbs. Let go.",
         "ENGLISH  arrow keys move the strike point on the cue-ball face (bottom left).",
         "         UP is follow, DOWN is draw, LEFT and RIGHT are side english.  C centres it.",
@@ -659,6 +741,9 @@ static void draw_howto(int sw, int sh)
         "         the camera behind your aim.",
         "RIDE     R skips the ball straight to rest.  The result is identical.",
         "         TAB shows the card.  ESC pauses.",
+        "PREVIEW  P draws the full predicted path of the shot (also in OPTIONS).",
+        "         Off by default.  It is exact, not a guess -- the game replays",
+        "         your shot on a copy of the world to draw it.",
         "",
         "The dotted guide shows geometry only: first contact and one centre-ball bounce.",
         "It never accounts for spin. Learning what english does is the game.",
@@ -710,6 +795,7 @@ static void tour_step(void)
     if (tour_frame < 5) return;
     if (tour_frame == 5) {
         TakeScreenshot("tour_title.png");
+        G.save.preview = 1;          /* the tour exercises the assist too */
         begin_round(0, 17);
         tour_hole = 0;
         return;
@@ -718,7 +804,7 @@ static void tour_step(void)
     if (G.state == ST_INTRO) {
         G.state = ST_AIM;
         bp_cam_set_mode(&G.cam, CAM_SURVEY, &G.w, G.w.balls[0].p, cup_pos(&G.w));
-        tour_shot_wait = 4;
+        tour_shot_wait = 22;         /* long enough for the optimal-power search */
         return;
     }
 
@@ -897,7 +983,7 @@ int main(int argc, char **argv)
 
         case ST_OPTIONS: {
             int *v = NULL;
-            menu_move(&G.opt_sel, 5);
+            menu_move(&G.opt_sel, 7);
             if (G.opt_sel == 0 || G.opt_sel == 1 || G.opt_sel == 2) {
                 static int tmp;
                 tmp = (G.opt_sel == 0) ? G.save.vol_master
@@ -916,9 +1002,23 @@ int main(int argc, char **argv)
                     ToggleFullscreen();
                     bp_sfx(SFX_UI, 1.2f, 0.5f);
                 }
+            } else if (G.opt_sel == 4) {
+                if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_RIGHT) ||
+                    IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) {
+                    G.save.preview = (unsigned char)!G.save.preview;
+                    G.preview_dirty = 1;
+                    G.preview.valid = 0;
+                    bp_sfx(SFX_UI, 1.2f, 0.5f);
+                }
+            } else if (G.opt_sel == 5) {
+                if (IsKeyPressed(KEY_LEFT) || IsKeyPressed(KEY_RIGHT) ||
+                    IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) {
+                    G.save.invert_aim = (unsigned char)!G.save.invert_aim;
+                    bp_sfx(SFX_UI, 1.2f, 0.5f);
+                }
             }
             if (IsKeyPressed(KEY_ESCAPE) ||
-                (G.opt_sel == 4 && (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)))) {
+                (G.opt_sel == 6 && (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)))) {
                 bp_save_store(&G.save);
                 G.state = G.ret_state ? G.ret_state : ST_TITLE;
             }
@@ -985,8 +1085,13 @@ int main(int argc, char **argv)
             const BpWorld *world = (G.state == ST_REPLAY) ? &G.rw : &G.w;
             Camera3D cam = bp_cam_raylib(&G.cam);
             int show_cue = (G.state == ST_AIM);
+            /* With the full preview on, the short geometry guide is just a
+             * second line saying less, so it steps aside. */
+            int show_guide = show_cue && !(G.save.preview && G.preview.valid);
             BeginMode3D(cam);
-            bp_render_world(world, G.hole, &G.shot, show_cue, show_cue, G.t);
+            bp_render_world(world, G.hole, &G.shot, show_guide, show_cue, G.t);
+            if (G.state == ST_AIM && G.save.preview)
+                bp_render_preview(world, &G.preview, G.t);
             EndMode3D();
 
             if (G.cam.warp_blur > 0.01f) {
@@ -1001,9 +1106,12 @@ int main(int argc, char **argv)
                 bp_render_pause(sw, sh, G.pause_sel, &G.hud);
             } else if (G.state == ST_OPTIONS) {
                 bp_render_options(sw, sh, G.opt_sel, G.save.vol_master, G.save.vol_music,
-                                  G.save.vol_sfx, G.save.fullscreen);
+                                  G.save.vol_sfx, G.save.fullscreen, G.save.preview,
+                                  G.save.invert_aim);
             } else {
                 bp_render_hud(world, &G.hud, sw, sh);
+                if (G.state == ST_AIM && G.save.preview)
+                    bp_render_preview_readout(&G.preview, sw, sh, G.shot.charging);
                 if (G.state == ST_INTRO) {
                     const char *s = BP_HOLES[G.hole].brief;
                     int w = MeasureText(s, 24);

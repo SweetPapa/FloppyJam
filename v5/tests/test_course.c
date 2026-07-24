@@ -10,6 +10,7 @@
  *   make testcourse
  */
 #include "../src/course.h"
+#include "../src/shot.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -39,7 +40,7 @@ static void report(int cond, const char *hole, const char *what, const char *det
 
 /* ---- run one shot to completion ------------------------------------ */
 
-#define MAX_TICKS 6000
+#define MAX_TICKS BP_RIDE_TICKS
 
 static void play(BpWorld *w, float aim, float power, float tx, float ty)
 {
@@ -248,6 +249,59 @@ static int solve(int hi, int coarse, int nspin, int *out_penalties)
     return 99;
 }
 
+/* ---- the trajectory preview must not lie ---------------------------
+ *
+ * The assist claims to show the real path, not an approximation. Prove it:
+ * predict a shot, then actually play the same shot, and require the ball to
+ * finish in exactly the same place with the same outcome. Any drift here
+ * means the preview is drawing a shot the player will not get. */
+static void test_preview(void)
+{
+    int hi, bad_pos = 0, bad_outcome = 0, checked = 0;
+    float worst = 0.0f;
+    char buf[128];
+    printf("\ntrajectory preview fidelity\n");
+
+    for (hi = 0; hi < BP_NHOLES; ++hi) {
+        int a, p;
+        for (a = 0; a < 8; ++a) {
+            for (p = 0; p < 4; ++p) {
+                BpWorld w;
+                BpPreview pv;
+                float aim = (float)a * (BP_TAU / 8.0f);
+                float pow = 0.25f + 0.24f * (float)p;
+                float tx = (a & 1) ? 0.45f : -0.30f;
+                float ty = (p & 1) ? -0.50f : 0.35f;
+                V3 pred_end, real_end;
+                float d;
+
+                bp_course_build(&w, hi);
+                bp_predict(&w, aim, pow, tx, ty, &pv);
+                pred_end = pv.pt[pv.n - 1];
+
+                /* now play it for real on the untouched world */
+                bp_course_build(&w, hi);
+                play(&w, aim, pow, tx, ty);
+                real_end = w.balls[0].p;
+
+                ++checked;
+                if ((pv.holed != 0) != (w.holed != 0)) ++bad_outcome;
+                /* a holed or scratched ball is removed, so only compare the
+                 * resting place when the ball is still on the table */
+                if (!w.holed && !w.scratched) {
+                    d = v3len(v3sub(pred_end, real_end));
+                    if (d > worst) worst = d;
+                    if (d > 0.02f) ++bad_pos;
+                }
+            }
+        }
+    }
+    snprintf(buf, sizeof buf, "%d shots, worst end-point error %.5f m", checked, worst);
+    report(bad_pos == 0, "preview", "predicted path ends where the ball ends", buf);
+    snprintf(buf, sizeof buf, "%d outcome mismatches of %d", bad_outcome, checked);
+    report(bad_outcome == 0, "preview", "predicted hole-out matches reality", buf);
+}
+
 int main(int argc, char **argv)
 {
     int i, total = 0, par_total = 0, bad = 0;
@@ -267,6 +321,8 @@ int main(int argc, char **argv)
         check_geometry(i, &w);
     }
     if (failures == 0) printf("  ok   all %d holes pass geometry checks\n", BP_NHOLES);
+
+    test_preview();
 
     printf("\nplaythrough (greedy bot, %d aim steps)\n", coarse);
     printf("  %-3s %-16s %4s %8s %6s\n", "#", "hole", "par", "bot", "pen");

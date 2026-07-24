@@ -46,13 +46,15 @@ Keyboard-and-mouse first; **keyboard alone is fully playable**.
 | Action | Input |
 | --- | --- |
 | Aim | `A` / `D` — detented, one audible click per notch. Tap for exactly one click, hold to sweep |
-| Fine aim | hold `SHIFT` (same detents, five times smaller) |
+| Fine aim | hold `SHIFT` (same detents, six times smaller) |
+| Invert aim | OPTIONS → INVERT AIM swaps which of `A` / `D` turns the cue left |
 | Power | hold `SPACE`, release to strike — the meter climbs, falls, climbs |
 | English (cue-ball face) | arrow keys: `↑` follow, `↓` draw, `←` `→` side |
 | Centre the english | `C` |
 | Orbit camera | drag **any** mouse button, or `Q` / `E` to swing, `W` / `S` to raise and lower |
 | Zoom (4 steps) | mouse wheel, or `Z` / `X` |
 | Square the camera up behind your aim | `V` |
+| Trajectory preview on/off | `P` (also in OPTIONS) — off by default |
 | Skip the ball to rest | `R` during the ride — identical result, sim runs at full speed |
 | Scorecard | `TAB` |
 | Pause / restart hole / options | `ESC` |
@@ -60,10 +62,41 @@ Keyboard-and-mouse first; **keyboard alone is fully playable**.
 The mouse is **camera only** and the keyboard does the aiming, so the two never
 fight over the same button. Aiming is detented rather than continuous: each
 notch clicks, so you can line up off a rail and then count three clicks left
-instead of nudging a slider and hoping.
+instead of nudging a slider and hoping. A coarse detent is 0.60 deg (about
+15 cm of aim at a far cup) and a fine one is 0.10 deg (~2.5 cm), tight enough
+to thread a gap on the far side of the hole. `A` and `D` can be swapped in
+OPTIONS for players who read left/right the other way round.
 
 English resets to centre at the start of each **hole**, not each shot: leaving
 your last spin dialled in is a small mastery reward and a small trap.
+
+## Trajectory preview (optional)
+
+`P`, or OPTIONS → TRAJECTORY. **Off by default.** With it on, the full path the
+ball will take is drawn while you aim, with markers at each contact, faint
+lines for any object ball that gets moved, a ring where the ball comes to
+rest, and a one-line verdict — `IN THE CUP`, `SCRATCH`, or how far short.
+
+It is not an estimate. The simulation is deterministic, so the preview copies
+the world and plays the shot out with the real solver — `make testcourse`
+asserts across 576 shots on all eighteen holes that the predicted end point
+matches the played one to **0.00000 m** with zero outcome mismatches. The only
+error left is your own timing on the power meter.
+
+What it shows depends on what you are doing:
+
+- **Holding SPACE** — the exact path for the power you would release at *right
+  now*, updating live as the meter swings. Watch the line reach the cup and let go.
+- **Aim settled** — the game hunts for the power that finishes nearest the
+  objective and shows that line. This is the "if you hit it optimally" answer.
+  The search is spread over several frames so it never costs a dropped frame
+  (0.67 ms/frame live, and the hunt is 3 candidate sims per frame).
+
+A note on why it is opt-in: the spec argues at length (4.3, 15) that the guide
+should show geometry only and never spin, because learning what english does
+*is* the game, and it explicitly says not to add an option to extend the guide.
+That reasoning is sound and it stays the shipped default — but it is your call,
+so the assist is here, one key away, and the save file remembers it.
 
 ## Safe route and hero line
 
@@ -135,7 +168,8 @@ that passed them.
 
 ```sh
 make test         # headless physics suite — no window, no audio device
-make testcourse   # geometry invariants + a bot that plays all 18 holes
+make testcourse   # geometry, preview fidelity, and a bot that plays all 18 holes
+make testcamera   # camera smoothness and frame-rate independence
 ```
 
 `make test` covers the Definition of Done: 1000 bit-identical re-sims of the

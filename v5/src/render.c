@@ -717,7 +717,7 @@ void bp_render_hud(const BpWorld *w, const BpHud *h, int sw, int sh)
     /* controls hint strip */
     if (!h->riding) {
         const char *k = "A/D aim   SHIFT fine   SPACE power   ARROWS english   "
-                        "MOUSE/QE/WS camera   V square up   TAB card   ESC pause";
+                        "MOUSE/QE/WS camera   V square up   P preview   TAB card   ESC pause";
         DrawText(k, 14, sh - 26, 15, (Color){ 128, 146, 170, 205 });
     } else {
         DrawText("R  skip to rest", 14, sh - 26, 15, (Color){ 128, 146, 170, 205 });
@@ -884,19 +884,21 @@ void bp_render_pause(int sw, int sh, int sel, const BpHud *h)
              (Color){ 120, 138, 165, 255 });
 }
 
-void bp_render_options(int sw, int sh, int sel, int vm, int vmu, int vs, int fs)
+void bp_render_options(int sw, int sh, int sel, int vm, int vmu, int vs, int fs,
+                       int preview, int invert)
 {
-    static const char *ITEMS[5] = { "MASTER", "MUSIC", "SFX", "FULLSCREEN", "BACK" };
+    static const char *ITEMS[7] = { "MASTER", "MUSIC", "SFX", "FULLSCREEN",
+                                    "TRAJECTORY", "INVERT AIM", "BACK" };
     int vals[3];
-    int i, x = sw / 2 - 220, y = sh / 2 - 170;
+    int i, x = sw / 2 - 220, y = sh / 2 - 210;
     vals[0] = vm; vals[1] = vmu; vals[2] = vs;
     DrawRectangle(0, 0, sw, sh, (Color){ 0, 0, 0, 180 });
-    panel(x, y, 440, 340);
+    panel(x, y, 440, 438);
     DrawText("OPTIONS", x + 24, y + 20, 34, (Color){ 246, 240, 210, 255 });
-    for (i = 0; i < 5; ++i) {
-        int yy = y + 86 + i * 46;
+    for (i = 0; i < 7; ++i) {
+        int yy = y + 76 + i * 44;
         Color c = (i == sel) ? (Color){ 255, 236, 180, 255 } : (Color){ 176, 192, 214, 255 };
-        if (i == sel) DrawRectangle(x + 14, yy - 8, 412, 38, (Color){ 255, 206, 84, 34 });
+        if (i == sel) DrawRectangle(x + 14, yy - 6, 412, 36, (Color){ 255, 206, 84, 34 });
         DrawText(ITEMS[i], x + 32, yy, 22, c);
         if (i < 3) {
             int j;
@@ -907,9 +909,20 @@ void bp_render_options(int sw, int sh, int sel, int vm, int vmu, int vs, int fs)
         } else if (i == 3) {
             DrawText(fs ? "ON" : "OFF", x + 200, yy, 22,
                      fs ? (Color){ 120, 210, 160, 255 } : (Color){ 130, 146, 172, 255 });
+        } else if (i == 4) {
+            DrawText(preview ? "ON" : "OFF", x + 200, yy, 22,
+                     preview ? (Color){ 120, 210, 160, 255 }
+                             : (Color){ 130, 146, 172, 255 });
+        } else if (i == 5) {
+            DrawText(invert ? "ON" : "OFF", x + 200, yy, 22,
+                     invert ? (Color){ 120, 210, 160, 255 }
+                            : (Color){ 130, 146, 172, 255 });
         }
     }
-    DrawText("LEFT / RIGHT to change", x + 24, y + 308, 14, (Color){ 120, 138, 165, 255 });
+    DrawText("INVERT AIM swaps which of A / D turns the cue left.",
+             x + 24, y + 388, 13, (Color){ 120, 138, 165, 255 });
+    DrawText("LEFT / RIGHT to change        P toggles preview in play",
+             x + 24, y + 408, 14, (Color){ 120, 138, 165, 255 });
 }
 
 /* ------------------------------------------------------------------ */
@@ -932,4 +945,104 @@ void bp_render_trail(const BpWorld *w, float tx, float ty, float dt)
     else if (fabsf(tx) > 0.20f)           c = (Color){ 140, 240, 180, 255 };  /* side   */
     else                                  c = (Color){ 225, 232, 244, 255 };  /* stun   */
     bp_burst(b->p, 1, c, 0.05f, 0.34f, 0.4f);
+}
+
+/* ------------------------------------------------------------------ */
+/* trajectory preview (optional assist)                                */
+
+/* Drawn as a fading ribbon rather than a flat line: bright and warm where
+ * the ball is now, cooling as it runs out, so the direction of travel and
+ * roughly how long the shot lasts both read at a glance. Contact points get
+ * a marker; the resting place gets a ring. */
+void bp_render_preview(const BpWorld *w, const BpPreview *pv, float t)
+{
+    int i;
+    if (!pv || !pv->valid || pv->n < 2) return;
+
+    /* object-ball paths first, underneath, and dimmer */
+    for (i = 0; i < pv->nobj; ++i) {
+        Color base = BALL_COL[pv->obj[i].color & 7];
+        int j;
+        for (j = 1; j < pv->obj[i].n; ++j) {
+            V3 a = pv->obj[i].pt[j - 1], b = pv->obj[i].pt[j];
+            Color c = base;
+            c.a = 130;
+            DrawLine3D(rv(v3(a.x, a.y + 0.010f, a.z)),
+                       rv(v3(b.x, b.y + 0.010f, b.z)), c);
+        }
+        if (pv->obj[i].n > 1) {
+            V3 e = pv->obj[i].pt[pv->obj[i].n - 1];
+            DrawCircle3D(rv(v3(e.x, e.y + 0.012f, e.z)), BP_R * 1.5f,
+                         rv(v3(1, 0, 0)), 90.0f, base);
+        }
+    }
+
+    for (i = 1; i < pv->n; ++i) {
+        float u = (float)i / (float)(pv->n - 1);
+        V3 a = pv->pt[i - 1], b = pv->pt[i];
+        Color c;
+        c.r = (unsigned char)bp_lerpf(255.0f, 90.0f, u);
+        c.g = (unsigned char)bp_lerpf(238.0f, 170.0f, u);
+        c.b = (unsigned char)bp_lerpf(150.0f, 255.0f, u);
+        c.a = (unsigned char)bp_lerpf(235.0f, 90.0f, u);
+        DrawLine3D(rv(v3(a.x, a.y + 0.013f, a.z)),
+                   rv(v3(b.x, b.y + 0.013f, b.z)), c);
+        /* a second, offset strand makes the line readable against the felt
+         * without needing a thick-line shader */
+        DrawLine3D(rv(v3(a.x, a.y + 0.019f, a.z)),
+                   rv(v3(b.x, b.y + 0.019f, b.z)), (Color){ c.r, c.g, c.b, (unsigned char)(c.a / 2) });
+
+        if (pv->hit[i]) {
+            Color m = (pv->hit[i] == 2) ? (Color){ 255, 150, 200, 235 }
+                    : (pv->hit[i] == 3) ? (Color){ 255, 214,  92, 235 }
+                                        : (Color){ 190, 226, 255, 235 };
+            DrawCube(rv(v3(b.x, b.y + 0.016f, b.z)), 0.030f, 0.030f, 0.030f, m);
+        }
+    }
+
+    /* where it comes to rest, and what happens there */
+    {
+        V3 e = pv->pt[pv->n - 1];
+        float pulse = 1.0f + 0.16f * sinf(t * 6.0f);
+        Color ring = pv->holed     ? (Color){ 120, 255, 170, 255 }
+                   : pv->scratched ? (Color){ 255,  90,  90, 255 }
+                                   : (Color){ 210, 232, 255, 235 };
+        DrawCircle3D(rv(v3(e.x, e.y + 0.014f, e.z)), BP_R * 2.0f * pulse,
+                     rv(v3(1, 0, 0)), 90.0f, ring);
+        DrawCircle3D(rv(v3(e.x, e.y + 0.014f, e.z)), BP_R * 2.9f * pulse,
+                     rv(v3(1, 0, 0)), 90.0f,
+                     (Color){ ring.r, ring.g, ring.b, 110 });
+    }
+    (void)w;
+}
+
+/* One line of plain English about what the preview says will happen. */
+void bp_render_preview_readout(const BpPreview *pv, int sw, int sh, int live)
+{
+    char buf[96];
+    const char *verdict;
+    Color c;
+    int wdt;
+    if (!pv || !pv->valid) return;
+
+    if (pv->holed)          { verdict = "IN THE CUP"; c = (Color){ 120, 255, 170, 255 }; }
+    else if (pv->scratched) { verdict = "SCRATCH";    c = (Color){ 255, 110, 110, 255 }; }
+    else {
+        snprintf(buf, sizeof buf, "%.1f m short", pv->rest_dist);
+        verdict = buf;
+        c = (Color){ 214, 230, 250, 255 };
+    }
+    {
+        char line[128];
+        snprintf(line, sizeof line, "PREVIEW  %3d%%  %s%s",
+                 (int)(pv->power * 100.0f + 0.5f), verdict,
+                 pv->bonus ? "  +GOLD" : "");
+        wdt = MeasureText(line, 18);
+        DrawRectangle(sw / 2 - wdt / 2 - 12, sh - 66, wdt + 24, 28,
+                      (Color){ 8, 12, 20, 190 });
+        DrawRectangleLines(sw / 2 - wdt / 2 - 12, sh - 66, wdt + 24, 28,
+                           live ? (Color){ 255, 226, 130, 200 }
+                                : (Color){ 90, 110, 140, 200 });
+        DrawText(line, sw / 2 - wdt / 2, sh - 60, 18, c);
+    }
 }
