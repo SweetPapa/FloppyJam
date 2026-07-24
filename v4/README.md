@@ -62,6 +62,35 @@ gates**, **roamers**, and **magnet mines** — plus the level anomalies:
 **flashlight** (Cave of Shadows), the **AI rival race** (The Race), and the
 **rotating camera** (Spinning World).
 
+## Feel & feedback
+
+The simulation is a faithful 1:1 port; everything below is presentation-layer
+polish layered on top of it (no gameplay rules were changed):
+
+- **Target badges & reticles** — each of the four keys shows a contracting
+  ring and a `W/A/S/D` badge on the node it would tether to right now, so the
+  direction→color mapping is readable at a glance.
+- **Combo feedback** — the landing tone pitches up as the combo climbs,
+  `+points` popups float off each node, and a draining bar shows the combo
+  timeout.
+- **Slow motion** — death drops to 0.3× and checkpoints hitch to 0.55×,
+  easing back to full speed.
+- **Motion ribbon** — a tapering trail follows the player, tinted by the
+  armed color.
+- **Camera** — velocity look-ahead, gentle horizontal follow, and a subtle
+  dolly-out with speed; shakes on landings, deaths, and lava surges.
+- **Lava tension** — an edge-only danger vignette (never the center), a
+  rumble cue that quickens as it closes, red-hot shaft walls, a wavy crust,
+  and rising embers.
+- **Readability** — HUD text and the key cluster sit on dark plates, the
+  score counts up smoothly, and a right-edge rail tracks your climb against
+  the lava.
+- **Transitions** — fade-ins on level start and respawn, plus a level-name
+  intro card.
+
+Note: all environment geometry (lava, walls, embers) is kept *behind* the
+play plane so it can never occlude the player.
+
 ## Architecture
 
 The core simulation is deliberately isolated from rendering so it can be
