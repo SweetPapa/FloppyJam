@@ -178,15 +178,29 @@ valid. Per-bar variation is re-derived from `hash(seed, bar)`, so it keeps
 evolving and never audibly loops. Lava proximity and your own speed drive an
 intensity control that opens the filter and thickens the percussion.
 
-Audition any level's theme without launching the game:
+### Changing theme
+
+Two complete generators run side by side, so a theme change is a true
+**cross-fade** rather than a cut: the outgoing theme keeps playing and fades
+out while the incoming one fades in underneath it, over 1.25s with
+equal-power (cos/sin) gains so perceived loudness stays constant through the
+transition. The incoming generator starts on its own downbeat, and a change
+arriving mid-fade lands the one already in flight first, so a generator is
+never reconfigured while the audio thread is reading it.
+
+Audition any level's theme — or a transition between two — without launching
+the game:
 
 ```sh
 cc -O2 -I src tools/music_preview.c src/music.c -lm -o music_preview
-./music_preview 12 40 level12.wav     # seed, seconds, output
+./music_preview 12 40 level12.wav        # seed, seconds, output
+./music_preview 1 12 xfade.wav 12        # + cross-fade into seed 12 halfway
 ```
 
 It prints the theme it generated, e.g.
-`key=B dorian  prog=[0 6 3 4]  bpm=102  groove=1  arp=1`.
+`key=B dorian  prog=[0 6 3 4]  bpm=102  groove=1  arp=1`, and for a
+transition it also reports peak/clipping, the largest sample-to-sample step
+(a cut or click would spike it) and windowed loudness across the fade.
 
 ## Architecture
 
