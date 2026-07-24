@@ -71,6 +71,45 @@ static int test_scoring(void) {
     return 1;
 }
 
+/* The tether must do two opposing things: swing you around a node when you
+ * arrive with speed (dynamics), and always settle into a predictable hang so
+ * a calm shot is available (playability). Check both. */
+static int test_orbit(void) {
+    GameSim g;
+    sim_init(&g, 1);
+    int attached = 0;
+    for (int i = 0; i < 60 * 30 && !attached; i++) {
+        sim_update(&g, DT, bot_choose(&g));
+        if (g.ev_attach) attached = 1;
+    }
+    if (!attached) { printf("  FAIL: never reached a node\n"); return 0; }
+
+    float a0 = g.orbit_ang, maxdev = 0;
+    for (int i = 0; i < 60; i++) {          /* one second of free orbit */
+        sim_update(&g, DT, -1);
+        float d = fabsf(g.orbit_ang - a0);
+        if (d > maxdev) maxdev = d;
+    }
+    if (maxdev < 0.15f) {
+        printf("  FAIL: arrival momentum did not swing the tether (%.3f rad)\n", maxdev);
+        return 0;
+    }
+    printf("  ok: arrival momentum swung the tether %.2f rad\n", (double)maxdev);
+
+    for (int i = 0; i < 60 * 6; i++) sim_update(&g, DT, -1);
+    float off = g.orbit_ang - 1.5707963f;   /* rest hangs straight down */
+    while (off >  3.1415927f) off -= 6.2831853f;
+    while (off < -3.1415927f) off += 6.2831853f;
+    if (fabsf(g.orbit_av) > 0.35f || fabsf(off) > 0.35f) {
+        printf("  FAIL: tether never settled (av=%.3f off-rest=%.3f)\n",
+               (double)g.orbit_av, (double)off);
+        return 0;
+    }
+    printf("  ok: settles to a predictable hang (av=%.3f, off-rest=%.3f)\n",
+           (double)g.orbit_av, (double)off);
+    return 1;
+}
+
 int main(void) {
     int fails = 0;
     printf("== MagLava sim tests ==\n");
@@ -85,6 +124,7 @@ int main(void) {
 
     printf("[lava]\n");   if (!test_lava_kills()) fails++;
     printf("[scoring]\n"); if (!test_scoring())    fails++;
+    printf("[tether orbit]\n"); if (!test_orbit()) fails++;
 
     printf(fails ? "\nFAILED (%d)\n" : "\nALL PASS\n", fails);
     return fails ? 1 : 0;

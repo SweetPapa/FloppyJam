@@ -83,6 +83,11 @@ static void handle_events(void) {
         render_push_popup(&app, g->px, g->py - 30.0f, buf,
                           mult > 1 ? (Color){255, 150, 220, 255} : (Color){255, 235, 160, 255});
     }
+    if (g->ev_bounce) {
+        audio_play_pitched(&app, SFX_LAND_BACK, 1.5f);
+        render_spawn_burst(&app, g->px, g->py, (Color){200, 220, 255, 255}, 8, 140.0f);
+        app.cam_shake = fmaxf(app.cam_shake, 0.05f);
+    }
     if (g->ev_checkpoint) {
         audio_play(&app, SFX_CHECKPOINT);
         render_spawn_burst(&app, g->px, g->py, (Color){120, 255, 170, 255}, 28, 220.0f);

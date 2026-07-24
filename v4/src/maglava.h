@@ -36,6 +36,27 @@
 #define ARC_SPEED_BOOST  1.3f
 #define ARC_MIN_SPEED    230.0f
 
+/* --- Tether orbit ---------------------------------------------------
+ * Landing on a node no longer parks you on it: you stay on the tether and
+ * swing around it as a pendulum, carrying the momentum you arrived with.
+ * Releasing at the right point in the arc slings you further, which is the
+ * new skill. Every constant below is a playability guard rail:
+ *   - radius is clamped to a small band, so your position relative to the
+ *     node (and therefore to hazards and lava) stays close to as authored
+ *   - angular speed is capped, so you can never become uncontrollable
+ *   - damping guarantees you always settle into a predictable hang, so a
+ *     calm shot is available to any player willing to wait a beat
+ *   - launch speed is capped to the pre-existing maximum, so arcs stay
+ *     bounded and every node stays reachable */
+#define ORBIT_MIN_R      22.0f
+#define ORBIT_MAX_R      44.0f
+#define ORBIT_REST_R     28.0f
+#define ORBIT_DAMP       0.85f  /* per second; settles a swing in a few beats */
+#define ORBIT_MAX_AV     9.0f   /* rad/s spin cap */
+#define MOMENTUM_CARRY   0.55f  /* how much orbital speed feeds the next launch */
+#define WALL_BOUNCE      0.6f
+#define WALL_MARGIN      16.0f
+
 /* Lava */
 #define LAVA_START_OFFSET   500.0f  /* lava starts this far below player start */
 #define LAVA_WARNING_DIST   200.0f
@@ -176,7 +197,11 @@ typedef struct {
     int target_idx;            /* swing target magnet index, or -1 */
     MagColor color;
     float immune;              /* seconds remaining */
-    float bob_t;               /* attached bob phase */
+    float bob_t;               /* attached bob phase (legacy) */
+    /* tether orbit while attached */
+    float orbit_r;             /* tether length */
+    float orbit_ang;           /* angle around the node (rad; +y/down = rest) */
+    float orbit_av;            /* angular velocity (rad/s) */
 
     /* magnets: alive flag (consumed by lava / recreated on respawn) */
     int n_mag;
@@ -222,6 +247,7 @@ typedef struct {
     int ev_attach_forward;     /* landed going up */
     int ev_checkpoint;
     int ev_swing;              /* started a swing */
+    int ev_bounce;             /* bounced off a shaft wall */
     int ev_death;
     int ev_complete;
     unsigned int rng;          /* deterministic per-sim RNG */
