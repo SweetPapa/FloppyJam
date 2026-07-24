@@ -342,11 +342,16 @@ static void draw_pockets(const BpWorld *w, const BpPalette *pal, float t)
             /* flagstick */
             DrawCylinderEx(rv(v3(c.x, c.y, c.z)), rv(v3(c.x, c.y + 0.52f, c.z)),
                            0.006f, 0.006f, 6, (Color){ 240, 244, 250, 255 });
-            {
-                float wv = sinf(flagwave * 3.1f) * 0.03f;
+            {   /* the flag streams downwind and flutters harder in a breeze */
+                float ws = bp_wind_strength(), wa = bp_wind_angle();
+                V3 wd = v3(sinf(wa), 0.0f, cosf(wa));
+                V3 side = v3(wd.z, 0.0f, -wd.x);
+                float flut = sinf(flagwave * (3.0f + 5.0f * ws)) * (0.015f + 0.045f * ws);
+                float len = 0.11f + 0.15f * ws;
                 V3 a = v3(c.x, c.y + 0.52f, c.z);
-                V3 b = v3(c.x + 0.20f, c.y + 0.44f + wv, c.z + 0.02f);
-                V3 d = v3(c.x, c.y + 0.36f, c.z);
+                V3 d = v3(c.x, c.y + 0.37f, c.z);
+                V3 b = v3add(v3add(v3lerp(a, d, 0.45f), v3mul(wd, len)),
+                             v3add(v3mul(side, flut), v3(0.0f, flut * 0.5f, 0.0f)));
                 DrawTriangle3D(rv(a), rv(b), rv(d), pal->accent);
                 DrawTriangle3D(rv(d), rv(b), rv(a), pal->accent);
             }
@@ -551,6 +556,38 @@ static void draw_meter(int x, int y, int hgt, float p, int charging)
     DrawText("PWR", x - 3, y + hgt + 8, 12, (Color){ 150, 165, 185, 255 });
 }
 
+static const char *power_word(float p)
+{
+    if (p < 0.20f) return "TAP";
+    if (p < 0.40f) return "SOFT";
+    if (p < 0.62f) return "FIRM";
+    if (p < 0.82f) return "HARD";
+    return "SMASH";
+}
+
+/* How hard did I just hit that? Shown right where the meter was, so the
+ * number and the word land in the same place your eye already is. */
+static void draw_strike_readout(int x, int y, float flash, float power)
+{
+    char buf[32];
+    int a, fs, w;
+    float pop;
+    if (flash <= 0.001f) return;
+    a = (int)(bp_clampf(flash * 1.6f, 0.0f, 1.0f) * 255.0f);
+    pop = 1.0f + (1.0f - bp_clampf(flash * 3.0f, 0.0f, 1.0f)) * 0.0f +
+          bp_clampf((flash - 0.75f) * 4.0f, 0.0f, 1.0f) * 0.45f;
+    fs = (int)(26.0f * pop);
+    /* left-aligned: "SMASH" at the pop scale is wider than the meter column
+     * and would run off the edge of the screen if it were centred on it */
+    snprintf(buf, sizeof buf, "%s", power_word(power));
+    DrawText(buf, x, y - fs, fs,
+             (Color){ 255, (unsigned char)bp_lerpf(240.0f, 150.0f, power),
+                      (unsigned char)bp_lerpf(210.0f, 110.0f, power), (unsigned char)a });
+    snprintf(buf, sizeof buf, "%d%%", (int)(power * 100.0f + 0.5f));
+    DrawText(buf, x, y + 2, 16, (Color){ 226, 234, 250, (unsigned char)a });
+    (void)w;
+}
+
 /* the cue-ball face widget: this is where english lives (4.4) */
 static void draw_spin_widget(int cx, int cy, int r, float tx, float ty)
 {
@@ -655,13 +692,32 @@ void bp_render_hud(const BpWorld *w, const BpHud *h, int sw, int sh)
     }
 
     draw_meter(26, sh - 230, 150, h->charging ? h->power : 0.0f, h->charging);
+    draw_strike_readout(16, sh - 252, h->pow_flash, h->pow_value);
     draw_spin_widget(120, sh - 118, 44, h->tx, h->ty);
     draw_minimap(w, sw - 178, sh - 178, 160);
 
+    /* aim detent: the compass ticks over as you swing the cue */
+    {
+        int cx = 252, cy = sh - 104, i;
+        float base = h->aim_tick;
+        DrawText("AIM", cx - 14, cy - 30, 12, (Color){ 150, 165, 185, 255 });
+        for (i = -6; i <= 6; ++i) {
+            int tx2 = cx + i * 11;
+            int hgt = (i % 3 == 0) ? 11 : 6;
+            unsigned char al = (unsigned char)(i == 0 ? 255 : 110);
+            DrawRectangle(tx2, cy - hgt / 2, 2, hgt,
+                          (Color){ 190, 205, 228, al });
+        }
+        if (base > 0.01f) {
+            unsigned char al = (unsigned char)(bp_clampf(base, 0.0f, 1.0f) * 255.0f);
+            DrawRectangle(cx - 1, cy - 9, 4, 18, (Color){ 255, 226, 130, al });
+        }
+    }
+
     /* controls hint strip */
     if (!h->riding) {
-        const char *k = "DRAG/A-D aim   SHIFT fine   SPACE hold+release power   "
-                        "ARROWS english   TAB card   ESC pause";
+        const char *k = "A/D aim   SHIFT fine   SPACE power   ARROWS english   "
+                        "MOUSE/QE/WS camera   V square up   TAB card   ESC pause";
         DrawText(k, 14, sh - 26, 15, (Color){ 128, 146, 170, 205 });
     } else {
         DrawText("R  skip to rest", 14, sh - 26, 15, (Color){ 128, 146, 170, 205 });

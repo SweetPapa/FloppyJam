@@ -234,6 +234,12 @@ static void build_sfx(void)
     mix_tone(&b, 0.0f, 0.055f, 1250.0f, 1050.0f, 0.35f, 90.0f, 1);
     make_all(SFX_UI, b);
 
+    /* TICK — the aim detent. Tiny, dry, and cheap enough to fire often. */
+    b = buf_new(0.035f);
+    mix_tone (&b, 0.0f, 0.014f, 2400.0f, 1500.0f, 0.30f, 320.0f, 1);
+    mix_noise(&b, 0.0f, 0.006f, 0.16f, 700.0f);
+    make_all(SFX_TICK, b);
+
     /* LAND — the ball touching down */
     b = buf_new(0.16f);
     mix_noise(&b, 0.0f, 0.05f, 0.5f, 90.0f);

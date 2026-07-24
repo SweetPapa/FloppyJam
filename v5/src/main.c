@@ -47,6 +47,7 @@ typedef struct {
     int   slowmo_armed;
     int   pending_ace;
     float result_t;
+    float pow_flash, pow_value;    /* strike readout by the meter         */
     float t;                       /* presentation clock (never sim)      */
 
     /* best-moment heuristics for the final card (Section 8) */
@@ -196,6 +197,11 @@ static void start_hole(int index, int fresh)
     G.shot.aim = 0.0f;
     bp_cam_init(&G.cam, G.w.balls[0].p);
     G.hud.sealed = G.w.cup_sealed;
+    G.pow_flash = 0.0f;
+    /* A settled breeze per hole: deterministic from the index so a hole always
+     * feels the same, and cosmetic only so it can never affect a shot. */
+    bp_wind_set((float)(((unsigned)index * 2654435761u) % 628u) * 0.01f,
+                0.25f + 0.65f * (float)(((unsigned)index * 40503u) % 97u) / 96.0f);
     bp_music_mood(index < 9 ? 1 : 2);
 
     if (!G.seen_intro[index]) {
@@ -338,11 +344,24 @@ static void fire(float power)
     G.state = ST_RIDE;
     bp_cam_set_mode(&G.cam, CAM_RIDE, &G.w, G.w.balls[0].p, cup_pos(&G.w));
 
+    /* Strike feedback scales continuously with power so you can feel how hard
+     * you hit it with your eyes shut (16.1). Brightness, hitstop, shockwave
+     * size, dust, camera kick and the sub-thump layer all track it. */
     bp_sfx(SFX_CRACK, bp_clampf(0.72f + power * 0.72f, 0.5f, 1.9f),
            bp_clampf(0.35f + power * 0.60f, 0.0f, 1.0f));
-    bp_hitstop(0.033f);
-    bp_shockwave(G.w.balls[0].p, (Color){ 255, 245, 220, 210 }, 0.09f);
-    if (power > 0.60f) G.cam.shake = bp_clampf(power, 0.0f, 1.0f);
+    if (power > 0.42f)                       /* body under the crack */
+        bp_sfx(SFX_THUMP, bp_clampf(0.42f + power * 0.22f, 0.35f, 0.9f),
+               bp_clampf((power - 0.42f) * 0.85f, 0.0f, 0.55f));
+    bp_hitstop(0.018f + power * 0.048f);
+    bp_shockwave(G.w.balls[0].p, (Color){ 255, 245, 220, 210 }, 0.05f + power * 0.11f);
+    bp_burst(G.w.balls[0].p, 3 + (int)(power * 14.0f),
+             (Color){ 236, 240, 228, 255 }, 0.35f + power * 1.9f, 0.22f + power * 0.22f, 5.5f);
+    G.cam.shake = bp_clampf(G.cam.shake + power * power * 1.15f, 0.0f, 1.0f);
+    if (power > 0.78f) bp_flash((Color){ 255, 248, 226, 255 }, (power - 0.78f) * 1.4f);
+
+    /* on-screen readout by the power meter: a word plus the number */
+    G.pow_flash = 1.0f;
+    G.pow_value = power;
     bp_music_duck(0.65f);
 }
 
@@ -359,33 +378,68 @@ static void skip_to_rest(void)
 /* ------------------------------------------------------------------ */
 /* input                                                               */
 
+/* Aiming is detented: every DETENT of rotation lands with an audible and
+ * visible click, so a player can count clicks to a line instead of eyeballing
+ * a continuous slider. Fine aim subdivides the same detent. */
+#define AIM_DETENT      (1.25f * BP_DEG)
+#define AIM_DETENT_FINE (0.25f * BP_DEG)
+
+static float aim_click_acc = 0.0f;
+
+static void aim_click(float delta, int fine)
+{
+    float step = fine ? AIM_DETENT_FINE : AIM_DETENT;
+    G.shot.aim += delta;
+    aim_click_acc += fabsf(delta);
+    while (aim_click_acc >= step) {
+        aim_click_acc -= step;
+        bp_sfx(SFX_TICK, fine ? 1.55f : 1.0f, fine ? 0.10f : 0.16f);
+        G.shot.aim_tick = 1.0f;
+    }
+}
+
+/* Camera is mouse-only; aiming is keyboard-only. Two jobs, two devices,
+ * no fighting over the left mouse button. */
+static void camera_input(float dt)
+{
+    float wheel;
+    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) || IsMouseButtonDown(MOUSE_BUTTON_RIGHT) ||
+        IsMouseButtonDown(MOUSE_BUTTON_MIDDLE)) {
+        Vector2 d = GetMouseDelta();
+        bp_cam_orbit(&G.cam, d.x * 0.005f, -d.y * 0.0035f);
+    }
+    /* keyboard camera: left hand stays home. Q/E swing, W/S raise and lower. */
+    if (IsKeyDown(KEY_Q)) bp_cam_orbit(&G.cam, -1.5f * dt, 0.0f);
+    if (IsKeyDown(KEY_E)) bp_cam_orbit(&G.cam,  1.5f * dt, 0.0f);
+    if (IsKeyDown(KEY_W)) bp_cam_orbit(&G.cam, 0.0f,  0.9f * dt);
+    if (IsKeyDown(KEY_S)) bp_cam_orbit(&G.cam, 0.0f, -0.9f * dt);
+    wheel = GetMouseWheelMove();
+    if (wheel > 0.5f)  { bp_cam_zoom(&G.cam, -1); bp_sfx(SFX_TICK, 1.3f, 0.16f); }
+    if (wheel < -0.5f) { bp_cam_zoom(&G.cam,  1); bp_sfx(SFX_TICK, 1.1f, 0.16f); }
+    if (IsKeyPressed(KEY_Z)) { bp_cam_zoom(&G.cam, -1); bp_sfx(SFX_TICK, 1.3f, 0.16f); }
+    if (IsKeyPressed(KEY_X)) { bp_cam_zoom(&G.cam,  1); bp_sfx(SFX_TICK, 1.1f, 0.16f); }
+    /* V lines the camera up behind the current aim — the "get me square" key */
+    if (IsKeyPressed(KEY_V)) {
+        G.cam.yaw = G.shot.aim + BP_PI;
+        bp_sfx(SFX_UI, 1.3f, 0.35f);
+    }
+}
+
 static void aim_input(float dt)
 {
-    float fine = (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT)) ? 0.125f : 1.0f;
-    float rate = 1.9f * fine;
+    int fine = (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT));
+    /* 0.60 rad/s coarse is ~34 deg/s: slow enough to place a line by hand.
+     * Fine aim is 12x slower again for surgical banks (4.1). */
+    float rate = fine ? 0.050f : 0.60f;
     float p;
 
-    if (IsKeyDown(KEY_A)) G.shot.aim -= rate * dt;
-    if (IsKeyDown(KEY_D)) G.shot.aim += rate * dt;
-    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
-        Vector2 d = GetMouseDelta();
-        G.shot.aim += d.x * 0.006f * fine;
-    }
-    /* camera orbit: right drag, or Q/E, wheel to zoom */
-    if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
-        Vector2 d = GetMouseDelta();
-        bp_cam_orbit(&G.cam, d.x * 0.006f, -d.y * 0.004f);
-    }
-    if (IsKeyDown(KEY_Q)) bp_cam_orbit(&G.cam, -1.4f * dt, 0.0f);
-    if (IsKeyDown(KEY_E)) bp_cam_orbit(&G.cam,  1.4f * dt, 0.0f);
-    if (IsKeyDown(KEY_R) && !IsKeyDown(KEY_LEFT_CONTROL)) { /* reserved */ }
-    {
-        float wheel = GetMouseWheelMove();
-        if (wheel > 0.5f) bp_cam_zoom(&G.cam, -1);
-        if (wheel < -0.5f) bp_cam_zoom(&G.cam, 1);
-        if (IsKeyPressed(KEY_Z)) bp_cam_zoom(&G.cam, -1);
-        if (IsKeyPressed(KEY_X)) bp_cam_zoom(&G.cam, 1);
-    }
+    if (IsKeyDown(KEY_A)) aim_click(-rate * dt, fine);
+    if (IsKeyDown(KEY_D)) aim_click( rate * dt, fine);
+    /* tap-nudge exactly one detent, for counting clicks off a known line */
+    if (IsKeyPressed(KEY_A)) aim_click(-(fine ? AIM_DETENT_FINE : AIM_DETENT), fine);
+    if (IsKeyPressed(KEY_D)) aim_click( (fine ? AIM_DETENT_FINE : AIM_DETENT), fine);
+
+    camera_input(dt);
 
     /* english on the cue-ball face */
     {
@@ -449,6 +503,13 @@ static void update_play(float dt)
 
     case ST_RIDE: {
         float cd;
+        {   /* let the player reframe while the ball is out there */
+            float wheel = GetMouseWheelMove();
+            if (wheel > 0.5f)  bp_cam_zoom(&G.cam, -1);
+            if (wheel < -0.5f) bp_cam_zoom(&G.cam,  1);
+            if (IsKeyPressed(KEY_Z)) bp_cam_zoom(&G.cam, -1);
+            if (IsKeyPressed(KEY_X)) bp_cam_zoom(&G.cam,  1);
+        }
         if (IsKeyPressed(KEY_R)) skip_to_rest();
         sim_ride(dt);
         cd = cup_dist(&G.w);
@@ -538,6 +599,11 @@ static void fill_hud(void)
     G.hud.power = G.shot.meter;
     G.hud.charging = G.shot.charging;
     G.hud.tx = G.shot.tx; G.hud.ty = G.shot.ty;
+    G.hud.pow_flash = G.pow_flash;
+    G.hud.pow_value = G.pow_value;
+    G.hud.aim_tick = G.shot.aim_tick;
+    G.hud.pow_value = G.pow_value;
+    G.hud.aim_tick = G.shot.aim_tick;
     G.hud.riding = (G.state == ST_RIDE);
     G.hud.sealed = G.w.cup_sealed;
     G.hud.aces = G.save.aces;
@@ -583,11 +649,14 @@ static void draw_howto(int sw, int sh)
     static const char *L[] = {
         "It looks like mini golf. You are shooting pool.",
         "",
-        "AIM      drag with the left mouse button, or A / D.  Hold SHIFT for fine aim.",
+        "AIM      A / D.  Every click is one detent, so you can count clicks to a line.",
+        "         Tap for exactly one click, hold to sweep.  SHIFT for fine detents.",
         "POWER    hold SPACE.  The meter climbs, then falls, then climbs. Let go.",
         "ENGLISH  arrow keys move the strike point on the cue-ball face (bottom left).",
         "         UP is follow, DOWN is draw, LEFT and RIGHT are side english.  C centres it.",
-        "CAMERA   drag with the right mouse button or Q / E.  Wheel or Z / X to zoom.",
+        "CAMERA   the mouse is camera only -- drag any button to orbit, wheel to zoom.",
+        "         Q / E swing round, W / S raise and lower, Z / X zoom, V squares up",
+        "         the camera behind your aim.",
         "RIDE     R skips the ball straight to rest.  The result is identical.",
         "         TAB shows the card.  ESC pauses.",
         "",
@@ -750,6 +819,12 @@ int main(int argc, char **argv)
 
         bp_music_update();
         bp_juice_update(dt);
+        /* decay the transient readouts, and let the breeze blow while playing */
+        if (G.pow_flash > 0.0f) G.pow_flash = bp_clampf(G.pow_flash - dt * 1.15f, 0.0f, 1.0f);
+        if (G.shot.aim_tick > 0.0f)
+            G.shot.aim_tick = bp_clampf(G.shot.aim_tick - dt * 7.0f, 0.0f, 1.0f);
+        if (G.state >= ST_INTRO && G.state <= ST_RESULT)
+            bp_wind_motes(G.cam.target, dt);
 
         if (tour) {
             tour_step();

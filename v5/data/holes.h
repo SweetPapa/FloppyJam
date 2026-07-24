@@ -68,6 +68,10 @@ static const BpWallDef H1W[] = {
     W( 5.4f, 4.4f,  5.4f, 7.4f), W(-1.5f, 7.4f, 5.4f, 7.4f),
 };
 static const BpPocket H1K[] = { CUP(4.3f, 5.7f) };
+/* Two mushroom bumpers tucked in the dogleg. They never block the safe route
+ * up the lane, but a ball that comes round the corner can carom off one into
+ * the cup, so hole 1 already has something to bounce off and grin at. */
+static const BpPost H1O[] = { BUMP(2.15f, 6.85f), BUMP(3.15f, 4.95f) };
 
 /* 2 — BANK ALLEY (par 2): cup behind a blocker, one cushion required   */
 
@@ -78,6 +82,7 @@ static const BpWallDef H2W[] = {
     W(-2.5f, 6.2f, 0.4f, 6.2f),
 };
 static const BpPocket H2K[] = { CUP(-1.6f, 7.9f) };
+static const BpPost H2O[] = { BUMP(2.00f, 7.75f), BUMP(-2.00f, 4.30f) };
 
 /* 3 — LEDGE (par 2): ramp to a plateau with no back rail but a board   */
 
@@ -110,6 +115,10 @@ static const BpWallDef H4W[] = {
     W( 0.4f, 10.6f,  0.4f, 13.0f), W(-1.6f, 13.0f,  0.4f, 13.0f),
 };
 static const BpPocket H4K[] = { CUP(-0.6f, 12.2f) };
+/* Bumpers live in the dead corners of the jogs, never in the racing line —
+ * hole 4 is the english lesson, so the corridor itself stays clean and the
+ * bumper is a reward for a wide carom rather than a tax on a good line. */
+static const BpPost H4O[] = { BUMP(2.95f, 4.55f), BUMP(2.85f, 9.90f) };
 
 /* 5 — DEAD STRAIGHT (par 3): the first object ball, a pure combo       */
 
@@ -121,6 +130,7 @@ static const BpWallDef H5W[] = {
 };
 static const BpPocket H5K[] = { CUP(0.0f, 9.9f) };
 static const BpBallDef H5B[] = { OBJ(0.0f, 8.8f, 2, 3) };
+static const BpPost H5O[] = { BUMP(-2.05f, 5.20f), BUMP(2.05f, 5.20f) };
 
 /* 6 — AIRMAIL (par 3): ramp, flight, and a rough collar to punish long */
 
@@ -201,6 +211,8 @@ static const BpWallDef H11W[] = {
     W(-2.8f, 5.0f, 0.7f, 5.0f), W(-0.7f, 8.2f, 2.8f, 8.2f),
 };
 static const BpPocket H11K[] = { CUP(-1.7f, 10.6f) };
+/* Bumpers on ice are gloriously unfair. That is the point of hole 11. */
+static const BpPost H11O[] = { BUMP(0.00f, 3.40f), BUMP(1.70f, 6.70f) };
 
 /* 12 — THE LONG ONE (par 4): kicker chain, three routes, one channel   */
 
@@ -223,6 +235,7 @@ static const BpWallDef H12W[] = {
     W( 2.0f,  4.5f,  2.0f, 13.0f),
 };
 static const BpPocket H12K[] = { CUP(3.4f, 15.6f) };
+static const BpPost H12O[] = { BUMP(0.00f, 11.40f), BUMP(0.60f, 15.20f) };
 
 /* 13 — CASINO I (par 3): safe lane, or two ramps between four scratches */
 
@@ -355,12 +368,12 @@ const BpHole BP_HOLES[BP_NHOLES] = {
 { "OPENING BREAK", "One dogleg rail. Aim, power, go.",
   "Hold SHIFT while aiming for eight-times finer control.",
   2, 0,  0.0f, 0.7f, -6.0f,
-  H1P, CNT(H1P), H1W, CNT(H1W), 0,0, H1K, CNT(H1K), 0,0, 0,0 },
+  H1P, CNT(H1P), H1W, CNT(H1W), H1O, CNT(H1O), H1K, CNT(H1K), 0,0, 0,0 },
 
 { "BANK ALLEY", "The cup hides behind a wall. Find a cushion.",
   "The dotted guide shows one bounce. Read the angle, then trust it.",
   2, 0,  0.0f, 0.8f, -6.0f,
-  H2P, CNT(H2P), H2W, CNT(H2W), 0,0, H2K, CNT(H2K), 0,0, 0,0 },
+  H2P, CNT(H2P), H2W, CNT(H2W), H2O, CNT(H2O), H2K, CNT(H2K), 0,0, 0,0 },
 
 { "LEDGE", "Up the ramp to a shelf with no back rail.",
   "Draw spin (tip DOWN on the ball face) pulls the ball back after it lands.",
@@ -370,12 +383,12 @@ const BpHole BP_HOLES[BP_NHOLES] = {
 { "S-BEND", "Two blind jogs. Side spin keeps your speed.",
   "Side english changes how the ball comes off a rail — running spin widens it.",
   3, 0,  0.0f, 0.6f, -6.0f,
-  H4P, CNT(H4P), H4W, CNT(H4W), 0,0, H4K, CNT(H4K), 0,0, 0,0 },
+  H4P, CNT(H4P), H4W, CNT(H4W), H4O, CNT(H4O), H4K, CNT(H4K), 0,0, 0,0 },
 
 { "DEAD STRAIGHT", "An object ball parked on the cup. Play the combo.",
   "Hit the object ball full in the face and it goes where you were pointing.",
   3, 0,  0.0f, 0.8f, -6.0f,
-  H5P, CNT(H5P), H5W, CNT(H5W), 0,0, H5K, CNT(H5K), 0,0, H5B, CNT(H5B) },
+  H5P, CNT(H5P), H5W, CNT(H5W), H5O, CNT(H5O), H5K, CNT(H5K), 0,0, H5B, CNT(H5B) },
 
 { "AIRMAIL", "Launch off the lip. The rough eats anything long.",
   "Backspin survives the flight — a drawn ball checks up when it lands.",
@@ -405,12 +418,12 @@ const BpHole BP_HOLES[BP_NHOLES] = {
 { "ICE RINK", "Nothing slows down. Bank it and pray.",
   "Check english scrubs speed off a cushion. On ice that is the only brake.",
   3, 0,  0.0f, 0.8f, -6.0f,
-  H11P, CNT(H11P), H11W, CNT(H11W), 0,0, H11K, CNT(H11K), 0,0, 0,0 },
+  H11P, CNT(H11P), H11W, CNT(H11W), H11O, CNT(H11O), H11K, CNT(H11K), 0,0, 0,0 },
 
 { "THE LONG ONE", "Kicker pads and a channel. Pick your risk.",
   "Kicker pads set your speed exactly — power stops mattering once you are on one.",
   4, 0,  0.0f, 0.8f, -6.0f,
-  H12P, CNT(H12P), H12W, CNT(H12W), 0,0, H12K, CNT(H12K), 0,0, 0,0 },
+  H12P, CNT(H12P), H12W, CNT(H12W), H12O, CNT(H12O), H12K, CNT(H12K), 0,0, 0,0 },
 
 { "CASINO", "Long way round, or two ramps over four scratch pockets.",
   "Missing a jump usually leaves you playable. Usually.",

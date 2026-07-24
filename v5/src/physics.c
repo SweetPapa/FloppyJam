@@ -186,20 +186,35 @@ int bp_pocket_at(const BpWorld *w, float x, float z, float y)
  * contact point. This one routine is the whole english story: running
  * english slips with the cushion and widens the rebound, check english
  * slips against it and narrows/kills it (5.4). */
-static void contact_impulse(BpBall *b, V3 n, float e, float mu, float boost)
+/* Friction is limited by the contact normal force. A super-bumper's spring
+ * returns stored energy, it does not press the ball harder into the post, so
+ * the friction budget is capped at the e=1 impulse and ignores the outward
+ * kick. Without this, e=1.4 scaled up the tangential impulse and a rolling
+ * ball's downward contact-point slip launched it metres into the air. */
+/* Ceiling on the upward speed a rail or post may leave the ball with. Walls
+ * pass this; floors, ramps and cup rims pass BP_NO_LIFT_CAP and behave freely,
+ * so real airtime off a ramp is untouched. */
+#define BP_LIFT_GROUNDED 0.35f
+#define BP_LIFT_AIRBORNE 1.10f
+#define BP_NO_LIFT_CAP   1.0e9f
+
+static void contact_impulse(BpBall *b, V3 n, float e, float mu, float boost,
+                            float lift_cap)
 {
     float vn = v3dot(b->v, n);
-    float jn, us;
+    float vy_before = b->v.y;
+    float jn, jn_fric, us;
     V3 r, u, ut, uh, J;
     if (vn > 0.0f) vn = 0.0f;
     jn = -(1.0f + e) * vn + boost;
+    jn_fric = -(1.0f + (e > 1.0f ? 1.0f : e)) * vn;
     r = v3mul(n, -BP_R);
     u = v3add(b->v, v3cross(b->w, r));
     ut = v3tan(u, n);
     b->v = v3add(b->v, v3mul(n, jn));
     us = v3len(ut);
-    if (us > 1e-5f && jn > 0.0f) {
-        float jt_max = mu * jn;
+    if (us > 1e-5f && jn_fric > 0.0f) {
+        float jt_max = mu * jn_fric;
         float jt_stop = (2.0f / 7.0f) * us;
         float jt = jt_max < jt_stop ? jt_max : jt_stop;
         uh = v3mul(ut, 1.0f / us);
@@ -207,6 +222,16 @@ static void contact_impulse(BpBall *b, V3 n, float e, float mu, float boost)
         b->v = v3add(b->v, J);
         b->w = v3add(b->w, v3mul(v3cross(r, J), 5.0f / (2.0f * BP_R * BP_R)));
     }
+
+    /* Rails must never serve the ball. Two things conspire otherwise: a
+     * rolling ball's contact point moves downward so cushion friction lifts
+     * it, and a glancing hit on the TOP EDGE of a rail gets a diagonal normal
+     * that turns the ball's whole horizontal speed into vertical. A fast ball
+     * takes several contacts per tick, so it climbs the rail like a ladder and
+     * leaves the hole. Clamp what the contact ADDED; never take away speed the
+     * ball already had. */
+    if (b->v.y > lift_cap && b->v.y > vy_before)
+        b->v.y = (lift_cap > vy_before) ? lift_cap : vy_before;
 }
 
 /* 5.4: hard smashes come off the cushion dead. */
@@ -351,6 +376,7 @@ void bp_post_pose(const BpWorld *w, int i, V3 *c)
 static void resolve_boxes(BpWorld *w, int bi)
 {
     BpBall *b = &w->balls[bi];
+    float lift = b->grounded ? BP_LIFT_GROUNDED : BP_LIFT_AIRBORNE;
     int i;
     for (i = 0; i < w->nboxes; ++i) {
         const BpBox *bx = &w->boxes[i];
@@ -363,14 +389,14 @@ static void resolve_boxes(BpWorld *w, int bi)
         vn = v3dot(b->v, n);
         if (vn < 0.0f) {
             speed = v3len(b->v);
-            if (bx->kind == BOX_BUMPER_WALL) {
-                contact_impulse(b, n, BP_E_BUMPER, BP_MU_WALL, BP_BUMPER_KICK);
+            if (bx->kind == BOX_BUMPER_WALL && fabsf(n.y) <= 0.7f) {
+                contact_impulse(b, n, BP_E_BUMPER, BP_MU_WALL, BP_BUMPER_KICK, lift);
                 ev_push(w, EV_BUMPER, bi, -1, speed, b->p);
             } else if (fabsf(n.y) > 0.7f) {
-                contact_impulse(b, n, BP_E_FLOOR, BP_MU_SLIDE, 0.0f);
+                contact_impulse(b, n, BP_E_FLOOR, BP_MU_SLIDE, 0.0f, lift);
             } else {
                 e = wall_e(speed);
-                contact_impulse(b, n, e, BP_MU_WALL, 0.0f);
+                contact_impulse(b, n, e, BP_MU_WALL, 0.0f, lift);
                 if (speed > 0.18f) {
                     ev_push(w, EV_WALL, bi, -1, speed, b->p);
                     if (bi == 0) w->wall_hits++;
@@ -384,6 +410,7 @@ static void resolve_boxes(BpWorld *w, int bi)
 static void resolve_posts(BpWorld *w, int bi)
 {
     BpBall *b = &w->balls[bi];
+    float lift = b->grounded ? BP_LIFT_GROUNDED : BP_LIFT_AIRBORNE;
     int i;
     for (i = 0; i < w->nposts; ++i) {
         BpPost *po = &w->posts[i];
@@ -416,10 +443,19 @@ static void resolve_posts(BpWorld *w, int bi)
         if (vn < 0.0f) {
             speed = v3len(b->v);
             if (po->kind == POST_BUMPER) {
-                contact_impulse(b, n, BP_E_BUMPER, BP_MU_WALL, BP_BUMPER_KICK);
-                ev_push(w, EV_BUMPER, bi, (signed char)i, speed, b->p);
+                /* A mushroom is springy round the sides and dead on the cap.
+                 * Without this a ball that lands on top gets restitution 1.4
+                 * plus the outward kick straight upward, and two or three
+                 * bounces pump it clean over the rails and out of the world. */
+                if (fabsf(n.y) > 0.6f) {
+                    contact_impulse(b, n, BP_E_FLOOR, BP_MU_SLIDE, 0.0f, lift);
+                    ev_push(w, EV_LAND, bi, (signed char)SURF_FELT, speed, b->p);
+                } else {
+                    contact_impulse(b, n, BP_E_BUMPER, BP_MU_WALL, BP_BUMPER_KICK, lift);
+                    ev_push(w, EV_BUMPER, bi, (signed char)i, speed, b->p);
+                }
             } else {
-                contact_impulse(b, n, wall_e(speed), BP_MU_WALL, 0.0f);
+                contact_impulse(b, n, wall_e(speed), BP_MU_WALL, 0.0f, lift);
                 if (speed > 0.18f) {
                     ev_push(w, EV_WALL, bi, -1, speed, b->p);
                     if (bi == 0) w->wall_hits++;
@@ -471,7 +507,7 @@ static void resolve_pocket_geom(BpWorld *w, int bi)
             b->p = v3add(b->p, v3mul(n, pen + 1e-4f));
             vn = v3dot(b->v, n);
             if (vn < -0.05f) {
-                contact_impulse(b, n, BP_E_RIM, BP_MU_WALL, 0.0f);
+                contact_impulse(b, n, BP_E_RIM, BP_MU_WALL, 0.0f, BP_NO_LIFT_CAP);
                 ev_push(w, EV_RIM, bi, (signed char)i, -vn, b->p);
             } else if (vn < 0.0f) {
                 b->v = v3sub(b->v, v3mul(n, vn));
@@ -487,7 +523,7 @@ cylinder:
             b->p = v3add(b->p, v3mul(n, pen + 1e-4f));
             vn = v3dot(b->v, n);
             if (vn < 0.0f) {
-                contact_impulse(b, n, 0.40f, BP_MU_WALL, 0.0f);
+                contact_impulse(b, n, 0.40f, BP_MU_WALL, 0.0f, BP_NO_LIFT_CAP);
                 if (-vn > 0.25f) ev_push(w, EV_RIM, bi, (signed char)i, -vn, b->p);
             }
         }
@@ -609,7 +645,7 @@ static void ball_step(BpWorld *w, int bi, float h)
         float vn = v3dot(b->v, n);
         if (b->p.y < support + BP_R) b->p.y = support + BP_R;
         if (vn < -0.30f) {
-            contact_impulse(b, n, BP_E_FLOOR, s->mu_slide, 0.0f);
+            contact_impulse(b, n, BP_E_FLOOR, s->mu_slide, 0.0f, BP_NO_LIFT_CAP);
             ev_push(w, EV_LAND, bi, (signed char)surf, -vn, b->p);
         } else if (vn < 0.0f) {
             b->v = v3sub(b->v, v3mul(n, vn));

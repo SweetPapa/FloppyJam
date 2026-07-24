@@ -15,6 +15,7 @@ typedef struct {
     BpGuideHit guide;
 
     /* cue animation: -1 .. 0 backswing, 0 .. 1 follow-through */
+    float aim_tick;         /* 0..1 pulse on each aim detent              */
     float cue_pull;
     float strike_anim;      /* counts down after the strike               */
 } BpShot;

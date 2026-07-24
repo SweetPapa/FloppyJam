@@ -57,7 +57,7 @@ endif
 # 1,474,560 bytes: one 1.44 MB floppy. Hard ceiling, not a target.
 FLOPPY := 1474560
 
-.PHONY: all debug run test testcourse size windows clean
+.PHONY: all debug run test testcourse testcamera size windows clean
 
 all: $(TARGET)
 
@@ -88,6 +88,12 @@ testcourse:
 	      $(SRCDIR)/course.c $(SRCDIR)/physics.c -lm -o bp_test_course
 	./bp_test_course
 
+testcamera:
+	$(CC) -std=c11 -O2 $(WARN) -I$(SRCDIR) -I. $(RAYLIB_CFLAGS) tests/test_camera.c \
+	      $(SRCDIR)/camera.c $(SRCDIR)/course.c $(SRCDIR)/physics.c \
+	      $(LDLIBS) -o bp_test_camera
+	./bp_test_camera
+
 size: $(TARGET)
 	@total=$$(wc -c < $(TARGET)); \
 	printf 'fileset: %s bytes (%s KB) of %s\n' "$$total" "$$((total/1024))" "$(FLOPPY)"; \
@@ -109,4 +115,4 @@ windows:
 	x86_64-w64-mingw32-strip $(TARGET).exe
 
 clean:
-	rm -f $(OBJS) $(TARGET) $(TARGET).exe bp_test_physics bp_test_course
+	rm -f $(OBJS) $(TARGET) $(TARGET).exe bp_test_physics bp_test_course bp_test_camera

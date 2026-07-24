@@ -103,6 +103,38 @@ void bp_flash(Color c, float amount)
     if (amount > flash_a) flash_a = amount;
 }
 
+/* ---- wind: atmosphere, never physics ------------------------------- */
+
+static float wind_ang = 0.7f, wind_str = 0.5f, mote_acc = 0.0f;
+
+void bp_wind_set(float angle, float strength)
+{
+    wind_ang = angle;
+    wind_str = bp_clampf(strength, 0.0f, 1.0f);
+}
+float bp_wind_angle(void)    { return wind_ang; }
+float bp_wind_strength(void) { return wind_str; }
+
+/* Drifting motes seeded around the camera's interest point. They are just
+ * particles with the breeze baked into their velocity. */
+void bp_wind_motes(V3 centre, float dt)
+{
+    V3 dir = v3(sinf(wind_ang), 0.0f, cosf(wind_ang));
+    mote_acc += dt * (5.0f + 16.0f * wind_str);
+    while (mote_acc >= 1.0f) {
+        Particle *p = alloc_par();
+        mote_acc -= 1.0f;
+        p->p = v3add(centre, v3(rnds() * 3.4f, 0.05f + rnd() * 1.15f, rnds() * 3.4f));
+        p->v = v3add(v3mul(dir, (0.35f + 1.5f * wind_str) * (0.6f + 0.7f * rnd())),
+                     v3(rnds() * 0.10f, rnds() * 0.06f, rnds() * 0.10f));
+        p->life = p->life0 = 1.4f + 1.6f * rnd();
+        p->size = 0.007f + 0.008f * rnd();
+        p->col = (Color){ 236, 244, 226, 110 };
+        p->grav = 0.0f;
+        p->kind = 3;
+    }
+}
+
 void bp_hitstop(float seconds) { if (seconds > hitstop_t) hitstop_t = seconds; }
 float bp_hitstop_left(void) { return hitstop_t; }
 
@@ -144,6 +176,12 @@ void bp_juice_update(float dt)
         p->life -= dt;
         if (p->kind == 2) continue;
         p->v.y -= p->grav * dt;
+        if (p->kind == 1 || p->kind == 3) {
+            /* confetti and motes get pushed around by the breeze */
+            V3 wd = v3(sinf(wind_ang), 0.0f, cosf(wind_ang));
+            float push = (p->kind == 3 ? 0.9f : 0.45f) * wind_str * dt;
+            p->v = v3add(p->v, v3mul(wd, push));
+        }
         p->p = v3add(p->p, v3mul(p->v, dt));
     }
 }

@@ -15,6 +15,14 @@ void  bp_confetti(V3 at, int count, float power);
 void  bp_shockwave(V3 at, Color c, float r);
 void  bp_flash(Color c, float amount);
 
+/* Ambient breeze. Cosmetic ONLY: it drifts motes and leans the flag, and is
+ * deliberately never read by physics.c, so determinism and every tuning gate
+ * stay intact and the wind never lies to the player about the shot. */
+void  bp_wind_set(float angle, float strength);
+float bp_wind_angle(void);
+float bp_wind_strength(void);
+void  bp_wind_motes(V3 centre, float dt);
+
 void  bp_hitstop(float seconds);
 float bp_hitstop_left(void);
 void  bp_slowmo(float seconds, float scale);
