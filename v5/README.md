@@ -45,13 +45,15 @@ Keyboard-and-mouse first; **keyboard alone is fully playable**.
 
 | Action | Input |
 | --- | --- |
-| Aim | `A` / `D` — detented, one audible click per notch. Tap for exactly one click, hold to sweep |
+| Aim | `←` / `→` — detented, one audible click per notch. Tap for exactly one click, hold to sweep |
 | Fine aim | hold `SHIFT` (same detents, six times smaller) |
-| Invert aim | OPTIONS → INVERT AIM swaps which of `A` / `D` turns the cue left |
+| Invert aim | OPTIONS → INVERT AIM swaps which arrow turns the cue left |
+| Focus camera on the hole | `↑` — swings behind the ball and zooms out for a clear line |
+| Aim the cue at the hole | `↓` — points the cue straight at it and focuses the camera |
 | Power | hold `SPACE`, release to strike — the meter climbs, falls, climbs |
-| English (cue-ball face) | arrow keys: `↑` follow, `↓` draw, `←` `→` side |
+| English (cue-ball face) | `A` / `D` left and right, `W` follow, `S` draw |
 | Centre the english | `C` |
-| Orbit camera | drag **any** mouse button, or `Q` / `E` to swing, `W` / `S` to raise and lower |
+| Orbit camera | drag **any** mouse button, or `Q` / `E` to swing |
 | Zoom (4 steps) | mouse wheel, or `Z` / `X` |
 | Square the camera up behind your aim | `V` |
 | Trajectory preview on/off | `P` (also in OPTIONS) — off by default |
@@ -59,13 +61,15 @@ Keyboard-and-mouse first; **keyboard alone is fully playable**.
 | Scorecard | `TAB` |
 | Pause / restart hole / options | `ESC` |
 
-The mouse is **camera only** and the keyboard does the aiming, so the two never
-fight over the same button. Aiming is detented rather than continuous: each
-notch clicks, so you can line up off a rail and then count three clicks left
-instead of nudging a slider and hoping. A coarse detent is 0.60 deg (about
-15 cm of aim at a far cup) and a fine one is 0.10 deg (~2.5 cm), tight enough
-to thread a gap on the far side of the hole. `A` and `D` can be swapped in
-OPTIONS for players who read left/right the other way round.
+The **arrow keys aim** (left/right rotate the cue) and the **left hand shapes the
+shot**: `A`/`D`/`W`/`S` move the strike point on the cue-ball face while `Q`/`E`
+swing the camera. The mouse is camera-only, so nothing fights over a button.
+Aiming is detented rather than continuous: each notch clicks, so you can line
+up off a rail and count three clicks left instead of nudging a slider and
+hoping. A coarse detent is 0.60 deg (about 15 cm of aim at a far cup) and a
+fine one is 0.10 deg (~2.5 cm), tight enough to thread a gap on the far side of
+the hole. When a far hole is hard to read, `↑` frames it for you and `↓` also
+lines the cue up straight at it. The two aim keys can be swapped in OPTIONS.
 
 English resets to centre at the start of each **hole**, not each shot: leaving
 your last spin dialled in is a small mastery reward and a small trap.
@@ -125,11 +129,12 @@ a missed hero shot should leave you playable, just worse off.
 ## Feel and feedback
 
 The strike scales continuously with power: crack brightness and pitch, a sub-thump
-layered in above 42%, hitstop from 18 to 66 ms, shockwave radius, dust count,
+layered in above 42%, one crisp frame of hitstop, shockwave radius, dust count,
 camera kick, a rim flash past 78%, and a word plus percentage that lands right
-where the power meter was. You can tell how hard you hit it with your eyes shut.
+where the power meter was. You can tell how hard you hit it with your eyes shut,
+and release is immediate — the ball leaves the frame after you let go.
 
-Aiming is **detented**. Each notch of `A`/`D` clicks audibly and ticks the compass
+Aiming is **detented**. Each notch of `←`/`→` clicks audibly and ticks the compass
 strip on the HUD, so a line can be counted rather than eyeballed, and `SHIFT`
 subdivides the same notch for surgical banks.
 

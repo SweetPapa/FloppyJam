@@ -18,6 +18,9 @@ typedef struct {
     float aim_tick;         /* 0..1 pulse on each aim detent              */
     float cue_pull;
     float strike_anim;      /* counts down after the strike               */
+    /* SPACE must be released once before a new charge can begin. Set on
+     * resume / hole start so a menu SPACE never leaks into a shot.         */
+    int   charge_lock;
 } BpShot;
 
 void  bp_shot_reset(BpShot *s, int keep_spin);
@@ -36,8 +39,20 @@ float bp_shot_power_curve(float p);
  * Off by default. The spec (4.3, 15) argues hard for a geometry-only guide,
  * and that stays the shipped default; this is opt-in for players who want it.
  */
-#define BP_PREVIEW_MAX     256   /* samples on the cue-ball path         */
+#define BP_PREVIEW_MAX     384   /* samples on the cue-ball path         */
 #define BP_PREVIEW_OBJ     3     /* object balls whose path is drawn     */
+/* hit[] low bits are the contact marker (1 wall, 2 bumper, 3 ball). The high
+ * bit means "the ball teleported to here" (a warp pocket) — the renderer must
+ * NOT draw a segment into a break point, or a long straight line jumps clean
+ * across the hole and the preview looks wonky on warp holes. */
+#define BP_PV_MARK  0x0f
+#define BP_PV_BREAK 0x80
+/* A gap between consecutive samples larger than this is a teleport, not a
+ * roll: a warp pocket, or the ball plunging off the world. A full-speed ball
+ * at the coarsest decimated sampling still moves under 2 m in one step, while
+ * a warp jumps many metres, so this threshold cleanly separates a genuine
+ * (if coarse) path from a discontinuity that must not be drawn. */
+#define BP_PV_JUMP  3.0f
 #define BP_PREVIEW_OBJ_MAX 64
 
 typedef struct {

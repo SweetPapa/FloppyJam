@@ -300,6 +300,57 @@ static void test_preview(void)
     report(bad_pos == 0, "preview", "predicted path ends where the ball ends", buf);
     snprintf(buf, sizeof buf, "%d outcome mismatches of %d", bad_outcome, checked);
     report(bad_outcome == 0, "preview", "predicted hole-out matches reality", buf);
+
+    /* Item 5: extended preview lines must not streak. Every DRAWN segment (i.e.
+     * every pair of consecutive points that is not a warp break) has to be
+     * short; a warp teleport must be flagged as a break so the renderer skips
+     * it instead of drawing a line clean across the hole. */
+    {
+        int hh, bad_seg = 0, breaks = 0, ph;
+        float worst_seg = 0.0f;
+        static const float pows[3] = { 0.45f, 0.72f, 1.0f };
+        for (hh = 0; hh < BP_NHOLES; ++hh) {
+            int aa;
+            for (aa = 0; aa < 24; ++aa) {
+                for (ph = 0; ph < 3; ++ph) {
+                    BpWorld w;
+                    BpPreview pv;
+                    int j;
+                    float aim = (float)aa * (BP_TAU / 24.0f);
+                    bp_course_build(&w, hh);
+                    bp_predict(&w, aim, pows[ph], 0.0f, 0.0f, &pv);
+                    for (j = 1; j < pv.n; ++j) {
+                        float seg = v3len(v3sub(pv.pt[j], pv.pt[j - 1]));
+                        if (pv.hit[j] & BP_PV_BREAK) { ++breaks; continue; }
+                        if (seg > worst_seg) worst_seg = seg;
+                        if (seg > BP_PV_JUMP + 0.01f) ++bad_seg;
+                    }
+                }
+            }
+        }
+        snprintf(buf, sizeof buf, "worst drawn chord %.2f m, %d discontinuities flagged as breaks",
+                 worst_seg, breaks);
+        report(bad_seg == 0, "preview", "no drawn segment streaks across the hole", buf);
+        report(breaks > 0, "preview", "teleports / plunges are flagged as line breaks", buf);
+        /* Hole 7 is built so a straight shot warps: prove the break actually
+         * lands on the teleport by finding an aim where a >4 m jump between
+         * consecutive samples is the one carrying the break flag. */
+        {
+            int aa, ok = 0;
+            for (aa = 0; aa < 48 && !ok; ++aa) {
+                BpWorld w;
+                BpPreview pv;
+                int j;
+                bp_course_build(&w, 6);
+                bp_predict(&w, (float)aa * (BP_TAU / 48.0f), 0.5f, 0.0f, 0.0f, &pv);
+                for (j = 1; j < pv.n; ++j) {
+                    float seg = v3len(v3sub(pv.pt[j], pv.pt[j - 1]));
+                    if (seg > 4.0f && (pv.hit[j] & BP_PV_BREAK)) { ok = 1; break; }
+                }
+            }
+            report(ok, "preview", "a warp teleport is flagged, not drawn as a streak", NULL);
+        }
+    }
 }
 
 int main(int argc, char **argv)

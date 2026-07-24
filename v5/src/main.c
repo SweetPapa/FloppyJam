@@ -33,7 +33,9 @@ typedef struct {
     BpSave   save;
     BpReplay rep;
 
-    int   state, ret_state;
+    int   state, ret_state;    /* ret_state: where OPTIONS returns to        */
+    int   pause_from;          /* the play state PAUSE / the card overlay resumes to */
+    int   card_overlay;        /* TAB scorecard over play, vs the between-holes card  */
     int   menu_sel, pause_sel, opt_sel, select_sel;
     int   hole, from, to;
     int   strokes, restarts, total;
@@ -92,6 +94,41 @@ static float cup_dist(const BpWorld *w)
     V3 c = cup_pos(w);
     V3 d = v3sub(w->balls[0].p, c);
     return sqrtf(d.x * d.x + d.z * d.z);
+}
+
+/* What the player is actually trying to reach: the cup, or the 8-ball while a
+ * rack hole is still sealed (7.4). Used by the auto-focus / auto-aim keys. */
+static V3 objective_pos(const BpWorld *w)
+{
+    if (w->cup_sealed) {
+        int i;
+        for (i = 0; i < w->nballs; ++i)
+            if (w->balls[i].kind == BALL_EIGHT && w->balls[i].state != BS_GONE)
+                return w->balls[i].p;
+    }
+    return cup_pos(w);
+}
+
+/* Swing the camera behind the ball looking toward the objective and zoom out
+ * far enough to see the whole line — the "show me the hole" key. */
+static void focus_camera_on_objective(void)
+{
+    V3 ball = G.w.balls[0].p, obj = objective_pos(&G.w);
+    V3 d = v3sub(obj, ball);
+    float dist = sqrtf(d.x * d.x + d.z * d.z);
+    G.cam.yaw = atan2f(d.x, d.z) + BP_PI;    /* forward_yaw looks along d */
+    G.cam.pitch = 52.0f * BP_DEG;            /* high enough to clear rails */
+    /* zoom out with distance so the far cup stays in shot */
+    G.cam.zoom = (dist > 8.0f) ? 3 : (dist > 4.0f) ? 2 : 1;
+}
+
+/* Point the cue at the objective, and bring the camera round to match. */
+static void aim_at_objective(void)
+{
+    V3 ball = G.w.balls[0].p, obj = objective_pos(&G.w);
+    V3 d = v3sub(obj, ball);
+    if (d.x * d.x + d.z * d.z > 1e-6f) G.shot.aim = atan2f(d.x, d.z);
+    focus_camera_on_objective();
 }
 
 /* ------------------------------------------------------------------ */
@@ -206,6 +243,7 @@ static void start_hole(int index, int fresh)
     bp_cam_init(&G.cam, G.w.balls[0].p);
     G.hud.sealed = G.w.cup_sealed;
     G.pow_flash = 0.0f;
+    G.card_overlay = 0;
     G.preview.valid = 0;
     G.preview_dirty = 1;
     G.preview_settle = 0.0f;
@@ -371,7 +409,10 @@ static void fire(float power)
     if (power > 0.42f)                       /* body under the crack */
         bp_sfx(SFX_THUMP, bp_clampf(0.42f + power * 0.22f, 0.35f, 0.9f),
                bp_clampf((power - 0.42f) * 0.85f, 0.0f, 0.55f));
-    bp_hitstop(0.018f + power * 0.048f);
+    /* One crisp frame of hitstop, tops. The old 18-66 ms froze the ball for
+     * up to four frames after release, which read as the strike being laggy
+     * and disconnected from the key. The ball now leaves on the next frame. */
+    bp_hitstop(power > 0.5f ? 0.016f : 0.0f);
     bp_shockwave(G.w.balls[0].p, (Color){ 255, 245, 220, 210 }, 0.05f + power * 0.11f);
     bp_burst(G.w.balls[0].p, 3 + (int)(power * 14.0f),
              (Color){ 236, 240, 228, 255 }, 0.35f + power * 1.9f, 0.22f + power * 0.22f, 5.5f);
@@ -421,8 +462,9 @@ static void aim_click(float delta, int fine)
     }
 }
 
-/* Camera is mouse-only; aiming is keyboard-only. Two jobs, two devices,
- * no fighting over the left mouse button. */
+/* Camera: mouse drag, plus Q/E swing and Z/X zoom on the keyboard. Vertical
+ * framing is handled by mouse drag and the auto-focus keys, freeing W/S for
+ * english. */
 static void camera_input(float dt)
 {
     float wheel;
@@ -431,11 +473,8 @@ static void camera_input(float dt)
         Vector2 d = GetMouseDelta();
         bp_cam_orbit(&G.cam, d.x * 0.005f, -d.y * 0.0035f);
     }
-    /* keyboard camera: left hand stays home. Q/E swing, W/S raise and lower. */
     if (IsKeyDown(KEY_Q)) bp_cam_orbit(&G.cam, -1.5f * dt, 0.0f);
     if (IsKeyDown(KEY_E)) bp_cam_orbit(&G.cam,  1.5f * dt, 0.0f);
-    if (IsKeyDown(KEY_W)) bp_cam_orbit(&G.cam, 0.0f,  0.9f * dt);
-    if (IsKeyDown(KEY_S)) bp_cam_orbit(&G.cam, 0.0f, -0.9f * dt);
     wheel = GetMouseWheelMove();
     if (wheel > 0.5f)  { bp_cam_zoom(&G.cam, -1); bp_sfx(SFX_TICK, 1.3f, 0.16f); }
     if (wheel < -0.5f) { bp_cam_zoom(&G.cam,  1); bp_sfx(SFX_TICK, 1.1f, 0.16f); }
@@ -454,28 +493,33 @@ static void aim_input(float dt)
     /* 0.35 rad/s coarse is ~20 deg/s: unhurried, so the finer detents don't
      * make a full swing take forever. Fine aim is ~7x slower again (4.1). */
     float rate = fine ? 0.050f : 0.35f;
-    /* invert: A/D still mean "counterclockwise/clockwise" as drawn on the HUD,
-     * this just flips which key does which for players who read it the other
-     * way. left is the sign applied to a press of A. */
-    float left = G.save.invert_aim ? 1.0f : -1.0f;
     float step = fine ? AIM_DETENT_FINE : AIM_DETENT;
+    /* invert just flips which arrow turns the cue which way, for players who
+     * read left/right the other round. `left` is the sign applied to LEFT. */
+    float left = G.save.invert_aim ? 1.0f : -1.0f;
     float p;
 
-    if (IsKeyDown(KEY_A)) aim_click(left * rate * dt, fine);
-    if (IsKeyDown(KEY_D)) aim_click(-left * rate * dt, fine);
-    /* tap-nudge exactly one detent, for counting clicks off a known line */
-    if (IsKeyPressed(KEY_A)) aim_click(left * step, fine);
-    if (IsKeyPressed(KEY_D)) aim_click(-left * step, fine);
+    /* AIM is on the arrow keys: LEFT / RIGHT rotate the cue, detented. */
+    if (IsKeyDown(KEY_LEFT))  aim_click(left * rate * dt, fine);
+    if (IsKeyDown(KEY_RIGHT)) aim_click(-left * rate * dt, fine);
+    if (IsKeyPressed(KEY_LEFT))  aim_click(left * step, fine);
+    if (IsKeyPressed(KEY_RIGHT)) aim_click(-left * step, fine);
+
+    /* UP  focuses the camera on the hole and zooms out for a clear line.
+     * DOWN also swings the cue round to point straight at it. */
+    if (IsKeyPressed(KEY_UP))   { focus_camera_on_objective(); bp_sfx(SFX_UI, 1.2f, 0.4f); }
+    if (IsKeyPressed(KEY_DOWN)) { aim_at_objective();          bp_sfx(SFX_UI, 1.4f, 0.4f); }
 
     camera_input(dt);
 
-    /* english on the cue-ball face */
+    /* english on the cue-ball face: A/D move the strike point left and right,
+     * W/S move it up (follow) and down (draw). */
     {
         float s = 1.35f * dt;
-        if (IsKeyDown(KEY_UP))    G.shot.ty += s;
-        if (IsKeyDown(KEY_DOWN))  G.shot.ty -= s;
-        if (IsKeyDown(KEY_LEFT))  G.shot.tx -= s;
-        if (IsKeyDown(KEY_RIGHT)) G.shot.tx += s;
+        if (IsKeyDown(KEY_W)) G.shot.ty += s;   /* follow */
+        if (IsKeyDown(KEY_S)) G.shot.ty -= s;   /* draw   */
+        if (IsKeyDown(KEY_A)) G.shot.tx -= s;   /* left   */
+        if (IsKeyDown(KEY_D)) G.shot.tx += s;   /* right  */
         if (IsKeyPressed(KEY_C))  { G.shot.tx = G.shot.ty = 0.0f; bp_sfx(SFX_UI, 1.2f, 0.3f); }
         {
             float mag = sqrtf(G.shot.tx * G.shot.tx + G.shot.ty * G.shot.ty);
@@ -636,6 +680,7 @@ static void update_play(float dt)
         }
         if (G.result_t > 2.8f || IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ENTER)) {
             bp_banner("", "", 0.0f, (Color){ 255, 255, 255, 255 });
+            G.card_overlay = 0;
             G.state = ST_CARD;
         }
         break;
@@ -657,8 +702,18 @@ static void update_play(float dt)
         break;
 
     case ST_CARD:
-        if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_TAB))
+        if (G.card_overlay) {
+            /* the TAB scorecard popped over a shot: dismiss it, don't advance */
+            if (IsKeyPressed(KEY_TAB) || IsKeyPressed(KEY_ESCAPE) ||
+                IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ENTER)) {
+                G.card_overlay = 0;
+                G.state = G.pause_from;
+                G.shot.charge_lock = 1;
+            }
+        } else if (IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ENTER) ||
+                   IsKeyPressed(KEY_TAB)) {
             advance_hole();
+        }
         break;
 
     default: break;
@@ -730,15 +785,15 @@ static void draw_howto(int sw, int sh)
     static const char *L[] = {
         "It looks like mini golf. You are shooting pool.",
         "",
-        "AIM      A / D.  Every click is one detent, so you can count clicks to a line.",
-        "         Tap for exactly one click, hold to sweep.  SHIFT for fine detents.",
-        "         OPTIONS can swap A / D if you read left/right the other way.",
+        "AIM      LEFT / RIGHT arrows.  Every click is one detent; count clicks to a line.",
+        "         Tap for one click, hold to sweep.  SHIFT for fine detents.",
+        "         OPTIONS can swap LEFT / RIGHT if you read it the other way.",
+        "         UP focuses the camera on the hole; DOWN also aims the cue straight at it.",
         "POWER    hold SPACE.  The meter climbs, then falls, then climbs. Let go.",
-        "ENGLISH  arrow keys move the strike point on the cue-ball face (bottom left).",
-        "         UP is follow, DOWN is draw, LEFT and RIGHT are side english.  C centres it.",
+        "ENGLISH  A / D move the strike point left and right on the cue-ball face,",
+        "         W / S move it up (follow) and down (draw).  C centres it.",
         "CAMERA   the mouse is camera only -- drag any button to orbit, wheel to zoom.",
-        "         Q / E swing round, W / S raise and lower, Z / X zoom, V squares up",
-        "         the camera behind your aim.",
+        "         Q / E swing round, Z / X zoom, V squares up behind your aim.",
         "RIDE     R skips the ball straight to rest.  The result is identical.",
         "         TAB shows the card.  ESC pauses.",
         "PREVIEW  P draws the full predicted path of the shot (also in OPTIONS).",
@@ -962,10 +1017,15 @@ int main(int argc, char **argv)
 
         case ST_PAUSE:
             menu_move(&G.pause_sel, 4);
-            if (IsKeyPressed(KEY_ESCAPE)) { G.state = G.ret_state; bp_music_duck(0.0f); }
+            /* resume to the state we paused FROM, not ret_state — ret_state is
+             * clobbered to ST_PAUSE if OPTIONS was opened from here, which is
+             * what used to leave RESUME stuck in the pause menu. */
+            if (IsKeyPressed(KEY_ESCAPE)) {
+                G.state = G.pause_from; G.shot.charge_lock = 1; bp_music_duck(0.0f);
+            }
             if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) {
                 bp_sfx(SFX_UI, 1.4f, 0.5f);
-                if (G.pause_sel == 0) { G.state = G.ret_state; }
+                if (G.pause_sel == 0) { G.state = G.pause_from; G.shot.charge_lock = 1; }
                 else if (G.pause_sel == 1) {
                     /* restarting zeroes this hole's strokes; the card flags it */
                     G.restarts++;
@@ -1027,14 +1087,15 @@ int main(int argc, char **argv)
 
         default:  /* the playing states */
             if (IsKeyPressed(KEY_ESCAPE)) {
-                G.ret_state = G.state;
+                G.pause_from = G.state;
                 G.state = ST_PAUSE;
                 G.pause_sel = 0;
                 bp_music_duck(0.4f);
                 break;
             }
             if (IsKeyPressed(KEY_TAB) && (G.state == ST_AIM || G.state == ST_RIDE)) {
-                G.ret_state = G.state;
+                G.pause_from = G.state;
+                G.card_overlay = 1;
                 G.state = ST_CARD;
                 break;
             }

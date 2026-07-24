@@ -716,8 +716,8 @@ void bp_render_hud(const BpWorld *w, const BpHud *h, int sw, int sh)
 
     /* controls hint strip */
     if (!h->riding) {
-        const char *k = "A/D aim   SHIFT fine   SPACE power   ARROWS english   "
-                        "MOUSE/QE/WS camera   V square up   P preview   TAB card   ESC pause";
+        const char *k = "LEFT/RIGHT aim   SHIFT fine   SPACE power   A/D/W/S english   "
+                        "UP focus hole   DOWN aim at hole   MOUSE/QE cam   TAB card   ESC pause";
         DrawText(k, 14, sh - 26, 15, (Color){ 128, 146, 170, 205 });
     } else {
         DrawText("R  skip to rest", 14, sh - 26, 15, (Color){ 128, 146, 170, 205 });
@@ -919,7 +919,7 @@ void bp_render_options(int sw, int sh, int sel, int vm, int vmu, int vs, int fs,
                             : (Color){ 130, 146, 172, 255 });
         }
     }
-    DrawText("INVERT AIM swaps which of A / D turns the cue left.",
+    DrawText("INVERT AIM swaps which arrow turns the cue left.",
              x + 24, y + 388, 13, (Color){ 120, 138, 165, 255 });
     DrawText("LEFT / RIGHT to change        P toggles preview in play",
              x + 24, y + 408, 14, (Color){ 120, 138, 165, 255 });
@@ -980,11 +980,19 @@ void bp_render_preview(const BpWorld *w, const BpPreview *pv, float t)
     for (i = 1; i < pv->n; ++i) {
         float u = (float)i / (float)(pv->n - 1);
         V3 a = pv->pt[i - 1], b = pv->pt[i];
+        int mark = pv->hit[i] & BP_PV_MARK;
         Color c;
         c.r = (unsigned char)bp_lerpf(255.0f, 90.0f, u);
         c.g = (unsigned char)bp_lerpf(238.0f, 170.0f, u);
         c.b = (unsigned char)bp_lerpf(150.0f, 255.0f, u);
         c.a = (unsigned char)bp_lerpf(235.0f, 90.0f, u);
+        /* a break point is where the ball warped: draw a ring at the exit but
+         * no line across the gap, so the preview never streaks over the hole */
+        if (pv->hit[i] & BP_PV_BREAK) {
+            DrawCircle3D(rv(v3(b.x, b.y + 0.014f, b.z)), BP_R * 1.7f,
+                         rv(v3(1, 0, 0)), 90.0f, (Color){ 120, 240, 255, 220 });
+            continue;
+        }
         DrawLine3D(rv(v3(a.x, a.y + 0.013f, a.z)),
                    rv(v3(b.x, b.y + 0.013f, b.z)), c);
         /* a second, offset strand makes the line readable against the felt
@@ -992,10 +1000,10 @@ void bp_render_preview(const BpWorld *w, const BpPreview *pv, float t)
         DrawLine3D(rv(v3(a.x, a.y + 0.019f, a.z)),
                    rv(v3(b.x, b.y + 0.019f, b.z)), (Color){ c.r, c.g, c.b, (unsigned char)(c.a / 2) });
 
-        if (pv->hit[i]) {
-            Color m = (pv->hit[i] == 2) ? (Color){ 255, 150, 200, 235 }
-                    : (pv->hit[i] == 3) ? (Color){ 255, 214,  92, 235 }
-                                        : (Color){ 190, 226, 255, 235 };
+        if (mark) {
+            Color m = (mark == 2) ? (Color){ 255, 150, 200, 235 }
+                    : (mark == 3) ? (Color){ 255, 214,  92, 235 }
+                                  : (Color){ 190, 226, 255, 235 };
             DrawCube(rv(v3(b.x, b.y + 0.016f, b.z)), 0.030f, 0.030f, 0.030f, m);
         }
     }

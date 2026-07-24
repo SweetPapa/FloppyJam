@@ -12,6 +12,7 @@ void bp_shot_reset(BpShot *s, int keep_spin)
     s->meter_t = 0.0f;
     s->cue_pull = 0.0f;
     s->strike_anim = 0.0f;
+    s->charge_lock = 1;      /* require a fresh SPACE press before charging */
     s->aim = aim;
     if (keep_spin) { s->tx = tx; s->ty = ty; }
     else           { s->tx = s->ty = 0.0f; }
@@ -24,6 +25,13 @@ float bp_shot_power_curve(float p)
 
 float bp_shot_charge(BpShot *s, int held, float dt)
 {
+    /* Swallow a SPACE that was already down when we entered aiming (menu
+     * selection, resume), so it cannot start a charge until let go. */
+    if (s->charge_lock) {
+        if (!held) s->charge_lock = 0;
+        s->cue_pull = 0.0f;
+        return 0.0f;
+    }
     if (held) {
         if (!s->charging) { s->charging = 1; s->meter_t = 0.0f; }
         s->meter_t += dt;
@@ -115,9 +123,13 @@ static void predict_capped(const BpWorld *w, float aim, float power,
                            float tx, float ty, int cap, BpPreview *out)
 {
     BpWorld s;
-    int t, stride = 4, since = 0, i;
+    /* Base stride 3 (a sample every 3 ticks ~= every 12 cm at full speed)
+     * keeps the polyline smooth; long shots halve resolution as they fill
+     * the buffer, so the whole path is always shown. */
+    int t, stride = 3, since = 0, i;
     int track[BP_PREVIEW_OBJ], ntrack = 0;
     unsigned char pending = 0;
+    V3 last_rec;
 
     memset(out, 0, sizeof(*out));
     out->power = power;
@@ -136,6 +148,7 @@ static void predict_capped(const BpWorld *w, float aim, float power,
     out->pt[out->n] = s.balls[0].p;
     out->hit[out->n] = 0;
     out->n++;
+    last_rec = s.balls[0].p;
 
     for (t = 0; t < cap; ++t) {
         int e;
@@ -150,10 +163,16 @@ static void predict_capped(const BpWorld *w, float aim, float power,
             since = 0;
             if (out->n >= BP_PREVIEW_MAX) preview_decimate(out, &stride);
             if (s.balls[0].state != BS_GONE) {
+                /* A jump bigger than one plausible roll step is a teleport (a
+                 * warp pocket) or a plunge off the world — flag it so the
+                 * renderer draws a ring, not a line streaking across the hole. */
+                unsigned char brk =
+                    (v3len(v3sub(s.balls[0].p, last_rec)) > BP_PV_JUMP) ? BP_PV_BREAK : 0;
                 out->pt[out->n] = s.balls[0].p;
-                out->hit[out->n] = pending;
+                out->hit[out->n] = (unsigned char)(pending | brk);
                 out->n++;
                 pending = 0;
+                last_rec = s.balls[0].p;
             }
             for (i = 0; i < ntrack; ++i) {
                 int b = track[i];
@@ -170,9 +189,11 @@ static void predict_capped(const BpWorld *w, float aim, float power,
      * shot that runs the tick cap out is most of a metre — and the end marker
      * is precisely the bit the player is reading. */
     if (s.balls[0].state != BS_GONE) {
+        unsigned char brk;
         if (out->n >= BP_PREVIEW_MAX) preview_decimate(out, &stride);
+        brk = (v3len(v3sub(s.balls[0].p, last_rec)) > BP_PV_JUMP) ? BP_PV_BREAK : 0;
         out->pt[out->n] = s.balls[0].p;
-        out->hit[out->n] = pending;
+        out->hit[out->n] = (unsigned char)(pending | brk);
         out->n++;
     }
 
