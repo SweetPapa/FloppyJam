@@ -51,6 +51,10 @@ static float seg_dist(float px, float py, float ax, float ay, float bx, float by
     return flen(px - cx, py - cy);
 }
 
+/* tether-orbit helpers (defined below, used from init/attach/respawn) */
+static void orbit_from_arrival(GameSim *g, int idx);
+static void orbit_rest(GameSim *g, int idx);
+
 /* ------------------------------------------------------------------ */
 static void obstacle_reset(GameSim *g, int i) {
     const ObstacleDef *d = &g->lv->ob[i];
@@ -91,10 +95,9 @@ void sim_init(GameSim *g, int level_id) {
     /* player starts attached to magnet 0 */
     g->attached_idx = 0;
     g->target_idx = -1;
-    g->px = lv->mag[0].x;
-    g->py = lv->mag[0].y;
     g->color = (MagColor)lv->mag[0].color;
     g->state = PS_ATTACHED;
+    orbit_rest(g, 0);
 
     /* lava */
     g->normal_lava_speed = lv->lava_speed;
@@ -167,9 +170,8 @@ static void do_attach(GameSim *g, int idx) {
     /* landing on the last magnet completes the level */
     if (idx == lv->n_mag - 1) {
         g->attached_idx = idx; g->target_idx = -1;
-        g->px = lv->mag[idx].x; g->py = lv->mag[idx].y;
-        g->vx = g->vy = 0;
         g->state = PS_ATTACHED;
+        orbit_rest(g, idx);
         level_complete(g);
         return;
     }
@@ -185,11 +187,93 @@ static void do_attach(GameSim *g, int idx) {
 
     g->attached_idx = idx;
     g->target_idx = -1;
-    g->px = lv->mag[idx].x;
-    g->py = lv->mag[idx].y;
-    g->vx = g->vy = 0;
     g->state = PS_ATTACHED;
+    orbit_from_arrival(g, idx); /* keep the momentum: swing around the node */
     check_checkpoint(g);
+}
+
+/* ---- tether orbit ------------------------------------------------ *
+ * Arriving at a node converts the tangential part of your arrival velocity
+ * into spin around it. Hit it fast and side-on and you whip around; drift in
+ * slowly and you just hang. */
+static void orbit_from_arrival(GameSim *g, int idx) {
+    const MagnetDef *m = &g->lv->mag[idx];
+    float dx = g->px - m->x, dy = g->py - m->y;
+    float d = flen(dx, dy);
+    float ang;
+    if (d < 1.0f) { ang = PI * 0.5f; d = ORBIT_REST_R; }
+    else           ang = atan2f(dy, dx);
+    float r = d;
+    if (r < ORBIT_MIN_R) r = ORBIT_MIN_R;
+    if (r > ORBIT_MAX_R) r = ORBIT_MAX_R;
+
+    /* only the tangential component can become rotation */
+    float tx = -sinf(ang), ty = cosf(ang);
+    float av = (g->vx * tx + g->vy * ty) / r;
+    if (av >  ORBIT_MAX_AV) av =  ORBIT_MAX_AV;
+    if (av < -ORBIT_MAX_AV) av = -ORBIT_MAX_AV;
+
+    g->orbit_r = r;
+    g->orbit_ang = ang;
+    g->orbit_av = av;
+    g->px = m->x + cosf(ang) * r;
+    g->py = m->y + sinf(ang) * r;
+    g->vx = tx * av * r;
+    g->vy = ty * av * r;
+}
+
+/* park calmly on a node (level start, respawn) */
+static void orbit_rest(GameSim *g, int idx) {
+    const MagnetDef *m = &g->lv->mag[idx];
+    g->orbit_r = ORBIT_REST_R;
+    g->orbit_ang = PI * 0.5f;   /* hanging directly below */
+    g->orbit_av = 0.0f;
+    g->px = m->x;
+    g->py = m->y + ORBIT_REST_R;
+    g->vx = g->vy = 0.0f;
+}
+
+static void update_orbit(GameSim *g, float dt) {
+    int idx = g->attached_idx;
+    if (idx < 0) return;
+    const MagnetDef *m = &g->lv->mag[idx];
+
+    /* pendulum torque about the node: a = g*cos(theta)/r, rest at theta=pi/2 */
+    g->orbit_av += (PLAYER_GRAVITY * cosf(g->orbit_ang) / g->orbit_r) * dt;
+    g->orbit_av -= g->orbit_av * ORBIT_DAMP * dt;
+    if (g->orbit_av >  ORBIT_MAX_AV) g->orbit_av =  ORBIT_MAX_AV;
+    if (g->orbit_av < -ORBIT_MAX_AV) g->orbit_av = -ORBIT_MAX_AV;
+    g->orbit_ang += g->orbit_av * dt;
+
+    /* normalise the tether length back toward its resting value */
+    g->orbit_r += (ORBIT_REST_R - g->orbit_r) * (dt * 1.2f > 1.0f ? 1.0f : dt * 1.2f);
+
+    /* settle assist: kill residual jitter once we are basically at rest,
+     * so aiming is never a fight. Gated on already being near the hang, so
+     * it can't yank a genuine swing out of the air. */
+    if (fabsf(g->orbit_av) < 0.30f) {
+        float d = g->orbit_ang - PI * 0.5f;
+        while (d >  PI) d -= 2.0f * PI;
+        while (d < -PI) d += 2.0f * PI;
+        if (fabsf(d) < 0.7f) {
+            float k = dt * 1.5f; if (k > 1.0f) k = 1.0f;
+            g->orbit_ang -= d * k;
+        }
+    }
+
+    g->px = m->x + cosf(g->orbit_ang) * g->orbit_r;
+    g->py = m->y + sinf(g->orbit_ang) * g->orbit_r;
+    float tx = -sinf(g->orbit_ang), ty = cosf(g->orbit_ang);
+    g->vx = tx * g->orbit_av * g->orbit_r;
+    g->vy = ty * g->orbit_av * g->orbit_r;
+}
+
+/* Soft shaft walls: keeps a wild sling inside the playfield and adds a
+ * little bounce to play off. */
+static void walls(GameSim *g) {
+    float lo = WALL_MARGIN, hi = WORLD_WIDTH - WALL_MARGIN;
+    if (g->px < lo)      { g->px = lo; if (g->vx < 0) { g->vx = -g->vx * WALL_BOUNCE; g->ev_bounce = 1; } }
+    else if (g->px > hi) { g->px = hi; if (g->vx > 0) { g->vx = -g->vx * WALL_BOUNCE; g->ev_bounce = 1; } }
 }
 
 /* ---- swing / fall physics ---------------------------------------- */
@@ -200,6 +284,11 @@ static void start_swing(GameSim *g, int idx) {
     g->state = PS_SWINGING;
     g->ev_swing = 1;
 
+    /* whatever you were carrying when you let go feeds the launch — this is
+     * what makes release timing matter */
+    float carry_x = g->vx * MOMENTUM_CARRY;
+    float carry_y = g->vy * MOMENTUM_CARRY;
+
     float dx = lv->mag[idx].x - g->px;
     float dy = lv->mag[idx].y - g->py;
     float d = flen(dx, dy);
@@ -208,8 +297,13 @@ static void start_swing(GameSim *g, int idx) {
         float perpx = -diry, perpy = dirx;
         float initial = PLAYER_SWING_MAX_SPEED * ARC_INIT_MULT;
         float sign = (perpy < 0 || (fabsf(perpy) < 0.3f && perpx * dx < 0)) ? 1.0f : -1.0f;
-        g->vx = perpx * initial * sign;
-        g->vy = perpy * initial * sign;
+        g->vx = perpx * initial * sign + carry_x;
+        g->vy = perpy * initial * sign + carry_y;
+        /* cap the launch so a big whip stays bounded and the homing steer
+         * below can still always converge on the target */
+        float sp = flen(g->vx, g->vy);
+        float maxs = PLAYER_SWING_MAX_SPEED * ARC_SPEED_BOOST;
+        if (sp > maxs) { g->vx = g->vx / sp * maxs; g->vy = g->vy / sp * maxs; }
     }
 }
 
@@ -240,6 +334,7 @@ static void update_swing(GameSim *g, float dt) {
     }
     g->px += g->vx * dt;
     g->py += g->vy * dt;
+    walls(g);
 }
 
 static void update_fall(GameSim *g, float dt) {
@@ -248,6 +343,7 @@ static void update_fall(GameSim *g, float dt) {
     g->px += g->vx * dt;
     g->py += g->vy * dt;
     g->vx *= 0.98f;
+    walls(g);
 }
 
 /* ---- obstacles ---------------------------------------------------- */
@@ -431,13 +527,11 @@ static void respawn(GameSim *g) {
     for (int i = 0; i < g->n_ob; i++)
         if (lv->ob[i].y < rlava) obstacle_reset(g, i);
 
-    g->px = lv->mag[midx].x;
-    g->py = lv->mag[midx].y;
-    g->vx = g->vy = 0;
     g->attached_idx = midx;
     g->target_idx = -1;
     g->color = (MagColor)lv->mag[midx].color;
     g->state = PS_ATTACHED;
+    orbit_rest(g, midx);
     g->immune = IMMUNITY_TIME;
 
     g->lava_y = rlava;
@@ -459,7 +553,7 @@ static void respawn(GameSim *g) {
 void sim_update(GameSim *g, float dt, int color_pressed) {
     /* clear per-frame events */
     g->ev_attach = g->ev_attach_forward = g->ev_checkpoint = 0;
-    g->ev_swing = g->ev_death = g->ev_complete = 0;
+    g->ev_swing = g->ev_death = g->ev_complete = g->ev_bounce = 0;
 
     if (g->game_over) { update_rotcam(g, dt); return; }
 
@@ -504,11 +598,7 @@ void sim_update(GameSim *g, float dt, int color_pressed) {
     /* --- player physics --- */
     switch (g->state) {
     case PS_ATTACHED:
-        g->bob_t += dt;
-        if (g->attached_idx >= 0) {
-            g->px = g->lv->mag[g->attached_idx].x;
-            g->py = g->lv->mag[g->attached_idx].y + sinf(g->bob_t * 3.3333f) * 2.0f;
-        }
+        update_orbit(g, dt);
         break;
     case PS_SWINGING: update_swing(g, dt); break;
     case PS_FALLING:  update_fall(g, dt);  break;
@@ -520,7 +610,16 @@ void sim_update(GameSim *g, float dt, int color_pressed) {
 
     /* --- collisions / death checks --- */
     if (g->state != PS_DEAD && g->immune <= 0 && obstacle_hit(g)) { die(g); return; }
-    if (g->py > g->lava_y) { die(g); return; } /* lava: ignores immunity */
+    /* Lava: ignores immunity. PLAYABILITY RULE — while you are on a tether
+     * the check is taken at the anchor node, not at your dangling feet. The
+     * levels were authored assuming you sit on the node, so this keeps every
+     * hand-tuned lava margin exactly as designed; the orbit stays a movement
+     * mechanic and can never silently make a level unsurvivable. Once you
+     * let go (swinging or falling) your real position is what counts. */
+    float lava_test_y = g->py;
+    if (g->state == PS_ATTACHED && g->attached_idx >= 0)
+        lava_test_y = g->lv->mag[g->attached_idx].y;
+    if (lava_test_y > g->lava_y) { die(g); return; }
     if (g->state == PS_FALLING && g->py > g->lava_y + 900.0f) { die(g); return; }
 
     /* --- backtrack lava surge timer --- */
