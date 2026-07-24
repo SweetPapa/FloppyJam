@@ -1,0 +1,184 @@
+{
+  "id": 3,
+  "name": "New Level",
+  "parTime": 180,
+  "lavaSpeed": 25,
+  "lavaAcceleration": 0,
+  "checkpoints": [],
+  "magnets": [
+    {
+      "id": "m1",
+      "x": 240,
+      "y": 4580,
+      "color": "blue"
+    },
+    {
+      "id": "m2",
+      "x": 240,
+      "y": 4460,
+      "color": "blue"
+    },
+    {
+      "id": "m3",
+      "x": 320,
+      "y": 4340,
+      "color": "red"
+    },
+    {
+      "id": "m4",
+      "x": 380,
+      "y": 4280,
+      "color": "red"
+    },
+    {
+      "id": "m5",
+      "x": 200,
+      "y": 4200,
+      "color": "green"
+    },
+    {
+      "id": "m6",
+      "x": 140,
+      "y": 4140,
+      "color": "green"
+    },
+    {
+      "id": "m7",
+      "x": 260,
+      "y": 3960,
+      "color": "yellow"
+    },
+    {
+      "id": "m8",
+      "x": 260,
+      "y": 3800,
+      "color": "blue"
+    },
+    {
+      "id": "m9",
+      "x": 260,
+      "y": 3620,
+      "color": "blue"
+    },
+    {
+      "id": "m10",
+      "x": 140,
+      "y": 3540,
+      "color": "green"
+    },
+    {
+      "id": "m11",
+      "x": 380,
+      "y": 3540,
+      "color": "red"
+    },
+    {
+      "id": "m12",
+      "x": 260,
+      "y": 3320,
+      "color": "yellow"
+    },
+    {
+      "id": "m13",
+      "x": 260,
+      "y": 3160,
+      "color": "yellow"
+    },
+    {
+      "id": "m14",
+      "x": 80,
+      "y": 3160,
+      "color": "green"
+    },
+    {
+      "id": "m15",
+      "x": 80,
+      "y": 2980,
+      "color": "red"
+    },
+    {
+      "id": "m16",
+      "x": 80,
+      "y": 2800,
+      "color": "blue"
+    },
+    {
+      "id": "m17",
+      "x": 340,
+      "y": 2800,
+      "color": "blue"
+    },
+    {
+      "id": "m18",
+      "x": 340,
+      "y": 2600,
+      "color": "yellow"
+    }
+  ],
+  "obstacles": [
+    {
+      "id": "obs1",
+      "type": "laser_gate",
+      "x": 180,
+      "y": 4520,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs2",
+      "type": "laser_gate",
+      "x": 200,
+      "y": 4000,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs3",
+      "type": "sweeper",
+      "x": 260,
+      "y": 3540,
+      "length": 100,
+      "speed": 60
+    },
+    {
+      "id": "obs4",
+      "type": "laser_gate",
+      "x": 60,
+      "y": 2880,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs5",
+      "type": "laser_gate",
+      "x": 40,
+      "y": 3080,
+      "onDuration": 1200,
+      "offDuration": 5000,
+      "length": 150
+    },
+    {
+      "id": "obs6",
+      "type": "sweeper",
+      "x": 220,
+      "y": 2800,
+      "length": 100,
+      "speed": 60
+    },
+    {
+      "id": "obs7",
+      "type": "sweeper",
+      "x": 340,
+      "y": 2660,
+      "length": 100,
+      "speed": 60
+    }
+  ],
+  "background": {
+    "color": "#0a0a1a"
+  },
+  "coordinateFormat": "540px"
+}

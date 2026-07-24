@@ -1,0 +1,200 @@
+{
+  "id": 9,
+  "name": "First Obstacles",
+  "parTime": 212,
+  "lavaSpeed": 36,
+  "lavaAcceleration": 0,
+  "checkpoints": [
+    {
+      "id": "cp1",
+      "y": 4038,
+      "respawnPlatformId": "m5"
+    },
+    {
+      "id": "cp2",
+      "y": 3276,
+      "respawnPlatformId": "m9"
+    },
+    {
+      "id": "cp3",
+      "y": 2514,
+      "respawnPlatformId": "m13"
+    },
+    {
+      "id": "cp4",
+      "y": 1751,
+      "respawnPlatformId": "m18"
+    },
+    {
+      "id": "cp5",
+      "y": 989,
+      "respawnPlatformId": "m21"
+    }
+  ],
+  "magnets": [
+    {
+      "id": "m1",
+      "x": 650,
+      "y": 4800,
+      "color": "green"
+    },
+    {
+      "id": "m2",
+      "x": 441,
+      "y": 4580,
+      "color": "yellow"
+    },
+    {
+      "id": "m3",
+      "x": 438,
+      "y": 4360,
+      "color": "blue"
+    },
+    {
+      "id": "m4",
+      "x": 551,
+      "y": 4140,
+      "color": "red"
+    },
+    {
+      "id": "m5",
+      "x": 440,
+      "y": 3920,
+      "color": "green"
+    },
+    {
+      "id": "m6",
+      "x": 406,
+      "y": 3700,
+      "color": "green"
+    },
+    {
+      "id": "m7",
+      "x": 360,
+      "y": 3393,
+      "color": "yellow"
+    },
+    {
+      "id": "m8",
+      "x": 620,
+      "y": 3393,
+      "color": "green"
+    },
+    {
+      "id": "m9",
+      "x": 490,
+      "y": 3233,
+      "color": "blue"
+    },
+    {
+      "id": "m10",
+      "x": 688,
+      "y": 3013,
+      "color": "red"
+    },
+    {
+      "id": "m11",
+      "x": 466,
+      "y": 2793,
+      "color": "red"
+    },
+    {
+      "id": "m12",
+      "x": 462,
+      "y": 2573,
+      "color": "green"
+    },
+    {
+      "id": "m13",
+      "x": 551,
+      "y": 2353,
+      "color": "yellow"
+    },
+    {
+      "id": "m14",
+      "x": 745,
+      "y": 2133,
+      "color": "blue"
+    },
+    {
+      "id": "m15",
+      "x": 480,
+      "y": 1927,
+      "color": "red"
+    },
+    {
+      "id": "m16",
+      "x": 620,
+      "y": 1927,
+      "color": "blue"
+    },
+    {
+      "id": "m17",
+      "x": 550,
+      "y": 1767,
+      "color": "green"
+    },
+    {
+      "id": "m18",
+      "x": 460,
+      "y": 1547,
+      "color": "green"
+    },
+    {
+      "id": "m19",
+      "x": 365,
+      "y": 1327,
+      "color": "yellow"
+    },
+    {
+      "id": "m20",
+      "x": 548,
+      "y": 1107,
+      "color": "red"
+    },
+    {
+      "id": "m21",
+      "x": 421,
+      "y": 887,
+      "color": "blue"
+    },
+    {
+      "id": "m22",
+      "x": 653,
+      "y": 667,
+      "color": "green"
+    },
+    {
+      "id": "m23",
+      "x": 700,
+      "y": 447,
+      "color": "green"
+    },
+    {
+      "id": "m24",
+      "x": 468,
+      "y": 227,
+      "color": "red"
+    }
+  ],
+  "obstacles": [
+    {
+      "id": "rm1",
+      "type": "roamer",
+      "x": 554,
+      "y": 3333,
+      "speed": 77
+    },
+    {
+      "id": "sw2",
+      "type": "sweeper",
+      "x": 501,
+      "y": 1867,
+      "length": 123,
+      "speed": -120
+    }
+  ],
+  "background": {
+    "color": "#0a0a1a"
+  }
+}
