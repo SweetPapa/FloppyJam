@@ -1,9 +1,19 @@
 /* audio.c — procedurally synthesized sound effects (no asset files).
  * Each SFX is rendered into an in-memory 16-bit PCM buffer at init. */
 #include "app.h"
+#include "music.h"
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
+
+#define MUSIC_SR 44100
+static AudioStream g_music;
+static int g_music_on = 0;
+
+/* Audio-thread callback: hand the buffer straight to the generator. */
+static void music_cb(void *buf, unsigned int frames) {
+    music_render((short *)buf, (int)frames);
+}
 
 #define SR 22050
 #define TAU 6.28318530718f
@@ -86,10 +96,39 @@ void audio_init(App *a) {
     a->sfx[SFX_COMPLETE]   = synth(2, 0.7f, 523.25f, 0.0f, 0.5f);
     a->sfx[SFX_UI]         = synth(1, 0.08f, 660.0f, 0.0f, 0.3f);
     a->sfx[SFX_WARN]       = synth(0, 0.30f, 150.0f, 90.0f, 0.4f); /* lava rumble */
+
+    /* procedural soundtrack on its own stream */
+    SetAudioStreamBufferSizeDefault(2048);
+    music_init(1, MUSIC_SR);
+    g_music = LoadAudioStream(MUSIC_SR, 16, 2);
+    SetAudioStreamCallback(g_music, music_cb);
+    SetAudioStreamVolume(g_music, 0.75f);
+    PlayAudioStream(g_music);
+    g_music_on = 1;
+}
+
+void audio_music_theme(App *a, int seed) {
+    (void)a;
+    if (g_music_on) music_set_theme(seed);
+}
+
+void audio_music_intensity(App *a, float v) {
+    (void)a;
+    if (g_music_on) music_set_intensity(v);
+}
+
+void audio_music_volume(App *a, float v) {
+    (void)a;
+    if (g_music_on) SetAudioStreamVolume(g_music, v);
 }
 
 void audio_shutdown(App *a) {
     if (a->audio_ok) {
+        if (g_music_on) {
+            StopAudioStream(g_music);
+            UnloadAudioStream(g_music);
+            g_music_on = 0;
+        }
         for (int i = 0; i < SFX_COUNT; i++) UnloadSound(a->sfx[i]);
         CloseAudioDevice();
     }

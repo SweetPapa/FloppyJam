@@ -117,19 +117,191 @@ static void draw_glow(App *a, Vector3 pos, float size, Color col) {
     EndBlendMode();
 }
 
-static void draw_shaft(App *a, float py) {
+/* ---- procedural environment -------------------------------------- *
+ * The shaft is built from a per-level palette and a bay-by-bay pattern
+ * derived from hash(level, bay). Everything is mirrored left/right so the
+ * duct reads as engineered and symmetrical, and every layer sits behind the
+ * play plane so it can never compete with the gameplay. */
+#define BAY 130.0f
+
+static Color g_wall, g_accent, g_glowc, g_deep;
+static unsigned int g_env_seed = 0;
+
+static unsigned int ehash(unsigned int x) {
+    x ^= x >> 16; x *= 0x7feb352du;
+    x ^= x >> 15; x *= 0x846ca68bu;
+    x ^= x >> 16; return x;
+}
+
+static Color hsv2rgb(float h, float s, float v, unsigned char al) {
+    h = h - floorf(h);
+    float i = floorf(h * 6.0f), f = h * 6.0f - i;
+    float p = v * (1 - s), q = v * (1 - f * s), t = v * (1 - (1 - f) * s);
+    float r, g, b;
+    switch (((int)i) % 6) {
+    case 0: r = v; g = t; b = p; break;
+    case 1: r = q; g = v; b = p; break;
+    case 2: r = p; g = v; b = t; break;
+    case 3: r = p; g = q; b = v; break;
+    case 4: r = t; g = p; b = v; break;
+    default: r = v; g = p; b = q; break;
+    }
+    return (Color){(unsigned char)(r * 255), (unsigned char)(g * 255),
+                   (unsigned char)(b * 255), al};
+}
+
+/* Derive a coherent palette for a level: a base hue for the structure and a
+ * complementary accent for the lights. */
+static void env_palette(int level_id) {
+    if ((unsigned)level_id == g_env_seed) return;
+    g_env_seed = (unsigned)level_id;
+    unsigned int h = ehash((unsigned int)level_id * 2654435761u + 7u);
+    float hue = (float)(h % 1000u) / 1000.0f;
+    g_deep   = hsv2rgb(hue, 0.60f, 0.19f, 255);
+    g_wall   = hsv2rgb(hue + 0.02f, 0.45f, 0.46f, 255);
+    g_accent = hsv2rgb(hue + 0.48f, 0.75f, 1.00f, 255);
+    g_glowc  = hsv2rgb(hue + 0.10f, 0.60f, 0.95f, 255);
+}
+
+/* how visible a bay is: fades out with distance, so the duct recedes */
+static float depth_fade(float gy, float py) {
+    return clampf(1.0f - fabsf(gy - py) / Y_WINDOW, 0.0f, 1.0f);
+}
+
+/* slow-turning ventilation fans set deep in the wall — the motif that sells
+ * "gliding through a duct", and pure procedural movement */
+static void draw_fans(App *a, float py) {
+    float spacing = BAY * 7.0f;
+    float first = floorf((py - Y_WINDOW) / spacing) * spacing;
+    for (float gy = first; gy <= py + Y_WINDOW; gy += spacing) {
+        float f = depth_fade(gy, py);
+        if (f <= 0.02f) continue;
+        unsigned int h = ehash(g_env_seed * 131u + (unsigned int)(gy / spacing) * 17u);
+        int blades = 5 + (int)(h % 3u);
+        float dir = (h & 8u) ? 1.0f : -1.0f;
+        float rot = a->t * (0.35f + (float)(h % 5u) * 0.05f) * dir;
+        float rad = g_half * 0.62f;
+        Vector3 c = game_to_world(g_cx, gy, Z_BACK + 6.0f);
+        DrawCircle3D(c, rad * WS, (Vector3){0, 0, 1}, 0, with_alpha(g_wall, f));
+        DrawCircle3D(c, rad * 0.92f * WS, (Vector3){0, 0, 1}, 0, with_alpha(g_wall, f * 0.6f));
+        DrawCircle3D(c, rad * 0.28f * WS, (Vector3){0, 0, 1}, 0, with_alpha(g_accent, f * 0.75f));
+        /* soft light spilling out of the fan housing */
+        BeginBlendMode(BLEND_ADDITIVE);
+        DrawBillboard(a->cam, a->tex_glow, c, rad * 2.4f * WS, with_alpha(g_glowc, f * 0.16f));
+        EndBlendMode();
+        for (int b = 0; b < blades; b++) {
+            float ang = rot + (float)b * (6.28318f / (float)blades);
+            Vector3 p0 = game_to_world(g_cx + cosf(ang) * rad * 0.26f,
+                                       gy + sinf(ang) * rad * 0.26f, Z_BACK + 6.0f);
+            Vector3 p1 = game_to_world(g_cx + cosf(ang + 0.55f) * rad,
+                                       gy + sinf(ang + 0.55f) * rad, Z_BACK + 6.0f);
+            DrawLine3D(p0, p1, with_alpha(g_wall, f * 0.95f));
+        }
+    }
+}
+
+/* mirrored light conduits with pulses running up them */
+static void draw_conduits(App *a, float py) {
     float y0 = py - Y_WINDOW, y1 = py + Y_WINDOW;
-    float step = 130.0f;
-    float ystart = floorf(y0 / step) * step;
+    float insets[2] = {g_cx - g_half + 16.0f, g_cx + g_half - 16.0f};
+    for (int s = 0; s < 2; s++) {
+        Vector3 c0 = game_to_world(insets[s], y0, Z_BACK + 26.0f);
+        Vector3 c1 = game_to_world(insets[s], y1, Z_BACK + 26.0f);
+        DrawLine3D(c0, c1, with_alpha(g_glowc, 0.5f));
+    }
+    /* pulses travel upward, offset per side so they interleave */
+    BeginBlendMode(BLEND_ADDITIVE);
+    for (int i = 0; i < 10; i++) {
+        for (int s = 0; s < 2; s++) {
+            float ph = fmodf(a->t * 0.16f + (float)i * 0.1f + (float)s * 0.05f, 1.0f);
+            float gy = y1 - ph * (y1 - y0);
+            float f = depth_fade(gy, py);
+            if (f <= 0.05f) continue;
+            Vector3 p = game_to_world(insets[s], gy, Z_BACK + 26.0f);
+            DrawBillboard(a->cam, a->tex_spark, p, 26.0f * WS, with_alpha(g_glowc, f * 0.75f));
+        }
+    }
+    EndBlendMode();
+}
+
+/* drifting motes at mixed depths give real parallax as you climb */
+static void draw_motes(App *a, float py) {
+    BeginBlendMode(BLEND_ADDITIVE);
+    for (int i = 0; i < 34; i++) {
+        unsigned int h = ehash((unsigned int)i * 9176u + g_env_seed);
+        float span = Y_WINDOW * 2.0f;
+        float base = (float)(h % 4096u) / 4096.0f * span;
+        float drift = fmodf(a->t * (6.0f + (float)(h % 17u)) + base, span);
+        float gy = (py - Y_WINDOW) + drift;
+        float gx = g_cx - g_half + (float)((h >> 12) % 1000u) / 1000.0f * g_half * 2.0f;
+        float z = Z_BACK + 20.0f + (float)((h >> 22) % 80u);
+        float f = depth_fade(gy, py);
+        if (f <= 0.04f) continue;
+        Vector3 p = game_to_world(gx, gy, z);
+        DrawBillboard(a->cam, a->tex_spark, p, (5.0f + (float)(h % 7u)) * WS,
+                      with_alpha(g_glowc, f * 0.30f));
+    }
+    EndBlendMode();
+}
+
+static void draw_shaft(App *a, float py) {
+    env_palette(a->sim.level_id);
+    float y0 = py - Y_WINDOW, y1 = py + Y_WINDOW;
+    float ystart = floorf(y0 / BAY) * BAY;
     float lx = g_cx - g_half, rx = g_cx + g_half;
-    Color wall = (Color){60, 70, 110, 255};
-    Color rung;
-    for (float gy = ystart; gy <= y1; gy += step) {
-        /* brighter near the lava for tension */
+
+    /* solid back wall behind everything: gives the duct depth and shadow */
+    for (float gy = ystart; gy <= y1; gy += BAY) {
+        float f = depth_fade(gy, py);
+        if (f <= 0.02f) continue;
+        unsigned int h = ehash(g_env_seed * 7919u + (unsigned int)(gy / BAY) * 2654435761u);
+        /* subtle per-bay shade variation reads as panelling */
+        float shade = 0.86f + (float)(h % 100u) / 100.0f * 0.52f;
+        Color panel = scale_color(g_deep, shade);
+        Vector3 c = game_to_world(g_cx, gy + BAY * 0.5f, Z_BACK - 4.0f);
+        DrawCubeV(c, (Vector3){g_half * 2.0f * WS, BAY * WS, 2.0f * WS},
+                  with_alpha(panel, 0.55f + f * 0.45f));
+
+        /* mirrored greebles: little service hatches on the back wall */
+        if ((h & 3u) == 0) {
+            float ox = g_half * (0.30f + (float)((h >> 4) % 30u) / 100.0f);
+            float sz = 12.0f + (float)((h >> 9) % 14u);
+            for (int s = -1; s <= 1; s += 2) {
+                Vector3 gpos = game_to_world(g_cx + ox * (float)s, gy + BAY * 0.5f, Z_BACK - 2.0f);
+                DrawCubeV(gpos, (Vector3){sz * WS, sz * WS, 1.0f * WS},
+                          with_alpha(g_wall, f * 0.9f));
+                DrawCubeWiresV(gpos, (Vector3){sz * WS, sz * WS, 1.0f * WS},
+                               with_alpha(g_accent, f * 0.6f));
+            }
+        }
+        /* upward chevrons every few bays: direction cue and graphic punch */
+        if ((h % 5u) == 0) {
+            float w = g_half * 0.22f, hgt = 26.0f;
+            for (int s = -1; s <= 1; s += 2) {
+                float cxx = g_cx + s * g_half * 0.62f;
+                Vector3 a0 = game_to_world(cxx - w, gy + hgt, Z_BACK + 14.0f);
+                Vector3 a1 = game_to_world(cxx, gy, Z_BACK + 14.0f);
+                Vector3 a2 = game_to_world(cxx + w, gy + hgt, Z_BACK + 14.0f);
+                DrawLine3D(a0, a1, with_alpha(g_accent, f * 0.7f));
+                DrawLine3D(a1, a2, with_alpha(g_accent, f * 0.7f));
+            }
+        }
+    }
+
+    draw_fans(a, py);
+    draw_conduits(a, py);
+
+    /* structural ribs: heated by nearby lava */
+    for (float gy = ystart; gy <= y1; gy += BAY) {
+        float f = depth_fade(gy, py);
+        if (f <= 0.02f) continue;
         float dl = fabsf(gy - a->sim.lava_y);
         float heat = clampf(1.0f - dl / 700.0f, 0.0f, 1.0f);
-        rung = (Color){(unsigned char)(60 + heat * 150), (unsigned char)(70 - heat * 30),
-                       (unsigned char)(110 - heat * 70), 255};
+        Color rung = g_wall;
+        rung.r = (unsigned char)clampf(rung.r + heat * 190.0f, 0, 255);
+        rung.g = (unsigned char)clampf(rung.g + heat * 40.0f, 0, 255);
+        rung.b = (unsigned char)clampf(rung.b - heat * 40.0f, 0, 255);
+        rung = with_alpha(rung, 0.35f + f * 0.65f);
         Vector3 blB = game_to_world(lx, gy, Z_BACK);
         Vector3 brB = game_to_world(rx, gy, Z_BACK);
         Vector3 blF = game_to_world(lx, gy, Z_FRONT);
@@ -139,14 +311,17 @@ static void draw_shaft(App *a, float py) {
         DrawLine3D(brB, brF, rung);   /* right rung */
     }
     /* long posts */
+    Color post = with_alpha(g_wall, 0.85f);
     Vector3 p0 = game_to_world(lx, y0, Z_BACK), p1 = game_to_world(lx, y1, Z_BACK);
-    DrawLine3D(p0, p1, wall);
+    DrawLine3D(p0, p1, post);
     p0 = game_to_world(rx, y0, Z_BACK); p1 = game_to_world(rx, y1, Z_BACK);
-    DrawLine3D(p0, p1, wall);
+    DrawLine3D(p0, p1, post);
     p0 = game_to_world(lx, y0, Z_FRONT); p1 = game_to_world(lx, y1, Z_FRONT);
-    DrawLine3D(p0, p1, wall);
+    DrawLine3D(p0, p1, post);
     p0 = game_to_world(rx, y0, Z_FRONT); p1 = game_to_world(rx, y1, Z_FRONT);
-    DrawLine3D(p0, p1, wall);
+    DrawLine3D(p0, p1, post);
+
+    draw_motes(a, py);
 }
 
 static void draw_lava(App *a) {
@@ -534,7 +709,7 @@ static void draw_speed_lines(App *a) {
     float inner = 190.0f - 90.0f * intensity;
     Color tint = mag_color(a->sim.color, 1);
     int tick = (int)(a->t * 18.0f); /* re-scatter for hand-drawn shimmer */
-    int n = 14 + (int)(intensity * 30.0f);
+    int n = 11 + (int)(intensity * 24.0f);
 
     BeginBlendMode(BLEND_ADDITIVE);
     for (int i = 0; i < n; i++) {
@@ -550,7 +725,7 @@ static void draw_speed_lines(App *a) {
         /* mostly white with a wash of the armed colour */
         Color c = {(unsigned char)((tint.r + 510) / 3), (unsigned char)((tint.g + 510) / 3),
                    (unsigned char)((tint.b + 510) / 3),
-                   (unsigned char)clampf(170.0f * intensity * (0.35f + len * 0.65f), 0, 255)};
+                   (unsigned char)clampf(92.0f * intensity * (0.35f + len * 0.65f), 0, 255)};
         DrawLineEx(p0, p1, thick, c);
     }
     EndBlendMode();
@@ -642,11 +817,16 @@ void render_world(App *a) {
     if (g->level_id) frame_level(a); /* cheap; keeps framing correct */
     update_camera(a);
 
-    /* 2D background gradient from the level color */
+    /* 2D backdrop: the level color warmed toward this level's palette, so
+     * the sky, the duct and the lights all belong to one world */
+    env_palette(g->level_id);
     unsigned int bg = g->lv->bg_color;
-    Color top = (Color){(bg >> 16) & 0xFF, (bg >> 8) & 0xFF, bg & 0xFF, 255};
-    Color bot = scale_color(top, 2.2f);
-    DrawRectangleGradientV(0, 0, GetScreenWidth(), GetScreenHeight(), scale_color(top, 0.6f), bot);
+    Color base = (Color){(bg >> 16) & 0xFF, (bg >> 8) & 0xFF, bg & 0xFF, 255};
+    Color top = (Color){(unsigned char)((base.r + g_deep.r) / 2),
+                        (unsigned char)((base.g + g_deep.g) / 2),
+                        (unsigned char)((base.b + g_deep.b) / 2), 255};
+    Color bot = scale_color(top, 2.6f);
+    DrawRectangleGradientV(0, 0, GetScreenWidth(), GetScreenHeight(), scale_color(top, 0.55f), bot);
 
     BeginMode3D(a->cam);
         draw_shaft(a, g->py);

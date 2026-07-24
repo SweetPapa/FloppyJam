@@ -121,6 +121,9 @@ void audio_init(App *a);
 void audio_shutdown(App *a);
 void audio_play(App *a, SfxId id);
 void audio_play_pitched(App *a, SfxId id, float pitch);
+void audio_music_theme(App *a, int seed);      /* re-key the soundtrack */
+void audio_music_intensity(App *a, float v);   /* 0..1 tension */
+void audio_music_volume(App *a, float v);
 
 /* ui.c */
 void ui_hud(App *a);
