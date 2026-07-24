@@ -1,0 +1,22 @@
+if(NOT EXISTS "${EXECUTABLE}")
+  message(FATAL_ERROR "MAGLAVA size check could not find ${EXECUTABLE}")
+endif()
+
+file(SIZE "${EXECUTABLE}" executable_bytes)
+set(additional_bytes 0)
+math(EXPR extracted_total "${executable_bytes} + ${additional_bytes}")
+math(EXPR bytes_remaining "${PACKAGE_LIMIT} - ${extracted_total}")
+
+message(STATUS "MAGLAVA package size")
+message(STATUS "Executable bytes: ${executable_bytes}")
+message(STATUS "Additional package bytes: ${additional_bytes}")
+message(STATUS "Extracted total: ${extracted_total}")
+message(STATUS "Bytes remaining: ${bytes_remaining}")
+
+if(extracted_total GREATER PACKAGE_LIMIT AND FAIL_ON_OVERSIZE)
+  message(FATAL_ERROR "PASS / FAIL: FAIL (limit ${PACKAGE_LIMIT} bytes)")
+elseif(extracted_total GREATER PACKAGE_LIMIT)
+  message(STATUS "PASS / FAIL: DEBUG OVERSIZE (release gate not applied)")
+else()
+  message(STATUS "PASS / FAIL: PASS")
+endif()
