@@ -46,42 +46,70 @@ static int bot_color(GameSim *g) {
 static void start_level(int id) {
     app.level_id = id;
     sim_init(&app.sim, id);
-    memset(app.parts, 0, sizeof(app.parts));
-    app.part_head = 0;
+    render_reset_fx(&app);
     app.cam_shake = 0;
     app.lava_flash = 0;
     app.accum = 0;
     app.cam_y = (LEVEL_HEIGHT - app.sim.py) * WS;
+    app.cam_x = 0;
+    app.cam_dist = 8.2f;
+    app.score_shown = 0;
+    app.intro_t = 0;      /* replays the level-name card */
+    app.fade = 1.0f;      /* fade up from black */
+    app.warn_timer = 0;
+    app.prev_state = app.sim.state;
     app.screen = SCR_PLAYING;
 }
 
 /* respond to one simulation step's event flags */
 static void handle_events(void) {
     GameSim *g = &app.sim;
+    char buf[16];
     if (g->ev_swing) audio_play(&app, SFX_SWING);
     if (g->ev_attach) {
-        audio_play(&app, g->ev_attach_forward ? SFX_LAND : SFX_LAND_BACK);
-        render_spawn_burst(&app, g->px, g->py, mag_color(g->color, 1), 10, 120.0f);
-        app.cam_shake = fmaxf(app.cam_shake, 0.03f);
+        /* the landing tone climbs with the combo — the core feedback loop */
+        int mult = g->combo < COMBO_MAX ? g->combo : COMBO_MAX;
+        float pitch = 1.0f + (mult - 1) * 0.06f;
+        audio_play_pitched(&app, g->ev_attach_forward ? SFX_LAND : SFX_LAND_BACK,
+                           g->ev_attach_forward ? pitch : 0.85f);
+        render_spawn_burst(&app, g->px, g->py, mag_color(g->color, 1),
+                           10 + mult, 120.0f + mult * 12.0f);
+        app.cam_shake = fmaxf(app.cam_shake, 0.03f + mult * 0.004f);
+        app.land_pop = 1.0f;
+        app.land_idx = g->attached_idx;
+        snprintf(buf, sizeof buf, "+%d", SCORE_LANDING * mult);
+        render_push_popup(&app, g->px, g->py - 30.0f, buf,
+                          mult > 1 ? (Color){255, 150, 220, 255} : (Color){255, 235, 160, 255});
     }
     if (g->ev_checkpoint) {
         audio_play(&app, SFX_CHECKPOINT);
-        render_spawn_burst(&app, g->px, g->py, (Color){120, 255, 170, 255}, 24, 200.0f);
+        render_spawn_burst(&app, g->px, g->py, (Color){120, 255, 170, 255}, 28, 220.0f);
         app.lava_flash = fmaxf(app.lava_flash, 0.5f);
+        app.time_scale = 0.55f; /* brief hitch to punctuate the milestone */
+        render_push_popup(&app, g->px, g->py - 60.0f, "CHECKPOINT", (Color){120, 255, 170, 255});
     }
     if (g->ev_death) {
         audio_play(&app, SFX_DEATH);
-        render_spawn_burst(&app, g->px, g->py, (Color){255, 120, 60, 255}, 40, 300.0f);
-        app.cam_shake = 0.18f;
+        render_spawn_burst(&app, g->px, g->py, (Color){255, 120, 60, 255}, 48, 320.0f);
+        app.cam_shake = 0.22f;
+        app.death_flash = 1.0f;
+        app.time_scale = 0.30f; /* slow-motion death, as in the original */
     }
     if (g->ev_complete) {
         audio_play(&app, SFX_COMPLETE);
-        render_spawn_burst(&app, g->px, g->py, (Color){255, 230, 120, 255}, 60, 320.0f);
+        render_spawn_burst(&app, g->px, g->py, (Color){255, 230, 120, 255}, 80, 340.0f);
+        app.cam_shake = fmaxf(app.cam_shake, 0.10f);
         int stars = sim_stars(g);
         save_record(&app.save, g->level_id, stars);
         app.screen = SCR_COMPLETE;
         app.complete_t = 0;
     }
+    /* respawn: flash back in */
+    if (app.prev_state == PS_DEAD && g->state != PS_DEAD) {
+        app.fade = 0.8f;
+        render_spawn_burst(&app, g->px, g->py, (Color){160, 220, 255, 255}, 24, 180.0f);
+    }
+    app.prev_state = g->state;
 }
 
 static int g_idle = 0; /* debug: demo player never swings (lets lava rise) */
@@ -105,8 +133,9 @@ static void update_playing(int demo) {
     int pending = demo ? (g_idle ? -1 : bot_color(&app.sim)) : poll_color();
     if (!demo && IsKeyPressed(KEY_ESCAPE)) { app.screen = SCR_PAUSED; return; }
 
-    float dt = GetFrameTime();
-    if (dt > 0.1f) dt = 0.1f; /* avoid spiral after a stall */
+    float raw = GetFrameTime();
+    if (raw > 0.1f) raw = 0.1f; /* avoid spiral after a stall */
+    float dt = raw * app.time_scale; /* slow-motion affects the sim clock */
     app.accum += dt;
     int backtrack_prev = app.sim.backtrack_active;
     while (app.accum >= STEP) {
@@ -116,10 +145,27 @@ static void update_playing(int demo) {
         app.accum -= STEP;
         if (app.screen != SCR_PLAYING) break; /* completed mid-substep */
     }
-    if (app.sim.backtrack_active && !backtrack_prev)
-        app.lava_flash = fmaxf(app.lava_flash, 0.6f);
+    if (app.sim.backtrack_active && !backtrack_prev) {
+        app.lava_flash = fmaxf(app.lava_flash, 0.7f);
+        app.cam_shake = fmaxf(app.cam_shake, 0.06f);
+    }
 
-    render_update_particles(&app, dt);
+    /* lava proximity rumble, paced so it never machine-guns */
+    float gap = app.sim.lava_y - app.sim.py;
+    if (gap < LAVA_WARNING_DIST && app.sim.state != PS_DEAD && !app.sim.game_over) {
+        app.warn_timer -= raw;
+        if (app.warn_timer <= 0) {
+            audio_play(&app, SFX_WARN);
+            app.warn_timer = 0.35f + 0.65f * (gap / LAVA_WARNING_DIST);
+        }
+    } else {
+        app.warn_timer = 0;
+    }
+
+    /* HUD score counts up smoothly toward the real value */
+    app.score_shown += ((float)app.sim.score - app.score_shown) * fminf(1.0f, raw * 6.0f);
+
+    render_update_fx(&app, raw); /* visuals run on unscaled time */
     app.cam_shake *= 0.88f;
     app.lava_flash *= 0.90f;
 }
@@ -219,7 +265,7 @@ int main(void) {
             break;
         case SCR_COMPLETE:
             app.complete_t += GetFrameTime();
-            render_update_particles(&app, GetFrameTime());
+            render_update_fx(&app, GetFrameTime());
             if (demo) {
                 if (app.complete_t > 1.6f) { if (!demo_advance()) goto done; }
                 break;
