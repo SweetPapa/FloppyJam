@@ -6,6 +6,7 @@
  */
 #include "render.h"
 #include "juice.h"
+#include "scenery.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -26,7 +27,10 @@ static Color shade(Color c, float k)
 static float lambert(V3 n)
 {
     float d = v3dot(v3norm(n), v3norm(LIGHT));
-    return 0.55f + 0.45f * bp_clampf(d, 0.0f, 1.0f);   /* hemisphere ambient */
+    /* Night grading: the ambient floor drops from 0.55 to 0.42 and the direct
+     * term picks up the slack, so faces have more range against each other and
+     * nothing on the table competes with a neon tube for brightness. */
+    return 0.42f + 0.58f * bp_clampf(d, 0.0f, 1.0f);
 }
 
 static Vector3 rv(V3 v) { Vector3 o; o.x = v.x; o.y = v.y; o.z = v.z; return o; }
@@ -44,21 +48,28 @@ static Color hsv(float h, float s, float v)
 BpPalette bp_palette(int hole)
 {
     BpPalette p;
-    /* felt greens drift toward twilight blue as the round goes on */
+    /* Night edition. The felt still walks green -> twilight blue across the
+     * eighteen (12.2), but it now sits under a city sky, so values come down
+     * and saturation goes up: a lit table in the dark, not a table in the sun.
+     * The accent walks the neon wheel independently and lands on a different
+     * tube colour every hole — it drives the flag, the cup beacon, the plaza
+     * rings and the HUD trim, so one number re-themes the whole hole. */
     float u = bp_clampf((float)hole / (float)(BP_NHOLES - 1), 0.0f, 1.0f);
-    float hue = bp_lerpf(122.0f, 208.0f, u * u * 0.85f + u * 0.15f);
-    float sat = bp_lerpf(0.44f, 0.52f, u);
-    float val = bp_lerpf(0.52f, 0.40f, u);
+    float hue = bp_lerpf(140.0f, 214.0f, u * u * 0.85f + u * 0.15f);
+    float sat = bp_lerpf(0.58f, 0.64f, u);
+    float val = bp_lerpf(0.33f, 0.26f, u);
+    /* neon wheel: mint -> cyan -> violet -> magenta -> amber, wrapped */
+    float ah = fmodf(bp_lerpf(158.0f, 470.0f, u), 360.0f);
     p.felt    = hsv(hue, sat, val);
-    p.felt2   = hsv(hue, sat * 0.94f, val * 0.90f);
-    p.rim     = hsv(hue, sat * 0.7f, val * 1.35f);
-    p.rail    = hsv(hue - 18.0f, sat * 0.55f, bp_lerpf(0.36f, 0.30f, u));
-    p.railTop = hsv(hue - 18.0f, sat * 0.40f, bp_lerpf(0.62f, 0.52f, u));
-    p.sky     = hsv(bp_lerpf(206.0f, 250.0f, u), bp_lerpf(0.45f, 0.55f, u),
-                    bp_lerpf(0.30f, 0.16f, u));
-    p.horizon = hsv(bp_lerpf(196.0f, 268.0f, u), 0.35f, bp_lerpf(0.52f, 0.26f, u));
-    p.accent  = hsv(bp_lerpf(44.0f, 316.0f, u), 0.80f, 0.95f);
-    p.ink     = (Color){ 12, 16, 24, 255 };
+    p.felt2   = hsv(hue + 5.0f, sat * 0.92f, val * 0.86f);
+    p.rim     = hsv(hue, sat * 0.6f, val * 1.5f);
+    p.rail    = hsv(hue - 26.0f, sat * 0.70f, bp_lerpf(0.20f, 0.16f, u));
+    p.railTop = hsv(hue - 26.0f, sat * 0.50f, bp_lerpf(0.34f, 0.27f, u));
+    p.sky     = hsv(bp_lerpf(252.0f, 274.0f, u), bp_lerpf(0.62f, 0.66f, u),
+                    bp_lerpf(0.13f, 0.10f, u));
+    p.horizon = hsv(bp_lerpf(342.0f, 288.0f, u), 0.62f, bp_lerpf(0.34f, 0.26f, u));
+    p.accent  = hsv(ah, 0.78f, 1.00f);
+    p.ink     = (Color){ 8, 10, 18, 255 };
     return p;
 }
 
@@ -277,40 +288,83 @@ static void draw_pads(const BpWorld *w, const BpPalette *pal)
     }
 }
 
-static void draw_boxes(const BpWorld *w, const BpPalette *pal)
+/* A tube of light laid along the top of a rail. Two passes: a wide dim halo
+ * and a narrow hot core, which is how you fake bloom without a shader. */
+static void neon_cap(V3 c, V3 h, float yaw, Color k, float glow)
+{
+    float cs = cosf(yaw), sn = sinf(yaw);
+    int pass;
+    for (pass = 0; pass < 2; ++pass) {
+        float inset = pass ? 0.55f : 1.30f;
+        float lift  = pass ? 0.004f : 0.002f;
+        float a     = (pass ? 0.95f : 0.26f) * glow;
+        float hx = (h.x > h.z) ? h.x * 0.98f : h.x * inset;
+        float hz = (h.x > h.z) ? h.z * inset : h.z * 0.98f;
+        V3 ex = v3(cs * hx, 0.0f, sn * hx);
+        V3 ez = v3(-sn * hz, 0.0f, cs * hz);
+        V3 o  = v3(c.x, c.y + h.y + lift, c.z);
+        Color col = k;
+        col.a = (unsigned char)bp_clampi((int)(a * 255.0f), 0, 255);
+        quad3(v3sub(v3sub(o, ex), ez), v3sub(v3add(o, ex), ez),
+              v3add(v3add(o, ex), ez), v3add(v3sub(o, ex), ez), col);
+    }
+}
+
+static void draw_boxes(const BpWorld *w, const BpPalette *pal, float t)
 {
     int i;
     for (i = 0; i < w->nboxes; ++i) {
         const BpBox *b = &w->boxes[i];
         V3 c; float yaw;
-        Color side = pal->rail, top = pal->railTop;
+        Color side = pal->rail, top = pal->railTop, tube = pal->accent;
+        float glow = 0.55f + 0.12f * sinf(t * 1.6f + (float)i * 0.7f);
         if (!bp_box_visible(w, i)) continue;
         bp_box_pose(w, i, &c, &yaw);
-        if (b->kind == BOX_BUMPER_WALL) { side = (Color){ 214, 66, 120, 255 }; top = (Color){ 255, 150, 190, 255 }; }
-        else if (b->kind == BOX_GATE)   { side = (Color){ 200, 70, 70, 255 };  top = (Color){ 255, 150, 140, 255 }; }
-        else if (b->kind == BOX_CAP)    { side = (Color){ 96, 100, 110, 255 }; top = (Color){ 132, 138, 150, 255 }; }
-        else if (b->mover)              { side = (Color){ 190, 120, 40, 255 }; top = (Color){ 250, 190, 90, 255 }; }
+        if (b->kind == BOX_BUMPER_WALL) {
+            side = (Color){ 92, 22, 52, 255 }; top = (Color){ 150, 44, 88, 255 };
+            tube = (Color){ 255, 110, 180, 255 };
+            glow = 0.75f + 0.25f * sinf(t * 4.0f + (float)i);
+        } else if (b->kind == BOX_GATE) {
+            side = (Color){ 88, 24, 26, 255 };  top = (Color){ 148, 46, 44, 255 };
+            tube = (Color){ 255, 96, 84, 255 };
+            glow = 0.70f + 0.30f * sinf(t * 5.5f);
+        } else if (b->kind == BOX_CAP) {
+            side = (Color){ 44, 46, 56, 255 };  top = (Color){ 74, 78, 90, 255 };
+            tube = (Color){ 150, 158, 176, 255 }; glow = 0.35f;
+        } else if (b->mover) {
+            side = (Color){ 92, 56, 18, 255 };  top = (Color){ 140, 92, 34, 255 };
+            tube = (Color){ 255, 186, 84, 255 };
+            glow = 0.80f + 0.20f * sinf(t * 3.0f + (float)i);
+        }
         box3(c, v3(b->hx, b->hy, b->hz), yaw, side, top);
+        neon_cap(c, v3(b->hx, b->hy, b->hz), yaw, tube, glow);
     }
 }
 
-static void draw_posts(const BpWorld *w, const BpPalette *pal)
+static void draw_posts(const BpWorld *w, const BpPalette *pal, float t)
 {
     int i;
     for (i = 0; i < w->nposts; ++i) {
         const BpPost *po = &w->posts[i];
         V3 c;
-        Color col = pal->rail, cap = pal->railTop;
+        Color col = pal->rail, cap = pal->railTop, ring = pal->accent;
+        float pulse = 0.5f + 0.5f * sinf(t * 2.2f + (float)i * 0.9f);
         bp_post_pose(w, i, &c);
         if (po->kind == POST_BUMPER) {
-            col = (Color){ 224, 60, 118, 255 };
+            col = (Color){ 148, 34, 78, 255 };
             cap = (Color){ 255, 168, 206, 255 };
+            ring = (Color){ 255, 120, 186, 255 };
+            pulse = 0.55f + 0.45f * sinf(t * 3.4f + (float)i);
         } else if (po->kind == POST_TARGET) {
-            col = po->lit ? (Color){ 70, 200, 140, 255 } : (Color){ 232, 190, 60, 255 };
+            col = po->lit ? (Color){ 40, 132, 96, 255 } : (Color){ 152, 122, 34, 255 };
             cap = po->lit ? (Color){ 150, 255, 200, 255 } : (Color){ 255, 240, 150, 255 };
+            ring = cap;
+            /* an unlit target begs to be hit: it strobes, a lit one settles */
+            pulse = po->lit ? 0.55f : (0.35f + 0.65f * (0.5f + 0.5f * sinf(t * 6.0f)));
         } else if (po->mover) {
-            col = (Color){ 190, 120, 40, 255 };
+            col = (Color){ 118, 74, 24, 255 };
             cap = (Color){ 250, 190, 90, 255 };
+            ring = cap;
         }
         DrawCylinderEx(rv(v3(c.x, c.y, c.z)), rv(v3(c.x, c.y + po->h, c.z)),
                        po->r, po->r * (po->kind == POST_BUMPER ? 1.06f : 1.0f), 14,
@@ -320,6 +374,14 @@ static void draw_posts(const BpWorld *w, const BpPalette *pal)
         } else {
             DrawCylinderEx(rv(v3(c.x, c.y + po->h, c.z)), rv(v3(c.x, c.y + po->h + 0.02f, c.z)),
                            po->r * 1.1f, po->r * 1.1f, 14, cap);
+        }
+        /* a light band round the waist and a pool of it on the floor */
+        {
+            Color k = ring;
+            k.a = (unsigned char)(90.0f + 130.0f * pulse);
+            ring3(v3(c.x, c.y + po->h * 0.62f, c.z), po->r * 1.02f, po->r * 1.24f, k, 12);
+            k.a = (unsigned char)(28.0f + 46.0f * pulse);
+            ring3(v3(c.x, c.y + 0.004f, c.z), po->r * 1.1f, po->r * 2.6f, k, 14);
         }
     }
 }
@@ -426,6 +488,18 @@ static void draw_ball(const BpWorld *w, int i, const BpPalette *pal)
         DrawSphereEx(rv(v3add(p, v3(-0.010f, BP_R * 0.62f, -0.010f))), BP_R * 0.16f, 5, 6,
                      (Color){ 255, 255, 255, 150 });
     }
+
+    /* Night rim light. Two translucent shells pick the ball out against dark
+     * felt without washing out the two-tone spin marks underneath, and a pool
+     * of the same colour on the floor keeps it readable from orbit height. */
+    {
+        Color k = (b->kind == BALL_CUE) ? (Color){ 210, 232, 255, 255 } : base;
+        DrawSphereEx(rv(p), BP_R * 1.22f, 8, 10, (Color){ k.r, k.g, k.b, 26 });
+        DrawSphereEx(rv(p), BP_R * 1.55f, 6, 8, (Color){ k.r, k.g, k.b, 12 });
+        if (g > -1e8f && p.y - BP_R - g < 0.05f)
+            ring3(v3(p.x, g + 0.003f, p.z), BP_R * 1.3f, BP_R * 3.4f,
+                  (Color){ k.r, k.g, k.b, 22 }, 12);
+    }
     (void)pal;
 }
 
@@ -497,8 +571,9 @@ void bp_render_world(const BpWorld *w, int hole, const BpShot *sh,
     int i;
     draw_pads(w, &pal);
     draw_pockets(w, &pal, t);
-    draw_boxes(w, &pal);
-    draw_posts(w, &pal);
+    draw_boxes(w, &pal, t);
+    draw_posts(w, &pal, t);
+    bp_scenery_draw_near(w, &pal, t);
     for (i = 0; i < w->nballs; ++i) draw_ball(w, i, &pal);
     if (show_guide && sh) draw_guide(w, sh);
     if (show_cue && sh) draw_cue(w, sh);
@@ -538,20 +613,26 @@ const char *bp_score_flair(int strokes, int par)
 static void draw_meter(int x, int y, int hgt, float p, int charging)
 {
     int i, seg = 26;
-    DrawRectangle(x - 4, y - 4, 26, hgt + 8, (Color){ 10, 14, 22, 190 });
-    DrawRectangleLines(x - 4, y - 4, 26, hgt + 8, (Color){ 70, 84, 104, 255 });
+    DrawRectangle(x - 4, y - 4, 26, hgt + 8, (Color){ 6, 8, 16, 200 });
+    DrawRectangleLines(x - 4, y - 4, 26, hgt + 8, (Color){ 50, 60, 80, 220 });
     for (i = 0; i < seg; ++i) {
         float u = (float)i / (float)(seg - 1);
         int yy = y + hgt - (int)(u * hgt) - 4;
-        Color c = (u < 0.55f) ? (Color){ 90, 200, 130, 255 }
-                : (u < 0.82f) ? (Color){ 240, 200, 80, 255 }
-                              : (Color){ 240, 90, 80, 255 };
-        if (u > p) c = (Color){ 40, 48, 60, 255 };
+        Color c = (u < 0.55f) ? (Color){ 90, 235, 150, 255 }
+                : (u < 0.82f) ? (Color){ 255, 210, 80, 255 }
+                              : (Color){ 255, 90, 110, 255 };
+        if (u > p) {
+            DrawRectangle(x, yy, 18, 4, (Color){ 28, 32, 44, 255 });
+            continue;
+        }
+        /* lit segments get a halo, so a full meter genuinely glows */
+        DrawRectangle(x - 3, yy - 1, 24, 6, (Color){ c.r, c.g, c.b, 45 });
         DrawRectangle(x, yy, 18, 4, c);
     }
     if (charging) {
         int yy = y + hgt - (int)(p * hgt) - 5;
-        DrawRectangle(x - 8, yy, 34, 2, (Color){ 255, 255, 255, 230 });
+        DrawRectangle(x - 10, yy - 1, 38, 4, (Color){ 255, 255, 255, 70 });
+        DrawRectangle(x - 8, yy, 34, 2, (Color){ 255, 255, 255, 240 });
     }
     DrawText("PWR", x - 3, y + hgt + 8, 12, (Color){ 150, 165, 185, 255 });
 }
@@ -609,7 +690,7 @@ static void draw_spin_widget(int cx, int cy, int r, float tx, float ty)
     DrawText("ENGLISH", cx - 26, cy + r + 10, 12, (Color){ 150, 165, 185, 255 });
 }
 
-static void draw_minimap(const BpWorld *w, int x, int y, int size)
+static void draw_minimap(const BpWorld *w, int x, int y, int size, Color accent)
 {
     V3 lo, hi;
     float sx, sz, sc;
@@ -618,7 +699,7 @@ static void draw_minimap(const BpWorld *w, int x, int y, int size)
     sx = hi.x - lo.x; sz = hi.z - lo.z;
     sc = (float)size / ((sx > sz ? sx : sz) + 0.6f);
 
-    DrawRectangle(x - 6, y - 6, size + 12, size + 12, (Color){ 8, 12, 20, 170 });
+    DrawRectangle(x - 6, y - 6, size + 12, size + 12, (Color){ 5, 7, 15, 195 });
     for (i = 0; i < w->npads; ++i) {
         const BpPad *p = &w->pads[i];
         int px = x + (int)((p->x0 - lo.x) * sc);
@@ -653,35 +734,59 @@ static void draw_minimap(const BpWorld *w, int x, int y, int size)
         DrawCircle(px, py, i == 0 ? 3.5f : 2.5f,
                    i == 0 ? (Color){ 255, 255, 255, 255 } : BALL_COL[b->color & 7]);
     }
-    DrawRectangleLines(x - 6, y - 6, size + 12, size + 12, (Color){ 70, 84, 104, 255 });
+    DrawRectangleLines(x - 6, y - 6, size + 12, size + 12, (Color){ 50, 60, 80, 220 });
+    DrawRectangle(x - 6, y + size + 4, size + 12, 2, accent);
+}
+
+/* Every HUD box is the same object: smoked glass with one lit edge. Doing it
+ * once keeps the overlay looking like one machine rather than six widgets. */
+static void hud_panel(int x, int y, int w, int hgt, Color k, int edge)
+{
+    DrawRectangle(x, y, w, hgt, (Color){ 6, 8, 16, 180 });
+    DrawRectangleLines(x, y, w, hgt, (Color){ 40, 48, 66, 190 });
+    if (edge & 1) DrawRectangle(x, y + hgt - 2, w, 2, k);            /* bottom */
+    if (edge & 2) DrawRectangle(x, y, 2, hgt, k);                    /* left   */
+    if (edge & 4) DrawRectangle(x + w - 2, y, 2, hgt, k);            /* right  */
+    if (edge & 8) DrawRectangle(x, y, w, 2, k);                      /* top    */
+    /* the bloom the tube throws onto the glass */
+    DrawRectangleGradientV(x, y + hgt - 12, w, 12,
+                           (Color){ k.r, k.g, k.b, 0 }, (Color){ k.r, k.g, k.b, 44 });
 }
 
 void bp_render_hud(const BpWorld *w, const BpHud *h, int sw, int sh)
 {
+    BpPalette pal = bp_palette(h->hole);
     char buf[128];
     int i;
 
     /* top-left: hole card */
-    DrawRectangle(0, 0, 352, 80, (Color){ 8, 12, 20, 175 });
+    hud_panel(0, 0, 352, 80, pal.accent, 1);
     snprintf(buf, sizeof buf, "HOLE %d", h->hole + 1);
     DrawText(buf, 14, 10, 22, (Color){ 236, 242, 252, 255 });
-    DrawText(h->name, 112, 12, 20, (Color){ 168, 190, 216, 255 });
+    DrawText(h->name, 112, 12, 20,
+             (Color){ pal.accent.r, pal.accent.g, pal.accent.b, 255 });
     snprintf(buf, sizeof buf, "PAR %d", h->par);
     DrawText(buf, 14, 40, 18, (Color){ 150, 200, 160, 255 });
     snprintf(buf, sizeof buf, "STROKES %d", h->strokes);
     DrawText(buf, 96, 40, 18, (Color){ 240, 226, 160, 255 });
 
-    /* top-right: running total against par */
-    snprintf(buf, sizeof buf, "%+d", h->running - h->running_par);
-    DrawRectangle(sw - 128, 0, 128, 56, (Color){ 8, 12, 20, 175 });
-    DrawText("TOTAL", sw - 114, 8, 13, (Color){ 130, 145, 165, 255 });
-    DrawText(buf, sw - 114, 24, 24, (Color){ 226, 234, 250, 255 });
+    /* top-right: running total against par, coloured by which side of it */
+    {
+        int d = h->running - h->running_par;
+        Color c = (d < 0) ? (Color){ 130, 240, 170, 255 }
+                : (d == 0) ? (Color){ 236, 242, 252, 255 }
+                           : (Color){ 250, 172, 130, 255 };
+        snprintf(buf, sizeof buf, "%+d", d);
+        hud_panel(sw - 128, 0, 128, 56, c, 1);
+        DrawText("TOTAL", sw - 114, 8, 13, (Color){ 130, 145, 165, 255 });
+        DrawText(buf, sw - 114, 24, 24, c);
+    }
 
     /* brief line */
     if (h->brief) {
         int bw = MeasureText(h->brief, 16);
-        DrawRectangle(sw / 2 - bw / 2 - 12, 10, bw + 24, 26, (Color){ 8, 12, 20, 140 });
-        DrawText(h->brief, sw / 2 - bw / 2, 15, 16, (Color){ 190, 205, 225, 255 });
+        hud_panel(sw / 2 - bw / 2 - 14, 8, bw + 28, 30, pal.accent, 1);
+        DrawText(h->brief, sw / 2 - bw / 2, 15, 16, (Color){ 200, 214, 234, 255 });
     }
 
     if (h->sealed) {
@@ -694,7 +799,7 @@ void bp_render_hud(const BpWorld *w, const BpHud *h, int sw, int sh)
     draw_meter(26, sh - 230, 150, h->charging ? h->power : 0.0f, h->charging);
     draw_strike_readout(16, sh - 252, h->pow_flash, h->pow_value);
     draw_spin_widget(120, sh - 118, 44, h->tx, h->ty);
-    draw_minimap(w, sw - 178, sh - 178, 160);
+    draw_minimap(w, sw - 178, sh - 178, 160, pal.accent);
 
     /* aim detent: the compass ticks over as you swing the cue */
     {
@@ -734,10 +839,18 @@ void bp_render_hud(const BpWorld *w, const BpHud *h, int sw, int sh)
 /* ------------------------------------------------------------------ */
 /* screens                                                             */
 
-static void panel(int x, int y, int w, int h)
+/* One panel style for every full-screen page: smoked glass, a hairline, and
+ * a lit strip along the top so the pages belong to the same sign shop as the
+ * HUD and the title. */
+void bp_render_panel(int x, int y, int w, int h)
 {
-    DrawRectangle(x, y, w, h, (Color){ 10, 14, 24, 225 });
-    DrawRectangleLines(x, y, w, h, (Color){ 78, 96, 122, 255 });
+    Color k = (Color){ 255, 206, 120, 255 };
+    DrawRectangle(x + 4, y + 5, w, h, (Color){ 0, 0, 0, 120 });
+    DrawRectangle(x, y, w, h, (Color){ 8, 10, 20, 232 });
+    DrawRectangleLines(x, y, w, h, (Color){ 60, 72, 96, 255 });
+    DrawRectangle(x, y, w, 2, k);
+    DrawRectangleGradientV(x, y + 2, w, 14, (Color){ k.r, k.g, k.b, 40 },
+                           (Color){ k.r, k.g, k.b, 0 });
 }
 
 void bp_render_scorecard(const BpHud *h, int sw, int sh, int final_page)
@@ -746,7 +859,7 @@ void bp_render_scorecard(const BpHud *h, int sw, int sh, int final_page)
     int tot = 0, par = 0;
     char buf[96];
     DrawRectangle(0, 0, sw, sh, (Color){ 0, 0, 0, 170 });
-    panel(x, y, 660, 446);
+    bp_render_panel(x, y, 660, 446);
     DrawText(final_page ? "FINAL CARD" : "SCORECARD", x + 22, y + 16, 30,
              (Color){ 246, 240, 210, 255 });
 
@@ -789,49 +902,105 @@ void bp_render_scorecard(const BpHud *h, int sw, int sh, int final_page)
              x + 22, y + 414, 15, (Color){ 130, 148, 175, 255 });
 }
 
+/* Text with a soft coloured bloom behind it: four offset copies at low alpha
+ * fake the halo a real neon tube throws onto the wall. */
+static void neon_text(const char *s, int x, int y, int fs, Color core, Color glow,
+                      float amount)
+{
+    static const int OFF[8][2] = { { 2,0 },{ -2,0 },{ 0,2 },{ 0,-2 },
+                                   { 3,3 },{ -3,3 },{ 3,-3 },{ -3,-3 } };
+    int i;
+    Color g = glow;
+    DrawText(s, x + 3, y + 4, fs, (Color){ 0, 0, 0, 130 });
+    for (i = 0; i < 8; ++i) {
+        g.a = (unsigned char)(bp_clampf(amount, 0.0f, 1.0f) * (i < 4 ? 46.0f : 26.0f));
+        DrawText(s, x + OFF[i][0], y + OFF[i][1], fs, g);
+    }
+    DrawText(s, x, y, fs, core);
+}
+
+/* A marquee: a run of bulbs chasing round a rectangle. Pure showbiz. */
+static void marquee(int x, int y, int w, int h, float t, Color c)
+{
+    int i, n = (w + h) / 22;
+    if (n < 8) n = 8;
+    for (i = 0; i < n; ++i) {
+        float u = (float)i / (float)n * 4.0f;
+        int side = (int)u;
+        float f = u - (float)side;
+        int px = 0, py = 0;
+        float on = 0.5f + 0.5f * sinf(t * 5.0f - (float)i * 0.8f);
+        Color k = c;
+        switch (side) {
+        case 0: px = x + (int)(f * w);     py = y;         break;
+        case 1: px = x + w;                py = y + (int)(f * h); break;
+        case 2: px = x + w - (int)(f * w); py = y + h;     break;
+        default: px = x;                   py = y + h - (int)(f * h); break;
+        }
+        k.a = (unsigned char)(60.0f + 100.0f * on);
+        DrawCircle(px, py, 6.0f, k);
+        k.a = (unsigned char)(150.0f + 105.0f * on);
+        DrawCircle(px, py, 2.5f, k);
+    }
+}
+
 void bp_render_title(int sw, int sh, int sel, float t, const BpHud *h)
 {
     static const char *ITEMS[4] = { "PLAY", "OPTIONS", "HOW TO PLAY", "QUIT" };
+    BpPalette pal = bp_palette(0);
     int i;
     char buf[96];
-    ClearBackground((Color){ 10, 16, 26, 255 });
-    /* felt sweep behind the logo */
-    for (i = 0; i < 26; ++i) {
-        float u = (float)i / 25.0f;
-        DrawRectangle(0, (int)(sh * 0.30f) + i * 9, sw, 9,
-                      ColorFromHSV(bp_lerpf(128.0f, 196.0f, u), 0.42f,
-                                   bp_lerpf(0.24f, 0.08f, u)));
-    }
+
+    /* the live city is behind us; knock it back just enough that type reads */
+    DrawRectangle(0, 0, sw, sh, (Color){ 6, 6, 18, 70 });
+    DrawRectangleGradientV(0, (int)(sh * 0.08f), sw, (int)(sh * 0.24f),
+                           (Color){ 8, 6, 24, 0 }, (Color){ 8, 6, 24, 130 });
+    DrawRectangleGradientV(0, (int)(sh * 0.32f), sw, (int)(sh * 0.22f),
+                           (Color){ 8, 6, 24, 130 }, (Color){ 8, 6, 24, 0 });
+
     {
         int w1 = MeasureText("BREAK", 96), w2 = MeasureText("PAR", 96);
         int total = w1 + w2 + 26;
         int x = sw / 2 - total / 2;
-        int y = (int)(sh * 0.16f) + (int)(sinf(t * 1.4f) * 3.0f);
-        DrawText("BREAK", x + 4, y + 5, 96, (Color){ 0, 0, 0, 150 });
-        DrawText("BREAK", x, y, 96, (Color){ 244, 246, 252, 255 });
-        DrawText("PAR", x + w1 + 26 + 4, y + 5, 96, (Color){ 0, 0, 0, 150 });
-        DrawText("PAR", x + w1 + 26, y, 96, (Color){ 255, 206, 84, 255 });
+        int y = (int)(sh * 0.15f) + (int)(sinf(t * 1.4f) * 3.0f);
+        /* the sign has a dodgy tube: BREAK stutters once every few seconds */
+        float flick = (sinf(t * 1.7f) > 0.985f || sinf(t * 11.0f) > 0.995f) ? 0.25f : 1.0f;
+        marquee(x - 34, y - 22, total + 68, 130, t, (Color){ 255, 206, 120, 255 });
+        neon_text("BREAK", x, y, 96,
+                  (Color){ 244, 246, 252, (unsigned char)(255.0f * flick) },
+                  (Color){ 120, 220, 255, 255 }, flick);
+        neon_text("PAR", x + w1 + 26, y, 96, (Color){ 255, 226, 150, 255 },
+                  (Color){ 255, 110, 170, 255 }, 1.0f);
+        (void)w2;
     }
     {
         const char *tag = "mini golf with a cue stick";
         int w = MeasureText(tag, 22);
-        DrawText(tag, sw / 2 - w / 2, (int)(sh * 0.16f) + 104, 22,
-                 (Color){ 168, 190, 216, 255 });
+        DrawText(tag, sw / 2 - w / 2, (int)(sh * 0.15f) + 116, 22,
+                 (Color){ 188, 206, 232, 235 });
+        DrawRectangle(sw / 2 - w / 2 - 30, (int)(sh * 0.15f) + 128, w + 60, 2,
+                      (Color){ pal.accent.r, pal.accent.g, pal.accent.b, 150 });
     }
     for (i = 0; i < 4; ++i) {
         int w = MeasureText(ITEMS[i], 30);
-        int y = (int)(sh * 0.52f) + i * 46;
+        int y = (int)(sh * 0.54f) + i * 48;
         if (i == sel) {
-            DrawRectangle(sw / 2 - w / 2 - 26, y - 7, w + 52, 42, (Color){ 255, 206, 84, 40 });
-            DrawText(">", sw / 2 - w / 2 - 30, y, 30, (Color){ 255, 206, 84, 255 });
+            float p = 0.5f + 0.5f * sinf(t * 4.5f);
+            DrawRectangle(sw / 2 - w / 2 - 30, y - 8, w + 60, 44,
+                          (Color){ pal.accent.r, pal.accent.g, pal.accent.b,
+                                   (unsigned char)(34 + 26 * p) });
+            DrawRectangle(sw / 2 - w / 2 - 30, y - 8, 3, 44, pal.accent);
+            DrawRectangle(sw / 2 + w / 2 + 27, y - 8, 3, 44, pal.accent);
+            neon_text(ITEMS[i], sw / 2 - w / 2, y, 30, (Color){ 255, 244, 220, 255 },
+                      pal.accent, 0.8f + 0.2f * p);
+        } else {
+            DrawText(ITEMS[i], sw / 2 - w / 2, y, 30, (Color){ 168, 184, 208, 235 });
         }
-        DrawText(ITEMS[i], sw / 2 - w / 2, y, 30,
-                 i == sel ? (Color){ 255, 236, 180, 255 } : (Color){ 170, 186, 208, 255 });
     }
     snprintf(buf, sizeof buf, "holes in one: %d", h->aces);
-    DrawText(buf, 16, sh - 28, 16, (Color){ 96, 114, 140, 255 });
+    DrawText(buf, 16, sh - 28, 16, (Color){ 120, 138, 168, 235 });
     DrawText("v1.0  original code, art and sound", sw - 300, sh - 28, 16,
-             (Color){ 96, 114, 140, 255 });
+             (Color){ 120, 138, 168, 235 });
 }
 
 void bp_render_select(int sw, int sh, int sel, float t)
@@ -839,26 +1008,35 @@ void bp_render_select(int sw, int sh, int sel, float t)
     static const char *ITEMS[3] = { "FRONT NINE", "BACK NINE", "FULL EIGHTEEN" };
     static const char *SUB[3] = { "holes 1-9, par 24", "holes 10-18, par 30",
                                   "the whole card, par 54" };
+    BpPalette pal = bp_palette(0);
     int i;
-    ClearBackground((Color){ 10, 16, 26, 255 });
-    (void)t;
+    DrawRectangle(0, 0, sw, sh, (Color){ 6, 6, 18, 175 });
     {
         const char *s = "CHOOSE YOUR ROUND";
         int w = MeasureText(s, 40);
-        DrawText(s, sw / 2 - w / 2, (int)(sh * 0.18f), 40, (Color){ 244, 246, 252, 255 });
+        neon_text(s, sw / 2 - w / 2, (int)(sh * 0.16f), 40,
+                  (Color){ 244, 246, 252, 255 }, pal.accent, 0.9f);
     }
     for (i = 0; i < 3; ++i) {
         int w = MeasureText(ITEMS[i], 34);
-        int y = (int)(sh * 0.38f) + i * 84;
-        if (i == sel) DrawRectangle(sw / 2 - 240, y - 10, 480, 66, (Color){ 255, 206, 84, 34 });
-        DrawText(ITEMS[i], sw / 2 - w / 2, y, 34,
-                 i == sel ? (Color){ 255, 236, 180, 255 } : (Color){ 170, 186, 208, 255 });
+        int y = (int)(sh * 0.36f) + i * 88;
+        if (i == sel) {
+            float p = 0.5f + 0.5f * sinf(t * 4.5f);
+            DrawRectangle(sw / 2 - 250, y - 12, 500, 70,
+                          (Color){ pal.accent.r, pal.accent.g, pal.accent.b,
+                                   (unsigned char)(30 + 24 * p) });
+            marquee(sw / 2 - 250, y - 12, 500, 70, t, pal.accent);
+            neon_text(ITEMS[i], sw / 2 - w / 2, y, 34, (Color){ 255, 244, 220, 255 },
+                      pal.accent, 0.9f);
+        } else {
+            DrawText(ITEMS[i], sw / 2 - w / 2, y, 34, (Color){ 168, 184, 208, 235 });
+        }
         {
             int w2 = MeasureText(SUB[i], 17);
-            DrawText(SUB[i], sw / 2 - w2 / 2, y + 38, 17, (Color){ 132, 152, 178, 255 });
+            DrawText(SUB[i], sw / 2 - w2 / 2, y + 40, 17, (Color){ 140, 160, 190, 235 });
         }
     }
-    DrawText("ESC  back", 16, sh - 30, 17, (Color){ 110, 128, 154, 255 });
+    DrawText("ESC  back", 16, sh - 30, 17, (Color){ 120, 138, 168, 235 });
 }
 
 void bp_render_pause(int sw, int sh, int sel, const BpHud *h)
@@ -866,7 +1044,7 @@ void bp_render_pause(int sw, int sh, int sel, const BpHud *h)
     static const char *ITEMS[4] = { "RESUME", "RESTART HOLE", "OPTIONS", "QUIT TO TITLE" };
     int i, x = sw / 2 - 190, y = sh / 2 - 160;
     DrawRectangle(0, 0, sw, sh, (Color){ 0, 0, 0, 180 });
-    panel(x, y, 380, 320);
+    bp_render_panel(x, y, 380, 320);
     DrawText("PAUSED", x + 24, y + 20, 34, (Color){ 246, 240, 210, 255 });
     {
         char buf[64];
@@ -893,7 +1071,7 @@ void bp_render_options(int sw, int sh, int sel, int vm, int vmu, int vs, int fs,
     int i, x = sw / 2 - 220, y = sh / 2 - 210;
     vals[0] = vm; vals[1] = vmu; vals[2] = vs;
     DrawRectangle(0, 0, sw, sh, (Color){ 0, 0, 0, 180 });
-    panel(x, y, 440, 438);
+    bp_render_panel(x, y, 440, 438);
     DrawText("OPTIONS", x + 24, y + 20, 34, (Color){ 246, 240, 210, 255 });
     for (i = 0; i < 7; ++i) {
         int yy = y + 76 + i * 44;

@@ -19,6 +19,7 @@ SRCS := $(SRCDIR)/main.c \
         $(SRCDIR)/shot.c \
         $(SRCDIR)/camera.c \
         $(SRCDIR)/render.c \
+        $(SRCDIR)/scenery.c \
         $(SRCDIR)/juice.c \
         $(SRCDIR)/synth.c \
         $(SRCDIR)/save.c \

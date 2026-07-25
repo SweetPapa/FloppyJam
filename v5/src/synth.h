@@ -20,6 +20,11 @@ typedef enum {
     SFX_TICK,        /* aim detent click                                 */
     SFX_LAND,        /* ball landing after flight                        */
     SFX_BOING0, SFX_BOING1, SFX_BOING2, SFX_BOING3, SFX_BOING4,
+    SFX_STAB,        /* horn-section hit: birdies and better             */
+    SFX_CROWD,       /* the room applauds                                */
+    SFX_CHIME,       /* struck vibraphone bar: targets, gold             */
+    SFX_COIN,        /* fairground payout                                */
+    SFX_WHOOSH,      /* camera moves, menu travel                        */
     SFX_COUNT
 } BpSfx;
 

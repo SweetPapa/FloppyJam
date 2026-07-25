@@ -10,9 +10,16 @@ english around a corner. Smash a combo through an object ball into a gold pocket
 worth a stroke. Sink the cup in the fewest strokes. Sometimes going crazy helps;
 other times tact and skill is the whole answer.
 
-Single native executable, ~120 KB, no asset files of any kind. Every mesh,
+The table is set up in the middle of a city at two in the morning: neon rails,
+festoon lights on poles, a wet plaza with traffic circling it, a skyline that
+is different on every hole, a ferris wheel somewhere over your shoulder, and a
+jazz trio playing the whole time.
+
+Single native executable, ~150 KB, no asset files of any kind. Every mesh,
 palette, texture and sound is generated at startup or synthesised at runtime,
-and all eighteen holes are compiled-in C arrays.
+and all eighteen holes are compiled-in C arrays. The skyline included — it is
+seeded off the hole index, so hole 7 has the same view every time you play it
+and nobody ever shipped a bitmap of it.
 
 ## Build
 
@@ -37,7 +44,7 @@ make windows RAYLIB_WIN=/path/to/mingw-raylib     # -> breakpar.exe
 
 That link line is `-static -static-libgcc -mwindows`, so the result runs on a
 stock Windows 10/11 machine with no runtime installs and no DLLs beside it.
-The current macOS release build is **120 KB** against a 1,474,560 byte ceiling.
+The current macOS release build is **150 KB** against a 1,474,560 byte ceiling.
 
 ## Controls
 
@@ -145,6 +152,41 @@ read by `physics.c`: adding wind to the simulation would invalidate every tuning
 gate, and a wind gauge that did not move the ball would lie to the player. So
 there is no gauge — just weather.
 
+Everything that pays off says so where it happened: bank three or more rails and
+the count pops off the cushion you just hit, a gold pocket floats `-1 STROKE`
+over itself, and a birdie or better brings a horn stab and a room full of people.
+Frequent events wash the edge of the frame rather than the middle of it, so the
+feedback never hides the table you are trying to read.
+
+## Art direction
+
+Night, neon, and nothing on disk. The felt walks green to twilight blue across
+the eighteen exactly as it always did, but it now sits under a city: a banded sky
+dome, a couple of hundred stars, three distance rings of buildings with lit
+windows and rooftop signs, a wet plaza with ring roads and traffic on them,
+searchlights, a blimp and a ferris wheel. Each hole draws a different one from a
+hash of its index — same hole, same skyline, forever, for about two kilobytes of
+table.
+
+Close in, the table is an island of light: neon tubes along every rail, festoon
+bulbs strung between poles all the way round, booths and speaker stacks at the
+corners, and a beacon standing over the cup. Each hole also picks one **accent**
+colour off a neon wheel, and that single number drives the flag, the beacon, the
+plaza rings and the HUD trim together.
+
+The whole backdrop is roughly five thousand triangles and costs about 2 ms of CPU
+a frame, which keeps the integrated-graphics floor in the spec intact.
+
+## Music
+
+A swing jazz combo, generated a sample at a time: a walking bass, an electric
+piano comping rootless shells on the Charleston, a swung ride cymbal, brushes on
+two and four, a feathered kick and a sparse vibraphone improvising out of the
+chord scale — in stereo, through a slap delay. Three charts: a lazy major
+turnaround for the menus, a bright minor ii-V-i for the front nine, and a slow
+minor blues for the back nine, because by hole ten it should feel late. Chords
+are a 64-byte table; everything else is arithmetic.
+
 ## Physics
 
 `src/physics.c` is the contract; everything else observes it. Fixed 1/240 s
@@ -207,9 +249,10 @@ v5/
     course.c/.h  hole tables -> world, geometry queries
     shot.c/.h    aim, power meter, english, aim guide
     camera.c/.h  survey / ride / cup / flyover / cinema
-    render.c/.h  palettes, procedural geometry, HUD, screens
-    juice.c/.h   particles, hitstop, slow-mo, banners
-    synth.c/.h   every sound effect plus the 16-step music tracker
+    render.c/.h  palettes, procedural geometry, neon HUD, screens
+    scenery.c/.h the city: sky dome, skyline, plaza, funfair, table dressing
+    juice.c/.h   particles, sparkles, hitstop, slow-mo, popups, banners
+    synth.c/.h   every sound effect plus the swing-jazz combo
     save.c/.h    breakpar.sav — bests, aces, volumes, fullscreen
     replay.c/.h  16 bytes per shot; ace replays are free because the sim is exact
   data/

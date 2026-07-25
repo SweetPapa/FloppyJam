@@ -1,14 +1,24 @@
-/* synth.c — parameterised recipes -> short PCM buffers, plus a 16-step
- * tracker for the ambient bed. Nothing here reads a file. */
+/* synth.c — parameterised recipes -> short PCM buffers, plus a small swing
+ * jazz combo streamed a sample at a time. Nothing here reads a file.
+ *
+ * The combo is the reason this file grew: BREAK PAR is played at two in the
+ * morning under neon, and a straight 16-step pentatonic loop was the one
+ * thing on screen still saying "daytime". What runs now is a walking bass, a
+ * comping electric piano, a swung ride cymbal, brushes and a sparse vibes
+ * line over an eight-bar chord chart, in stereo, through a slap delay. All of
+ * it is a few hundred bytes of chord table plus arithmetic. */
 #include "synth.h"
 #include "core.h"
 #include "raylib.h"
 #include <stdlib.h>
 #include <string.h>
 
-#define SR         22050
+/* 32 kHz, up from 22: brushes and ride cymbals live above 8 kHz and turned to
+ * mush at the old rate. Costs nothing on disk — every buffer is generated. */
+#define SR         32000
 #define VOICES     4          /* polyphony per sfx slot */
-#define MUS_CHUNK  1024
+#define MUS_FRAMES 512        /* stereo frames per streamed chunk */
+#define DELAY_LEN  6400       /* 200 ms slap, the room the combo plays in */
 
 /* ------------------------------------------------------------------ */
 /* cosmetic-only PRNG (never touched by the sim)                       */
@@ -19,6 +29,17 @@ static float nz(void)
     rs ^= rs << 13; rs ^= rs >> 17; rs ^= rs << 5;
     return ((float)(rs & 0xffffu) / 32768.0f) - 1.0f;
 }
+
+/* separate, seekable stream for musical choices, so the improviser plays the
+ * same solo on the same bar instead of drifting with the sfx load */
+static unsigned int mhash(unsigned int x)
+{
+    x ^= x >> 16; x *= 0x7feb352du;
+    x ^= x >> 15; x *= 0x846ca68bu;
+    x ^= x >> 16;
+    return x;
+}
+static float mrnd(unsigned int x) { return (float)(mhash(x) & 0xffffu) / 65535.0f; }
 
 /* ------------------------------------------------------------------ */
 /* buffer building                                                     */
@@ -101,14 +122,7 @@ static float vol_master = 0.8f, vol_music = 0.6f, vol_sfx = 0.9f;
 static float duck = 0.0f;
 
 static AudioStream music;
-static int   mus_mood = 0;
-static int   mus_step = 0;
-static int   mus_pos = 0;           /* samples into the current step */
-static short mus_buf[MUS_CHUNK];
-
-/* voice state for the tracker */
-static float bass_ph, bass_env, blip_ph, blip_env, perc_env, perc_lp;
-static float bass_f, blip_f;
+static short mus_buf[MUS_FRAMES * 2];
 
 static Sound make(Buf b, int loop)
 {
@@ -193,10 +207,14 @@ static void build_sfx(void)
     buf_lp(&b, 0.85f, 0.5f);
     make_all(SFX_SCRATCH, b);
 
-    /* SAD — the rim-out slide. Tragedy, but funny. */
-    b = buf_new(0.75f);
+    /* SAD — the rim-out slide. Tragedy, but funny. Now with a muted-trumpet
+     * "wah wah" tail, because this is a jazz club. */
+    b = buf_new(0.95f);
     mix_tone(&b, 0.0f, 0.70f, 760.0f, 155.0f, 0.55f, 4.0f, 0);
     mix_tone(&b, 0.0f, 0.70f, 764.0f, 152.0f, 0.30f, 4.0f, 1);
+    mix_tone(&b, 0.52f, 0.20f, 233.08f, 220.00f, 0.45f, 9.0f, 2);
+    mix_tone(&b, 0.70f, 0.25f, 207.65f, 174.61f, 0.45f, 7.0f, 2);
+    buf_lp(&b, 0.6f, 0.30f);
     make_all(SFX_SAD, b);
 
     /* BANNER slam */
@@ -255,6 +273,58 @@ static void build_sfx(void)
         mix_noise(&b, 0.0f, 0.02f, 0.25f, 260.0f);
         make_all(SFX_BOING0 + i, b);
     }
+
+    /* ---- the night-out set ------------------------------------------ */
+
+    /* STAB — a three-horn shell voicing hit hard and cut off. This is what
+     * a birdie should sound like: a section, not a chime. */
+    b = buf_new(0.85f);
+    {
+        static const float V[4] = { 220.00f, 277.18f, 329.63f, 415.30f };
+        for (i = 0; i < 4; ++i) {
+            mix_tone(&b, 0.000f, 0.55f, V[i] * 0.985f, V[i], 0.34f, 5.5f, 2);
+            mix_tone(&b, 0.004f, 0.50f, V[i] * 2.0f,   V[i] * 2.0f, 0.11f, 8.0f, 1);
+        }
+        mix_noise(&b, 0.0f, 0.03f, 0.35f, 130.0f);
+    }
+    buf_lp(&b, 0.85f, 0.28f);
+    make_all(SFX_STAB, b);
+
+    /* CROWD — a small room applauding. Filtered noise swelling under a
+     * scatter of individual claps so it does not read as static. */
+    b = buf_new(1.90f);
+    mix_noise(&b, 0.0f, 1.85f, 0.34f, 1.5f);
+    for (i = 0; i < 90; ++i) {
+        float when = 0.02f + 1.60f * ((float)(mhash((unsigned int)i * 7919u) & 0xffffu)
+                                      / 65535.0f);
+        float amp = 0.16f + 0.22f * ((float)(mhash((unsigned int)i * 104729u) & 0xffu)
+                                     / 255.0f);
+        mix_noise(&b, when, 0.020f, amp, 320.0f);
+    }
+    buf_lp(&b, 0.60f, 0.40f);
+    make_all(SFX_CROWD, b);
+
+    /* CHIME — struck vibraphone bar with its octave and a touch of the
+     * inharmonic fourth partial. Used for targets and gold. */
+    b = buf_new(1.30f);
+    mix_tone(&b, 0.0f, 1.20f, 1046.50f, 1046.50f, 0.50f, 2.4f, 0);
+    mix_tone(&b, 0.0f, 0.90f, 2093.00f, 2093.00f, 0.22f, 4.0f, 0);
+    mix_tone(&b, 0.0f, 0.45f, 4186.00f, 4186.00f, 0.09f, 9.0f, 0);
+    mix_noise(&b, 0.0f, 0.008f, 0.20f, 600.0f);
+    make_all(SFX_CHIME, b);
+
+    /* COIN — the fairground payout, two quick bright pips */
+    b = buf_new(0.36f);
+    mix_tone(&b, 0.00f, 0.09f, 987.77f, 987.77f, 0.55f, 26.0f, 1);
+    mix_tone(&b, 0.07f, 0.26f, 1318.51f, 1318.51f, 0.55f, 11.0f, 1);
+    mix_tone(&b, 0.07f, 0.26f, 2637.02f, 2637.02f, 0.16f, 14.0f, 0);
+    make_all(SFX_COIN, b);
+
+    /* WHOOSH — brushed air for camera moves and menu travel */
+    b = buf_new(0.42f);
+    mix_noise(&b, 0.0f, 0.40f, 0.55f, 7.0f);
+    buf_lp(&b, 0.06f, 0.85f);
+    make_all(SFX_WHOOSH, b);
 }
 
 static void build_rolls(void)
@@ -289,7 +359,7 @@ void bp_synth_init(void)
     if (!IsAudioDeviceReady()) return;
     build_sfx();
     build_rolls();
-    music = LoadAudioStream(SR, 16, 1);
+    music = LoadAudioStream(SR, 16, 2);
     SetAudioStreamVolume(music, vol_master * vol_music);
     PlayAudioStream(music);
     ready = 1;
@@ -348,41 +418,144 @@ void bp_roll(float speed, int surf)
     SetSoundPitch(roll[roll_cur], p);
 }
 
-/* ------------------------------------------------------------------ */
-/* music: 16-step tracker, three voices, patterns as bytes             */
+/* ================================================================== */
+/* the combo                                                          */
+/*                                                                    */
+/* Grid: eighth notes, swung 2:1, eight to the bar, eight bars to the */
+/* chorus. Everything below decides what to play when a step turns    */
+/* over, then the per-sample block renders whatever is ringing.       */
 
-/* Scale degrees; 255 = rest. Two moods: the front nine is warm, the back
- * nine sits a fourth lower and slower — the course "ages" as you play. */
-static const unsigned char PAT_BASS[2][16] = {
-    { 0,255,255, 0, 255,255, 5,255,  3,255,255, 3, 255, 7,255,255 },
-    { 0,255,255,255, 3,255,255,255,  5,255,255,255, 7,255, 5,255 },
-};
-static const unsigned char PAT_BLIP[2][16] = {
-    { 255,12,255,15, 255,255,17,255, 255,19,255,255, 15,255,12,255 },
-    { 255,255,15,255, 255,19,255,255, 22,255,255,17, 255,255,15,255 },
-};
-static const unsigned char PAT_PERC[2][16] = {
-    { 2,0,1,0, 2,0,1,1, 2,0,1,0, 2,1,1,0 },
-    { 2,0,0,0, 1,0,0,1, 2,0,0,0, 1,0,1,0 },
-};
-static const float ROOT[2] = { 55.00f, 43.65f };      /* A1, F1 */
-static const int   STEP_SAMPLES[2] = { SR * 60 / (108 * 4), SR * 60 / (84 * 4) };
+typedef struct { unsigned char root, type; } Chord;
 
-/* semitone offsets of a minor pentatonic, extended over three octaves */
-static float degree_hz(float root, int deg)
+/* chord types -> semitones above the chord root */
+enum { CH_M7 = 0, CH_DOM7, CH_MAJ7, CH_M7B5 };
+static const signed char TONES[4][4] = {
+    { 0, 3, 7, 10 },   /* m7    */
+    { 0, 4, 7, 10 },   /* 7     */
+    { 0, 4, 7, 11 },   /* maj7  */
+    { 0, 3, 6, 10 },   /* m7b5  */
+};
+/* the scale the vibes player improvises out of, per chord type */
+static const signed char SCALE[4][6] = {
+    {  0,  3,  5,  7, 10, 14 },   /* minor pentatonic over m7        */
+    {  0,  4,  7,  9, 10, 14 },   /* mixolydian bones over 7         */
+    {  0,  2,  4,  7,  9, 11 },   /* major over maj7                 */
+    {  0,  3,  6, 10, 13, 15 },   /* half-diminished, with tensions  */
+};
+
+/* Three charts. 0 is the menu — a lazy major turnaround. 1 is the front
+ * nine, a bright minor ii-V-i that keeps moving. 2 is the back nine: a slow
+ * minor blues, because by hole ten it should feel late. */
+static const Chord PROG[3][8] = {
+    { {0,CH_MAJ7},{5,CH_MAJ7},{9,CH_M7},  {2,CH_DOM7},
+      {7,CH_M7},  {0,CH_MAJ7},{9,CH_M7},  {2,CH_DOM7} },
+    { {0,CH_M7},  {5,CH_M7},  {2,CH_M7B5},{7,CH_DOM7},
+      {0,CH_M7},  {8,CH_MAJ7},{2,CH_M7B5},{7,CH_DOM7} },
+    { {0,CH_M7},  {0,CH_M7},  {5,CH_M7},  {5,CH_M7},
+      {0,CH_M7},  {8,CH_DOM7},{7,CH_DOM7},{7,CH_DOM7} },
+};
+static const int   BPM[3]     = { 116, 138, 92 };
+static const float TONIC[3]   = { 174.61f, 130.81f, 110.00f };   /* F3, C3, A2 */
+
+static int   mus_mood = 0;        /* 0 silence, 1 front, 2 back, 3 menu */
+static int   mus_bar, mus_step, mus_pos, mus_len, mus_chorus;
+
+/* voice state */
+static float bass_ph, bass_env, bass_f, bass_lp;
+static float pf[3], pph[3], piano_env, trem_ph;
+static float ride_env, ride_hp, ride_prev, rph1, rph2;
+static float brush_env, brush_lp;
+static float kick_ph, kick_env, kick_f;
+static float vib_ph, vib_env, vib_f, vib_lfo;
+
+static float delay_l[DELAY_LEN], delay_r[DELAY_LEN];
+static int   delay_pos;
+static float delay_lp;
+
+static float note_hz(float tonic, int semi)
 {
-    static const int SEMI[5] = { 0, 3, 5, 7, 10 };
-    int oct = deg / 5, d = deg % 5;
-    return root * powf(2.0f, (float)(SEMI[d] + 12 * oct) / 12.0f);
+    return tonic * powf(2.0f, (float)semi / 12.0f);
+}
+
+static void music_reset(void)
+{
+    mus_bar = mus_step = mus_pos = 0;
+    mus_len = 1;
+    mus_chorus = 0;
+    bass_env = piano_env = ride_env = brush_env = kick_env = vib_env = 0.0f;
+    memset(delay_l, 0, sizeof(delay_l));
+    memset(delay_r, 0, sizeof(delay_r));
+    delay_pos = 0;
+}
+
+/* how many samples this eighth lasts — swing lives entirely in here */
+static int step_len(int m, int step)
+{
+    int q = SR * 60 / BPM[m];          /* one quarter note */
+    int lng = q * 2 / 3;               /* 2:1 triplet feel */
+    return (step & 1) ? (q - lng) : lng;
+}
+
+/* Called once at each step boundary: decide what the five players do. */
+static void music_step_begin(int m)
+{
+    const Chord *ch = &PROG[m][mus_bar];
+    const Chord *nx = &PROG[m][(mus_bar + 1) & 7];
+    unsigned int sd = (unsigned int)((mus_chorus * 8 + mus_bar) * 8 + mus_step) * 2654435761u;
+    int s = mus_step, beat = s >> 1, onbeat = !(s & 1);
+    float tonic = TONIC[m];
+
+    /* --- walking bass: four to the bar, last beat leans into the next --- */
+    if (onbeat) {
+        int semi;
+        switch (beat) {
+        case 0:  semi = ch->root; break;
+        case 1:  semi = ch->root + TONES[ch->type][(mrnd(sd) < 0.5f) ? 2 : 1]; break;
+        case 2:  semi = ch->root + TONES[ch->type][(mrnd(sd + 1u) < 0.6f) ? 3 : 2]; break;
+        default: semi = (int)nx->root + ((mrnd(sd + 2u) < 0.5f) ? -1 : 1); break;
+        }
+        bass_f = note_hz(tonic * 0.25f, semi);
+        bass_env = 1.0f;
+    }
+
+    /* --- piano comping: the Charleston, plus the odd extra push --- */
+    if (s == 0 || s == 3 || (s == 6 && mrnd(sd + 3u) < 0.45f)) {
+        const signed char *tn = TONES[ch->type];
+        /* rootless shell: 3rd, 7th, 9th. It is what a piano actually plays
+         * behind a bass that is already covering the root. */
+        pf[0] = note_hz(tonic, ch->root + tn[1]);
+        pf[1] = note_hz(tonic, ch->root + tn[3]);
+        pf[2] = note_hz(tonic, ch->root + 14);
+        piano_env = (s == 0) ? 0.85f : 0.60f;
+    }
+
+    /* --- ride: ding, ding-a-ding. Beats plus the swung a of 2 and 4. --- */
+    if (s == 0 || s == 2 || s == 4 || s == 6) ride_env = (s == 2 || s == 6) ? 0.62f : 0.46f;
+    else if (s == 3 || s == 7)                ride_env = 0.34f;
+
+    /* --- brushes on 2 and 4, kick feathered on 1 --- */
+    if (s == 2 || s == 6) brush_env = 0.55f;
+    if (s == 0 && (mus_bar & 1) == 0) { kick_env = 0.60f; kick_f = 74.0f; }
+
+    /* --- vibes: sparse, off-beat, phrased in twos and threes --- */
+    {
+        float want = onbeat ? 0.16f : 0.42f;
+        if (mus_bar == 3 || mus_bar == 7) want += 0.22f;    /* fill the turnaround */
+        if (mrnd(sd + 4u) < want) {
+            const signed char *sc = SCALE[ch->type];
+            int deg = (int)(mrnd(sd + 5u) * 5.999f);
+            int oct = (mrnd(sd + 6u) < 0.3f) ? 12 : 0;
+            vib_f = note_hz(tonic * 2.0f, ch->root + sc[deg] + oct);
+            vib_env = 0.34f + 0.20f * mrnd(sd + 7u);
+        }
+    }
 }
 
 void bp_music_mood(int mood)
 {
     if (mood == mus_mood) return;
     mus_mood = mood;
-    mus_step = 0;
-    mus_pos = 0;
-    bass_env = blip_env = perc_env = 0.0f;
+    music_reset();
 }
 
 void bp_music_duck(float amount)
@@ -395,52 +568,108 @@ void bp_music_update(void)
 {
     int m;
     if (!ready) return;
-    m = mus_mood - 1;
+    /* moods are 1 front, 2 back, 3 menu; charts are indexed 1, 2, 0 */
+    m = (mus_mood == 3) ? 0 : mus_mood - 1;
 
     while (IsAudioStreamProcessed(music)) {
         int i;
-        for (i = 0; i < MUS_CHUNK; ++i) {
-            float v = 0.0f;
-            if (m < 0) { mus_buf[i] = 0; continue; }
+        for (i = 0; i < MUS_FRAMES; ++i) {
+            float l = 0.0f, r = 0.0f, dry, wet;
+            if (m < 0) { mus_buf[i * 2] = mus_buf[i * 2 + 1] = 0; continue; }
 
             if (mus_pos == 0) {
-                unsigned char b = PAT_BASS[m][mus_step];
-                unsigned char p = PAT_BLIP[m][mus_step];
-                unsigned char k = PAT_PERC[m][mus_step];
-                if (b != 255) { bass_f = degree_hz(ROOT[m], b); bass_env = 1.0f; }
-                if (p != 255) { blip_f = degree_hz(ROOT[m], p); blip_env = 0.55f; }
-                if (k == 2)   perc_env = 0.55f;
-                else if (k == 1) perc_env = 0.22f;
+                music_step_begin(m);
+                mus_len = step_len(m, mus_step);
             }
 
-            /* bass: soft triangle */
-            if (bass_env > 0.0005f) {
+            /* bass: triangle through a fixed lowpass, plucked */
+            if (bass_env > 0.0004f) {
+                float v;
                 bass_ph += bass_f / (float)SR;
                 if (bass_ph > 1.0f) bass_ph -= 1.0f;
-                v += (4.0f * fabsf(bass_ph - 0.5f) - 1.0f) * bass_env * 0.30f;
-                bass_env *= 0.99988f;
+                v = (4.0f * fabsf(bass_ph - 0.5f) - 1.0f) * bass_env;
+                bass_lp += 0.14f * (v - bass_lp);
+                l += bass_lp * 0.50f; r += bass_lp * 0.50f;
+                bass_env *= 0.99992f;
             }
-            /* pad blip: sine with a quick decay */
-            if (blip_env > 0.0005f) {
-                blip_ph += blip_f / (float)SR;
-                if (blip_ph > 1.0f) blip_ph -= 1.0f;
-                v += sinf(blip_ph * BP_TAU) * blip_env * 0.16f;
-                blip_env *= 0.99975f;
+            /* electric piano: three sines, tremolo, sits left of centre */
+            if (piano_env > 0.0004f) {
+                float v = 0.0f;
+                int j;
+                trem_ph += 5.2f / (float)SR;
+                if (trem_ph > 1.0f) trem_ph -= 1.0f;
+                for (j = 0; j < 3; ++j) {
+                    pph[j] += pf[j] / (float)SR;
+                    if (pph[j] > 1.0f) pph[j] -= 1.0f;
+                    v += sinf(pph[j] * BP_TAU);
+                }
+                v *= piano_env * (0.86f + 0.14f * sinf(trem_ph * BP_TAU));
+                l += v * 0.115f; r += v * 0.075f;
+                piano_env *= 0.99984f;
             }
-            /* brush percussion: lowpassed noise */
-            if (perc_env > 0.0005f) {
-                perc_lp += 0.28f * (nz() - perc_lp);
-                v += perc_lp * perc_env * 0.5f;
-                perc_env *= 0.9993f;
+            /* ride cymbal: highpassed noise plus two inharmonic partials,
+             * parked right of centre so it does not fight the piano */
+            if (ride_env > 0.0004f) {
+                float n = nz(), v;
+                ride_hp = 0.96f * (ride_hp + n - ride_prev);
+                ride_prev = n;
+                rph1 += 5240.0f / (float)SR; if (rph1 > 1.0f) rph1 -= 1.0f;
+                rph2 += 7930.0f / (float)SR; if (rph2 > 1.0f) rph2 -= 1.0f;
+                v = (ride_hp * 0.55f + sinf(rph1 * BP_TAU) * 0.14f +
+                     sinf(rph2 * BP_TAU) * 0.09f) * ride_env;
+                l += v * 0.070f; r += v * 0.135f;
+                ride_env *= 0.99955f;
+            }
+            /* brushes: a short swish, not a snare crack */
+            if (brush_env > 0.0004f) {
+                brush_lp += 0.16f * (nz() - brush_lp);
+                l += brush_lp * brush_env * 0.34f;
+                r += brush_lp * brush_env * 0.30f;
+                brush_env *= 0.99930f;
+            }
+            /* kick: felt beater, mostly felt rather than heard */
+            if (kick_env > 0.0004f) {
+                kick_ph += kick_f / (float)SR;
+                if (kick_ph > 1.0f) kick_ph -= 1.0f;
+                kick_f *= 0.99994f;
+                l += sinf(kick_ph * BP_TAU) * kick_env * 0.34f;
+                r += sinf(kick_ph * BP_TAU) * kick_env * 0.34f;
+                kick_env *= 0.99975f;
+            }
+            /* vibraphone: sine with the motor running */
+            if (vib_env > 0.0004f) {
+                float v;
+                vib_ph += vib_f / (float)SR;
+                if (vib_ph > 1.0f) vib_ph -= 1.0f;
+                vib_lfo += 6.4f / (float)SR;
+                if (vib_lfo > 1.0f) vib_lfo -= 1.0f;
+                v = sinf(vib_ph * BP_TAU) * vib_env *
+                    (0.70f + 0.30f * sinf(vib_lfo * BP_TAU));
+                l += v * 0.150f; r += v * 0.170f;
+                vib_env *= 0.99978f;
             }
 
-            mus_buf[i] = (short)(bp_clampf(v, -1.0f, 1.0f) * 9000.0f);
+            /* one slap back, cross-fed, lowpassed: a small club, not a hall */
+            dry = (l + r) * 0.5f;
+            wet = delay_l[delay_pos];
+            delay_lp += 0.30f * (dry + wet * 0.30f - delay_lp);
+            delay_l[delay_pos] = delay_lp;
+            delay_r[delay_pos] = delay_lp * 0.85f;
+            delay_pos = (delay_pos + 1) % DELAY_LEN;
+            l += delay_r[delay_pos] * 0.26f;
+            r += wet * 0.20f;
 
-            if (++mus_pos >= STEP_SAMPLES[m]) {
+            mus_buf[i * 2]     = (short)(bp_clampf(l, -1.0f, 1.0f) * 8800.0f);
+            mus_buf[i * 2 + 1] = (short)(bp_clampf(r, -1.0f, 1.0f) * 8800.0f);
+
+            if (++mus_pos >= mus_len) {
                 mus_pos = 0;
-                mus_step = (mus_step + 1) & 15;
+                if (++mus_step >= 8) {
+                    mus_step = 0;
+                    if (++mus_bar >= 8) { mus_bar = 0; ++mus_chorus; }
+                }
             }
         }
-        UpdateAudioStream(music, mus_buf, MUS_CHUNK);
+        UpdateAudioStream(music, mus_buf, MUS_FRAMES);
     }
 }
