@@ -393,19 +393,14 @@ bool scene_load(const char *id)
             else if (eq(kind, "cut"))   { h->kind = SC_CUT;   word(&p, h->arg, 48); }
             else                        { h->kind = SC_NONE; }
 
-            char tail[TEXT_MAX + 64];
-            rest(p, tail, sizeof tail);
             /* "<label>" [if <cond>] */
-            const char *q = tail;
+            const char *q = p;
             char lab[TEXT_MAX];
             if (word(&q, lab, sizeof lab)) snprintf(h->label, sizeof h->label, "%s", lab);
             char maybe_if[8];
-            const char *save = q;
             if (word(&q, maybe_if, sizeof maybe_if) && eq(maybe_if, "if")) {
                 snprintf(h->cond, sizeof h->cond, "%s", q);
                 h->has_cond = true;
-            } else {
-                (void)save;
             }
         }
     }
@@ -587,7 +582,11 @@ void scene_draw(void)
     }
 
     if (hover >= 0 && g_hot[hover].label[0]) {
-        const char *lab = g_hot[hover].label;
+        /* Look hotspots contain their full inspection prose. Keep that prose
+         * for the card after clicking; a compact verb is a clearer tooltip
+         * and cannot grow wider than the screen. */
+        const char *lab = g_hot[hover].kind == SC_NONE ? "Inspect"
+                                                       : g_hot[hover].label;
         float w = art_text_w(lab, 17) + 26;
         Rectangle r = { m.x - w * 0.5f, m.y - 46, w, 32 };
         if (r.x < 8) r.x = 8;
