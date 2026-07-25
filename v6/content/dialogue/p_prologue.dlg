@@ -157,8 +157,8 @@
   goto p_wick_iris
 
 @node p_wick_iris
-  WICK(sad): Iris Marlow has not been seen since the night before last. She
-  goes quiet for a day sometimes. Not two. Never two.
+  WICK(sad): Iris Marlow has not been seen since last night. She goes quiet
+  for a day sometimes. Not when the Prism goes quiet with her.
   grant clue.iris_missing
   WICK: Go up and look at her yourself. The Prismworks, I mean. The tower.
   WICK: You can stand on the stair. The stair is sound as far as it goes.

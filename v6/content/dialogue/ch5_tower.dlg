@@ -14,7 +14,7 @@
   YOU:
     * (curious) A great deal to report. You have been avoiding this hill.  -> mayor_avoid
     * (kind) You do not have to stand out here if it upsets you.  -> mayor_upset
-    * (dry) I have four days of your town's savings and a great deal to say.  -> mayor_avoid
+    * (dry) I have your town's savings and a great deal to say.  -> mayor_avoid
   [else]
   goto mayor_after
   [end]
@@ -151,7 +151,7 @@
 @node ch5_pip
   [if flag ch5.pip_done == 1]
   Pip is on the low wall with his head tipped sideways, waiting to see what
-  you do next. He has decided about you. It took a week and a pail of fish.
+  you do next. He has decided about you. It took all day and a pail of fish.
   [else]
   Something lands on the wall beside you, hard, the way a thing lands when it
   has been deciding for a long time and then stopped deciding.
@@ -171,7 +171,7 @@
 @node pip_hand
   He hops onto your wrist. He is nine ounces of nerve and his feet are cold.
   He puts a brass letter-opener into your palm, which is not a gift; it is an
-  argument he has been trying to make to this town for a week.
+  argument he has been trying to make to this town since dawn.
   goto pip_trust
 
 @node pip_trust
@@ -181,7 +181,7 @@
   grant clue.pip_trusts
   trust pip 3
   set ch5.pip_done = 1
-  You have been in this town four days and the only witness has been trying
+  You have been in this town all day and the only witness has been trying
   to give evidence the entire time.
 
 @node nona_intro

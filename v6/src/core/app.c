@@ -25,6 +25,7 @@ typedef enum {
 static AppState g_state = A_TITLE;
 static AppState g_after_cut = A_TOWN;
 static AppState g_after_puzzle = A_TOWN;
+static AppState g_settings_back = A_TITLE;
 static bool     g_resume_dlg;
 static float    g_time;
 static char     g_recap[512];
@@ -139,7 +140,7 @@ static void title_update(void)
                 g_state = A_RECAP;
             }
             break;
-        case 2: g_state = A_SETTINGS; break;
+        case 2: g_settings_back = A_TITLE; g_state = A_SETTINGS; break;
         default: g_quit = true; break;
         }
     }
@@ -153,7 +154,7 @@ static void name_draw(void)
 {
     title_draw();
     DrawRectangle(0, 0, VW, VH, (Color){ 24, 22, 26, 140 });
-    Rectangle r = { 340, 250, 600, 230 };
+    Rectangle r = { 340, 230, 600, 280 };
     paper_panel(r, 5.0f, 13000);
     art_text_fit(ui_str("name.prompt"),
                  (Rectangle){ r.x + 30, r.y + 22, r.width - 60, 56 }, 20, col_ink());
@@ -165,9 +166,13 @@ static void name_draw(void)
              fmodf(g_time, 1.0f) < 0.5f ? "_" : " ");
     art_text(shown, field.x + 14, field.y + 12, 24, col_ink());
 
-    pz_button((Rectangle){ r.x + 30, r.y + 156, 240, 52 }, ui_str("name.begin"),
+    if (save_exists(0))
+        art_text_fit(ui_str("name.overwrite"),
+                     (Rectangle){ r.x + 30, r.y + 144, r.width - 60, 32 },
+                     14, col_accent_b());
+    pz_button((Rectangle){ r.x + 30, r.y + 196, 240, 52 }, ui_str("name.begin"),
               true, 13002);
-    pz_button((Rectangle){ r.x + 320, r.y + 156, 240, 52 }, ui_str("name.back"),
+    pz_button((Rectangle){ r.x + 320, r.y + 196, 240, 52 }, ui_str("name.back"),
               true, 13004);
 }
 
@@ -182,11 +187,11 @@ static void name_update(void)
         int n = (int)strlen(g_name);
         if (n) g_name[n - 1] = 0;
     }
-    Rectangle r = { 340, 250, 600, 230 };
-    if (pz_button_clicked((Rectangle){ r.x + 30, r.y + 156, 240, 52 }, true) ||
+    Rectangle r = { 340, 230, 600, 280 };
+    if (pz_button_clicked((Rectangle){ r.x + 30, r.y + 196, 240, 52 }, true) ||
         IsKeyPressed(KEY_ENTER))
         begin_new_game();
-    if (pz_button_clicked((Rectangle){ r.x + 320, r.y + 156, 240, 52 }, true))
+    if (pz_button_clicked((Rectangle){ r.x + 320, r.y + 196, 240, 52 }, true))
         g_state = A_TITLE;
 }
 
@@ -246,13 +251,17 @@ static void settings_screen_draw(void)
     rows[0] = b0; rows[1] = b1; rows[2] = b2; rows[3] = b3; rows[4] = b4; rows[5] = b5;
 
     for (int i = 0; i < 6; i++)
-        pz_button((Rectangle){ r.x + 40, r.y + 74 + i * 62.0f, r.width - 80, 50 },
+        pz_button((Rectangle){ r.x + 40, r.y + 70 + i * 54.0f, r.width - 80, 46 },
                   rows[i], true, 15010 + i * 2);
-    snprintf(buf, sizeof buf, "%s", ui_str("set.back"));
-    pz_button((Rectangle){ r.x + r.width * 0.5f - 120, r.y + 452, 240, 50 },
+    snprintf(buf, sizeof buf, "%s",
+             g_settings_back == A_TOWN ? ui_str("set.resume") : ui_str("set.back"));
+    pz_button((Rectangle){ r.x + r.width * 0.5f - 120, r.y + 406, 240, 48 },
               buf, true, 15040);
+    if (g_settings_back == A_TOWN)
+        pz_button((Rectangle){ r.x + r.width * 0.5f - 120, r.y + 466, 240, 48 },
+                  ui_str("set.titleback"), true, 15042);
     art_text_fit(ui_str("set.note"),
-                 (Rectangle){ r.x + 40, r.y + 512, r.width - 80, 50 },
+                 (Rectangle){ r.x + 40, r.y + 522, r.width - 80, 34 },
                  13, col_ink_soft());
 }
 
@@ -261,8 +270,8 @@ static void settings_screen_update(void)
     Rectangle r = { 300, 70, VW - 600, VH - 150 };
     Settings *s = settings();
     for (int i = 0; i < 6; i++) {
-        if (!pz_button_clicked((Rectangle){ r.x + 40, r.y + 74 + i * 62.0f,
-                                            r.width - 80, 50 }, true)) continue;
+        if (!pz_button_clicked((Rectangle){ r.x + 40, r.y + 70 + i * 54.0f,
+                                            r.width - 80, 46 }, true)) continue;
         switch (i) {
         case 0: s->text_size = (s->text_size + 1) % 3; break;
         case 1: s->highlight = !s->highlight; break;
@@ -274,9 +283,13 @@ static void settings_screen_update(void)
         settings_store();
     }
     if (pz_button_clicked((Rectangle){ r.x + r.width * 0.5f - 120,
-                                       r.y + 452, 240, 50 }, true) ||
+                                       r.y + 406, 240, 48 }, true) ||
         IsKeyPressed(KEY_ESCAPE))
-        g_state = scene_current()[0] ? A_TOWN : A_TITLE;
+        g_state = g_settings_back;
+    else if (g_settings_back == A_TOWN &&
+             pz_button_clicked((Rectangle){ r.x + r.width * 0.5f - 120,
+                                            r.y + 466, 240, 48 }, true))
+        g_state = A_TITLE;
 }
 
 /* ==========================================================================
@@ -293,7 +306,7 @@ static void hud_draw(void)
     art_text(fb, VW - 282, 22, 20, col_ink());
 
     pz_button((Rectangle){ VW - 244, 14, 110, 42 }, ui_str("hud.journal"), true, 16000);
-    pz_button((Rectangle){ VW - 124, 14, 100, 42 }, ui_str("hud.menu"), true, 16002);
+    pz_button((Rectangle){ VW - 124, 14, 100, 42 }, ui_str("hud.settings"), true, 16002);
 
     /* the hue ribbon — you can see how far you have come from any screen */
     static const Color band[7] = {
@@ -309,6 +322,48 @@ static void hud_draw(void)
         ink_fill(q, 4, HATCH_NONE, 16010 + i, i <= stage ? band[i] : col_paper_dark());
         ink_rect(r, 1.4f, 0.5f, 16020 + i, col_ink_soft());
     }
+
+    static const char *need[6][7] = {
+        { "clue.town_gray", "clue.prism_missing", "clue.iris_missing",
+          "clue.door_locked", "clue.magpie_blamed", NULL },
+        { "clue.otto_alibi", "clue.tansy_saw", "clue.ferry_log",
+          "clue.fish_pail", "clue.midnight_figure", "clue.pip_hungry", NULL },
+        { "clue.no_forced_lock", "clue.greta_gossip", "clue.felix_letters",
+          "clue.iris_letter", "clue.shiny_thefts", "clue.bruno_order", NULL },
+        { "clue.cogg_ledger", "clue.repair_braces", "clue.prism_dimming",
+          "clue.picks_borrowed", "clue.iris_secret", NULL },
+        { "clue.three_years", "clue.bees_remember", "clue.mayor_dodges",
+          "clue.town_lowspirits", "clue.garden_gray", "clue.lanterns_stored", NULL },
+        { "clue.budget_cut", "clue.nona_key", "clue.stair_rotten",
+          "clue.spare_key", "clue.mayor_shame", "clue.nona_grief",
+          "clue.pip_trusts" }
+    };
+    static const char *question[6] = {
+        "What happened this morning?", "Who was at the tower at midnight?",
+        "How was the tower opened?", "What was wrong with the Prism?",
+        "Why did the festival stop?", "Where is Iris now?"
+    };
+    char lead[180];
+    bool urgent = false;
+    if (stage >= 6) {
+        snprintf(lead, sizeof lead, "%s", ui_str("hud.closed"));
+    } else if (stage == 5 && flag_get("board.ch5_where")) {
+        snprintf(lead, sizeof lead, "%s", ui_str("hud.climb"));
+        urgent = true;
+    } else {
+        int have = 0, total = 0;
+        for (int i = 0; i < 7 && need[stage][i]; i++) {
+            total++;
+            if (clue_has(need[stage][i])) have++;
+        }
+        urgent = have == total;
+        if (urgent)
+            snprintf(lead, sizeof lead, "%s  %s", question[stage], ui_str("hud.ready"));
+        else
+            snprintf(lead, sizeof lead, "%s  Evidence %d/%d", question[stage], have, total);
+    }
+    art_text_fit(lead, (Rectangle){ 248, 48, 690, 30 }, 15,
+                 urgent ? col_accent_b() : col_ink_soft());
 }
 
 static void hud_update(void)
@@ -319,6 +374,7 @@ static void hud_update(void)
         g_state = A_JOURNAL;
     } else if (pz_button_clicked((Rectangle){ VW - 124, 14, 100, 42 }, true) ||
                IsKeyPressed(KEY_ESCAPE)) {
+        g_settings_back = A_TOWN;
         g_state = A_SETTINGS;
     }
 }
