@@ -29,3 +29,5 @@ home.png
 # never commit a service-account key or a notarisation credential
 sa-key.json
 *.keychain-db
+
+.env
