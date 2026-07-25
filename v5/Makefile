@@ -58,7 +58,7 @@ endif
 # 1,474,560 bytes: one 1.44 MB floppy. Hard ceiling, not a target.
 FLOPPY := 1474560
 
-.PHONY: all debug run test testcourse testcamera size windows clean
+.PHONY: all debug run test testcourse testcamera testmusic size windows clean
 
 all: $(TARGET)
 
@@ -90,6 +90,15 @@ testcourse:
 	      -lm -o bp_test_course
 	./bp_test_course
 
+# The combo, rendered offline against stub audio calls: no window, no device.
+# Writes build/music-*.wav so the music can actually be listened to on a build
+# machine, and asserts the failure modes a generative bed is prone to.
+testmusic:
+	@mkdir -p build
+	$(CC) -std=c11 -O2 $(WARN) -I$(SRCDIR) -I. $(RAYLIB_CFLAGS) \
+	      tests/test_music.c $(SRCDIR)/synth.c -lm -o bp_test_music
+	./bp_test_music
+
 testcamera:
 	$(CC) -std=c11 -O2 $(WARN) -I$(SRCDIR) -I. $(RAYLIB_CFLAGS) tests/test_camera.c \
 	      $(SRCDIR)/camera.c $(SRCDIR)/course.c $(SRCDIR)/physics.c \
@@ -108,13 +117,30 @@ size: $(TARGET)
 # Windows x64 is the primary contest target; needs a MinGW raylib in
 # RAYLIB_WIN (headers in $(RAYLIB_WIN)/include, libraylib.a in .../lib).
 RAYLIB_WIN ?= /usr/local/x86_64-w64-mingw32
+# The icon and version block are compiled by windres and linked in, so the
+# executable carries its own artwork instead of needing a file next to it. If
+# windres or the .ico is missing the build still succeeds, just iconless — an
+# icon should never be the reason a release cannot be produced.
 windows:
+	@if command -v x86_64-w64-mingw32-windres >/dev/null 2>&1 && [ -f ../art/breakpar.ico ]; then \
+	  echo "x86_64-w64-mingw32-windres $(SRCDIR)/win.rc -O coff -o win.res.o"; \
+	  x86_64-w64-mingw32-windres $(SRCDIR)/win.rc -O coff -o win.res.o; \
+	else \
+	  echo "note: no windres or no art/breakpar.ico — building without an icon"; \
+	  rm -f win.res.o; \
+	fi
 	x86_64-w64-mingw32-gcc -std=c11 -Os -flto -ffunction-sections -fdata-sections \
 	  $(WARN) -I$(SRCDIR) -I$(RAYLIB_WIN)/include $(SRCS) \
+	  $$( [ -f win.res.o ] && echo win.res.o ) \
 	  -L$(RAYLIB_WIN)/lib -lraylib -lopengl32 -lgdi32 -lwinmm \
 	  -static -static-libgcc -mwindows \
 	  -Wl,--gc-sections -o $(TARGET).exe
 	x86_64-w64-mingw32-strip $(TARGET).exe
+	@rm -f win.res.o
+	@total=$$(wc -c < $(TARGET).exe); \
+	 printf '%s: %s bytes (%s KB) of %s\n' "$(TARGET).exe" "$$total" "$$((total/1024))" "$(FLOPPY)"; \
+	 [ "$$total" -le "$(FLOPPY)" ] || { echo "OVER THE FLOPPY CEILING"; exit 1; }
 
 clean:
-	rm -f $(OBJS) $(TARGET) $(TARGET).exe bp_test_physics bp_test_course bp_test_camera
+	rm -f $(OBJS) $(TARGET) $(TARGET).exe win.res.o \
+	      bp_test_physics bp_test_course bp_test_camera bp_test_music

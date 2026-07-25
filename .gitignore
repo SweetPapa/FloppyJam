@@ -1,0 +1,31 @@
+# raylib checkouts and static libs built by scripts/build-raylib.sh — reproducible
+# from the script, and a few megabytes each
+/build/
+v5/build/
+
+# compiled game + test harnesses
+v5/breakpar
+v5/breakpar.exe
+v5/bp_test_*
+v5/win.res.o
+v5/src/*.o
+*.dSYM/
+
+# signing intermediates
+*.p12
+*.icns.tmp
+/dist/
+*.app/
+*.dmg
+
+# generated screenshots from `breakpar --tour`
+tour_*.png
+
+# tool scratch
+.playwright-mcp/
+home.png
+.DS_Store
+
+# never commit a service-account key or a notarisation credential
+sa-key.json
+*.keychain-db

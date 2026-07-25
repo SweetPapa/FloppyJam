@@ -1,0 +1,380 @@
+name: Release
+
+# Push to `prod` -> build, sign, notarize, publish.
+#
+# Everything this workflow does has a local equivalent, on purpose: the same
+# scripts/sign-macos.sh and scripts/sign-windows.sh you run by hand are what run
+# here. When a release breaks, you can reproduce it on your laptop instead of
+# debugging by pushing commits.
+#
+# Required secrets — see scripts/setup-ci.sh, which sets all of these for you:
+#
+#   APPLE_CERT_P12        base64 of a Developer ID Application .p12
+#   APPLE_CERT_PASSWORD   the password that .p12 was exported with
+#   APPLE_TEAM_ID         10-character team id
+#
+# Notarisation, preferred — an App Store Connect API key. No password to rotate
+# and revocable on its own from the ASC console:
+#
+#   ASC_KEY_P8            base64 of the AuthKey_<KEY_ID>.p8
+#   ASC_KEY_ID            the key id
+#   ASC_ISSUER_ID         the issuer uuid
+#
+# Notarisation, fallback — used only if ASC_KEY_P8 is absent:
+#
+#   APPLE_ID              Apple ID
+#   APPLE_APP_PASSWORD    app-specific password from appleid.apple.com
+#
+# Signing always needs the certificate. An API key cannot sign code; it only
+# talks to Apple's services.
+#
+# Azure signing uses OIDC, so there is no client secret to leak. Set these as
+# repository *variables* (not secrets — none of them are sensitive):
+#
+#   AZURE_CLIENT_ID  AZURE_TENANT_ID  AZURE_SUBSCRIPTION_ID
+#
+# If the Apple secrets are absent the macOS job still builds and publishes, just
+# unsigned. Same for Azure and Windows. A missing credential should degrade the
+# release, not fail it at 90% — you can always re-run the job once it is set.
+
+on:
+  push:
+    branches: [prod]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version tag (default: v<date>-<sha>)'
+        required: false
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write     # create the release and push the tag
+  id-token: write     # Azure OIDC federated login
+
+env:
+  RAYLIB_TAG: '5.5'
+  APP_NAME: BREAK PAR
+  BIN_NAME: breakpar
+
+jobs:
+  # ------------------------------------------------------------------
+  version:
+    name: version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      notes: ${{ steps.v.outputs.notes }}
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - id: v
+        run: |
+          set -euo pipefail
+          # An annotated tag on HEAD wins; otherwise date + short sha, which is
+          # unique, sorts correctly and needs nobody to remember to bump a file.
+          if TAG=$(git describe --exact-match --tags HEAD 2>/dev/null); then
+            VERSION="$TAG"
+          elif [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="v$(date -u +%Y.%m.%d)-$(git rev-parse --short HEAD)"
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Releasing $VERSION"
+
+          # Release notes from the commits since the previous tag, deduped and
+          # with the noise (merges, foreman bookkeeping) dropped.
+          PREV=$(git describe --abbrev=0 --tags HEAD^ 2>/dev/null || true)
+          RANGE=${PREV:+$PREV..HEAD}
+          {
+            echo 'notes<<RELEASE_NOTES_EOF'
+            if [ -n "$PREV" ]; then echo "Changes since \`$PREV\`:"; else echo 'Changes:'; fi
+            echo
+            git log ${RANGE:-} --no-merges --pretty='- %s' \
+              | grep -viE '^- (FOREMAN|Merge|wip|fixup)' | sort -u | head -40
+            echo 'RELEASE_NOTES_EOF'
+          } >> "$GITHUB_OUTPUT"
+
+  # ------------------------------------------------------------------
+  test:
+    name: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends build-essential \
+            libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev \
+            libglu1-mesa-dev libxcursor-dev libxinerama-dev libwayland-dev libxkbcommon-dev
+      - name: Build raylib (static, trimmed)
+        run: ./scripts/build-raylib.sh --out rl
+      - name: All suites must pass before anything is published
+        working-directory: v5
+        run: |
+          F="RAYLIB_CFLAGS=-I$GITHUB_WORKSPACE/rl/include"
+          L="RAYLIB_LIBS=$GITHUB_WORKSPACE/rl/lib/libraylib.a"
+          make test "$F" "$L"
+          make testcourse "$F" "$L"
+          make testmusic "$F" "$L"
+          make testcamera "$F" "$L"
+
+  # ------------------------------------------------------------------
+  macos:
+    name: macOS (universal, signed)
+    needs: [version, test]
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build raylib static for both arches
+        run: |
+          set -euo pipefail
+          for ARCH in arm64 x86_64; do
+            ./scripts/build-raylib.sh --out "rl-$ARCH" --arch "$ARCH"
+            lipo -archs "rl-$ARCH/lib/libraylib.a"
+          done
+
+      # Statically linked and lipo'd by hand rather than through the Makefile:
+      # the Makefile builds one binary for the host arch, and a release wants
+      # one file that runs on both. Universal comes out around 1.2 MB, which
+      # still fits the 1,474,560-byte floppy ceiling the game is designed to.
+      - name: Compile universal binary
+        working-directory: v5
+        run: |
+          set -euo pipefail
+          SRC="src/main.c src/physics.c src/course.c src/shot.c src/camera.c
+               src/render.c src/scenery.c src/juice.c src/synth.c src/save.c src/replay.c"
+          for ARCH in arm64 x86_64; do
+            cc -std=c11 -Os -flto -ffunction-sections -fdata-sections \
+               -Wall -Wextra -Wno-unused-parameter -Isrc \
+               -I"$GITHUB_WORKSPACE/rl-$ARCH/include" \
+               -arch $ARCH -mmacosx-version-min=11.0 $SRC \
+               "$GITHUB_WORKSPACE/rl-$ARCH/lib/libraylib.a" -lm \
+               -framework CoreVideo -framework IOKit -framework Cocoa -framework OpenGL \
+               -o "$BIN_NAME-$ARCH"
+          done
+          lipo -create -output "$BIN_NAME" "$BIN_NAME-arm64" "$BIN_NAME-x86_64"
+          strip "$BIN_NAME"
+          rm -f "$BIN_NAME-arm64" "$BIN_NAME-x86_64"
+          lipo -archs "$BIN_NAME"
+          SIZE=$(wc -c < "$BIN_NAME")
+          echo "universal binary: $SIZE bytes"
+          if [ "$SIZE" -gt 1474560 ]; then
+            echo "::error::over the 1,474,560-byte floppy ceiling ($SIZE)"
+            exit 1
+          fi
+
+      # Guarded inside the script rather than with `if: env.HAVE_CERT`. A step
+      # `if` that reads an env var defined on that same step is the kind of
+      # thing that either works or silently never runs depending on how the
+      # expression is evaluated, and this is the one path that cannot be tested
+      # outside CI — so it is written the unambiguous way.
+      - name: Import signing certificate
+        id: cert
+        env:
+          APPLE_CERT_P12: ${{ secrets.APPLE_CERT_P12 }}
+          APPLE_CERT_PASSWORD: ${{ secrets.APPLE_CERT_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "${APPLE_CERT_P12:-}" ]; then
+            echo "::warning::no APPLE_CERT_P12 secret — the macOS build will be unsigned"
+            echo "imported=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "imported=true" >> "$GITHUB_OUTPUT"
+          KEYCHAIN="$RUNNER_TEMP/signing.keychain-db"
+          PASS=$(openssl rand -hex 24)
+          security create-keychain -p "$PASS" "$KEYCHAIN"
+          security set-keychain-settings -lut 3600 "$KEYCHAIN"
+          security unlock-keychain -p "$PASS" "$KEYCHAIN"
+          printf '%s' "$APPLE_CERT_P12" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" -k "$KEYCHAIN" \
+            -P "$APPLE_CERT_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -s -k "$PASS" "$KEYCHAIN" >/dev/null
+          # put it first so find-identity picks it up, but keep the system roots
+          security list-keychains -d user -s "$KEYCHAIN" $(security list-keychains -d user | tr -d '"')
+          rm -f "$RUNNER_TEMP/cert.p12"
+          security find-identity -v -p codesigning "$KEYCHAIN"
+
+      - name: Sign, notarize and staple
+        id: sign
+        env:
+          HAVE_CERT: ${{ steps.cert.outputs.imported }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASSWORD: ${{ secrets.APPLE_APP_PASSWORD }}
+          ASC_KEY_B64: ${{ secrets.ASC_KEY_P8 }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          if [ "$HAVE_CERT" != 'true' ]; then
+            echo "::warning::no APPLE_CERT_P12 secret — publishing an unsigned macOS build"
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          # The script prefers the App Store Connect API key and reads it from
+          # ASC_KEY_B64, which is exactly what the secret provides — so nothing
+          # special happens here. If there is no key, stash the app-specific
+          # password where the script's keychain lookup will find it, and the
+          # local and CI paths stay the same code.
+          if [ -z "${ASC_KEY_B64:-}" ] && [ -n "${APPLE_APP_PASSWORD:-}" ]; then
+            security add-generic-password -s ci-notary -a "$APPLE_ID" -w "$APPLE_APP_PASSWORD"
+            export NOTARY_KEYCHAIN_SERVICE=ci-notary
+          fi
+          SIGN_IDENTITY="Developer ID Application" \
+            ./scripts/sign-macos.sh "v5/$BIN_NAME" --app-name "$APP_NAME" --dmg
+          echo "signed=true" >> "$GITHUB_OUTPUT"
+
+      - name: Package
+        working-directory: v5
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          set -euo pipefail
+          mkdir -p ../dist
+          if [ -d "$APP_NAME.app" ]; then
+            ditto -c -k --keepParent "$APP_NAME.app" \
+              "../dist/BREAK-PAR-$VERSION-macos-universal.zip"
+          else
+            ditto -c -k "$BIN_NAME" "../dist/BREAK-PAR-$VERSION-macos-universal.zip"
+          fi
+          [ -f "$APP_NAME.dmg" ] && cp "$APP_NAME.dmg" "../dist/BREAK-PAR-$VERSION-macos.dmg"
+          ls -la ../dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          path: dist/*
+
+  # ------------------------------------------------------------------
+  windows:
+    name: Windows x64 (signed)
+    needs: [version, test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install MinGW toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends mingw-w64 git make
+
+      # Cross-compiling rather than using a Windows runner: the Makefile already
+      # has a `windows` target for exactly this, the result is a static .exe with
+      # no DLLs beside it, and it means the Azure signing step runs on the same
+      # Linux box — which is the whole point of Trusted Signing being a service.
+      - name: Build raylib for MinGW (trimmed)
+        run: ./scripts/build-raylib.sh --out mingw-raylib --mingw
+
+      - name: Build breakpar.exe
+        working-directory: v5
+        run: |
+          set -euo pipefail
+          # the target embeds art/breakpar.ico via windres and fails on its own
+          # if the result goes over the floppy ceiling
+          make windows RAYLIB_WIN="$GITHUB_WORKSPACE/mingw-raylib"
+          ls -la breakpar.exe
+
+      - name: Azure login (OIDC)
+        id: az
+        if: vars.AZURE_CLIENT_ID != ''
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Sign with Azure Trusted Signing
+        if: steps.az.outcome == 'success'
+        env:
+          SIGN_DESCRIPTION: BREAK PAR
+        run: |
+          set -euo pipefail
+          # dotnet/sign is a .NET tool and authenticates with
+          # DefaultAzureCredential, so it picks up the OIDC login above with
+          # nothing else configured.
+          dotnet tool install --global sign --prerelease
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          ./scripts/sign-windows.sh v5/breakpar.exe
+
+      - name: Warn if unsigned
+        if: steps.az.outcome != 'success'
+        run: echo "::warning::no AZURE_CLIENT_ID variable — publishing an unsigned Windows build"
+
+      - name: Package
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+        run: |
+          mkdir -p dist
+          cp v5/breakpar.exe "dist/BREAK-PAR-$VERSION-windows-x64.exe"
+          cd dist && zip -9 "BREAK-PAR-$VERSION-windows-x64.zip" "BREAK-PAR-$VERSION-windows-x64.exe"
+          ls -la
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          path: dist/*
+
+  # ------------------------------------------------------------------
+  release:
+    name: publish release
+    needs: [version, macos, windows]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Checksums
+        working-directory: artifacts
+        run: |
+          ls -la
+          sha256sum * > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Create the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.version.outputs.version }}
+          NOTES: ${{ needs.version.outputs.notes }}
+        run: |
+          set -euo pipefail
+          {
+            echo "## BREAK PAR $VERSION"
+            echo
+            echo 'Mini golf with a cue stick. One native executable, no asset files.'
+            echo
+            echo '| Platform | File |'
+            echo '| --- | --- |'
+            echo '| Windows x64 | `BREAK-PAR-*-windows-x64.zip` |'
+            echo '| macOS (Apple silicon + Intel) | `BREAK-PAR-*-macos.dmg` |'
+            echo
+            echo "$NOTES"
+            echo
+            echo '---'
+            echo
+            echo "Built from \`${GITHUB_SHA:0:7}\` on \`prod\`. Verify with \`SHA256SUMS.txt\`."
+          } > notes.md
+
+          # Idempotent on purpose: re-running the workflow for the same version
+          # replaces the assets instead of dying on "already exists".
+          if gh release view "$VERSION" >/dev/null 2>&1; then
+            gh release upload "$VERSION" artifacts/* --clobber
+            gh release edit "$VERSION" --notes-file notes.md
+          else
+            gh release create "$VERSION" artifacts/* \
+              --title "BREAK PAR $VERSION" \
+              --notes-file notes.md \
+              --target "$GITHUB_SHA"
+          fi
+          gh release view "$VERSION"

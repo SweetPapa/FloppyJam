@@ -15,7 +15,7 @@ festoon lights on poles, a wet plaza with traffic circling it, a skyline that
 is different on every hole, a ferris wheel somewhere over your shoulder, and a
 jazz trio playing the whole time.
 
-Single native executable, ~166 KB, no asset files of any kind. Every mesh,
+Single native executable, no asset files of any kind. Every mesh,
 palette, texture and sound is generated at startup or synthesised at runtime,
 and all eighteen holes are compiled-in C arrays. The skyline included — it is
 seeded off the hole index, so hole 7 has the same view every time you play it
@@ -44,7 +44,17 @@ make windows RAYLIB_WIN=/path/to/mingw-raylib     # -> breakpar.exe
 
 That link line is `-static -static-libgcc -mwindows`, so the result runs on a
 stock Windows 10/11 machine with no runtime installs and no DLLs beside it.
-The current macOS release build is **166 KB** against a 1,474,560 byte ceiling.
+Sizes against the 1,474,560-byte ceiling. The dev build links a system raylib;
+a shipped build is statically linked, with raylib trimmed by
+`../scripts/build-raylib.sh` (the game loads no models, fonts or audio files, so
+every decoder in raylib is dead weight — untrimmed, Windows comes to 1,837,056
+and blows the ceiling):
+
+| build | size |
+| --- | --- |
+| dev, shared raylib | 170 KB |
+| macOS universal, static | 1,166,416 |
+| Windows x64, static, with icon | 1,432,064 |
 
 ## Controls
 
@@ -196,13 +206,51 @@ a frame, which keeps the integrated-graphics floor in the spec intact.
 
 ## Music
 
-A swing jazz combo, generated a sample at a time: a walking bass, an electric
-piano comping rootless shells on the Charleston, a swung ride cymbal, brushes on
-two and four, a feathered kick and a sparse vibraphone improvising out of the
-chord scale — in stereo, through a slap delay. Three charts: a lazy major
-turnaround for the menus, a bright minor ii-V-i for the front nine, and a slow
-minor blues for the back nine, because by hole ten it should feel late. Chords
-are a 64-byte table; everything else is arithmetic.
+A swing jazz combo, generated a sample at a time and mixed in stereo through a
+slap delay. Seven players: a walking upright with a filter envelope and a finger
+transient, a Rhodes comping voice-led rootless shells on the Charleston, a swung
+ride with a bell that only rings on the turnaround, brushes that never leave the
+head, a feathered kick, a vibraphone, and a tenor with delayed vibrato and a
+short glide between notes.
+
+Three charts of **sixteen bars** each — a lazy major turnaround for the menus, a
+bright minor ii-V-i for the front nine, and a slow minor blues for the back nine,
+because by hole ten it should feel late. Sections rotate every chorus (head, horn
+solo, vibes solo), so a nine takes you through the whole cycle without hearing
+the same thing twice.
+
+The melody is the part that took the work. Picking each note at random from the
+right scale still says nothing, which is why the first version noodled. What runs
+now commits to a **rhythmic cell** for two bars, follows a **contour** of mostly
+stepwise motion, snaps to a chord tone whenever a bar turns over, and then
+answers itself: the same cell comes back with the contour inverted. That is the
+cheapest trick that makes a generated line sound composed.
+
+```sh
+make testmusic   # renders build/music-{menu,front,back}.wav and checks them
+```
+
+That harness stubs out raylib's audio calls, so the combo renders headless on any
+build machine. It writes WAVs you can actually listen to, and asserts the failure
+modes a generative bed is prone to — silence, DC offset, clipping, a dead channel,
+and a chorus that repeats verbatim.
+
+The stub deliberately models one raylib behaviour rather than being permissive:
+`UpdateAudioStream` does not append, it fills one whole sub-buffer and **zero-fills
+whatever the caller did not supply**. With the default sizing that sub-buffer is
+`deviceSampleRate/30` — 1600 frames at 48 kHz — and the engine was writing 512.
+Every chunk was 512 frames of music followed by 1088 frames of silence: a 32% duty
+cycle gated at 30 Hz, which is exactly why the music sounded muffled while the
+sound effects were fine (those are `Sound` objects and never touch the streaming
+path). The fix is `SetAudioStreamBufferSizeDefault(MUS_FRAMES)` before
+`LoadAudioStream`, with `MUS_FRAMES` large enough that raylib cannot quietly raise
+it past what we generate. The suite now asserts zero short writes.
+
+It has also earned its keep twice on the musical side: it
+caught a chart-index bug that sent the front nine to the *menu* progression and
+left the back-nine blues unreachable for the whole game, and a bass octave that
+put the root at 27–33 Hz, below the low E of a real double bass and inaudible on
+a laptop while still eating most of the mix.
 
 ## Physics
 

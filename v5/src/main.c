@@ -999,11 +999,20 @@ static void tour_step(void)
     if (tour_frame < 5) return;
     if (tour_frame == 5) {
         TakeScreenshot("tour_title.png");
+        /* the round-select page is a layout the tour used to skip entirely,
+         * which is how a clipped highlight box survived on it */
+        G.state = ST_SELECT;
+        G.select_sel = 2;            /* the longest label, worst case for width */
+        return;
+    }
+    if (tour_frame == 9) {
+        TakeScreenshot("tour_select.png");
         G.save.preview = 1;          /* the tour exercises the assist too */
         begin_round(0, 17);
         tour_hole = 0;
         return;
     }
+    if (tour_frame < 9) return;
 
     if (G.state == ST_INTRO) {
         G.state = ST_AIM;

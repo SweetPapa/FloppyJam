@@ -1,0 +1,34 @@
+/* win.rc — Windows resources: the executable icon and the version block.
+ *
+ * Compiled by windres in the Makefile's `windows` target and linked into
+ * breakpar.exe, so the icon is part of the binary rather than a file beside it.
+ * Nothing is read from disk at runtime, which keeps the no-asset-files rule.
+ */
+
+1 ICON "../art/breakpar.ico"
+
+1 VERSIONINFO
+FILEVERSION     1,0,0,0
+PRODUCTVERSION  1,0,0,0
+FILEOS          0x4L        /* VOS__WINDOWS32 */
+FILETYPE        0x1L        /* VFT_APP        */
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "040904B0"    /* US English, Unicode */
+        BEGIN
+            VALUE "CompanyName",      "SweetPapa Technologies"
+            VALUE "FileDescription",  "BREAK PAR - mini golf with a cue stick"
+            VALUE "FileVersion",      "1.0.0.0"
+            VALUE "InternalName",     "breakpar"
+            VALUE "LegalCopyright",   "Copyright (C) Forrester Terry"
+            VALUE "OriginalFilename", "breakpar.exe"
+            VALUE "ProductName",      "BREAK PAR"
+            VALUE "ProductVersion",   "1.0.0.0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x409, 0x04B0
+    END
+END
