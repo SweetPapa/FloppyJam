@@ -1,0 +1,152 @@
+/* Night, neon, and a lot of dark space — the same brief the games are built to. */
+
+:root {
+  --bg: #07070f;
+  --bg-2: #0c0c18;
+  --panel: rgba(255, 255, 255, 0.035);
+  --line: rgba(255, 255, 255, 0.09);
+  --ink: #e9ecf4;
+  --ink-dim: #98a0b6;
+  --ink-faint: #646c82;
+  --accent: #5cf0b0;
+  --accent-2: #ff5ca8;
+  --radius: 14px;
+  --maxw: 1120px;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #app { min-height: 100%; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: 'Space Grotesk', ui-sans-serif, system-ui, sans-serif;
+  font-size: 17px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* the city glow that sits behind everything */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(60rem 34rem at 12% -8%, rgba(92, 240, 176, 0.10), transparent 70%),
+    radial-gradient(52rem 30rem at 92% 4%, rgba(255, 92, 168, 0.10), transparent 70%),
+    radial-gradient(70rem 40rem at 50% 108%, rgba(120, 110, 255, 0.09), transparent 70%);
+}
+
+#app { position: relative; z-index: 1; }
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+h1, h2, h3 { line-height: 1.15; letter-spacing: -0.02em; margin: 0; }
+
+.mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+.wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+
+.eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+}
+
+/* ---- header ---- */
+.site-head {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  backdrop-filter: blur(14px);
+  background: rgba(7, 7, 15, 0.76);
+  border-bottom: 1px solid var(--line);
+}
+.site-head .inner {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.brand:hover { text-decoration: none; }
+.brand .dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 12px var(--accent);
+}
+.site-head nav { margin-left: auto; display: flex; gap: 20px; font-size: 15px; }
+.site-head nav a { color: var(--ink-dim); }
+.site-head nav a:hover, .site-head nav a.active { color: var(--ink); text-decoration: none; }
+
+/* ---- buttons ---- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 20px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: border-color 0.18s, background 0.18s, transform 0.18s;
+}
+.btn:hover { text-decoration: none; transform: translateY(-1px); border-color: rgba(255,255,255,0.22); }
+.btn-primary {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  color: #eafff5;
+}
+.btn-primary:hover { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+.btn .sub { color: var(--ink-faint); font-weight: 400; font-size: 13px; }
+
+/* ---- panels ---- */
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+
+/* ---- footer ---- */
+.site-foot {
+  margin-top: 90px;
+  border-top: 1px solid var(--line);
+  padding: 34px 0 60px;
+  color: var(--ink-faint);
+  font-size: 14px;
+}
+.site-foot .inner { display: flex; flex-wrap: wrap; gap: 16px; align-items: center; }
+.site-foot .inner > :last-child { margin-left: auto; }
+
+/* ---- shared image treatment ---- */
+.shot {
+  display: block;
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #05050b;
+}
+
+@media (max-width: 720px) {
+  body { font-size: 16px; }
+  .site-head nav { gap: 14px; font-size: 14px; }
+}

@@ -17,7 +17,24 @@
  * mush at the old rate. Costs nothing on disk — every buffer is generated. */
 #define SR         32000
 #define VOICES     4          /* polyphony per sfx slot */
-#define MUS_FRAMES 512        /* stereo frames per streamed chunk */
+/* Stereo frames per streamed chunk, and it MUST equal the size raylib gives the
+ * stream's sub-buffer, which is why SetAudioStreamBufferSizeDefault is called
+ * with the same number before LoadAudioStream.
+ *
+ * This is the bug that made the music sound muffled for so long.
+ * UpdateAudioStream does not append — it fills one whole sub-buffer and then
+ * (raudio.c: "Any leftover frames should be filled with zeros") memsets the
+ * remainder to silence. With the default sizing, subBufferSize is
+ * deviceSampleRate/30, so 1600 frames on a 48 kHz device. Writing 512 into 1600
+ * meant every chunk was 512 frames of combo followed by 1088 frames of nothing:
+ * a 32% duty cycle, gated at 30 Hz. That reads as muffled, buzzy and quiet, and
+ * it never touched the sound effects because those are Sound objects that go
+ * nowhere near the streaming path.
+ *
+ * 4096 frames is 128 ms at our sample rate and comfortably larger than any
+ * realistic device period (miniaudio is typically 480-1024 frames), so raylib
+ * will not quietly raise it past what we generate. */
+#define MUS_FRAMES 4096
 #define DELAY_LEN  6400       /* 200 ms slap, the room the combo plays in */
 
 /* ------------------------------------------------------------------ */
@@ -359,6 +376,10 @@ void bp_synth_init(void)
     if (!IsAudioDeviceReady()) return;
     build_sfx();
     build_rolls();
+    /* Before LoadAudioStream, not after: this is what sizes the stream's
+     * sub-buffer, and it has to match the MUS_FRAMES we generate per chunk or
+     * raylib pads the difference with silence. See the note on MUS_FRAMES. */
+    SetAudioStreamBufferSizeDefault(MUS_FRAMES);
     music = LoadAudioStream(SR, 16, 2);
     SetAudioStreamVolume(music, vol_master * vol_music);
     PlayAudioStream(music);
@@ -418,12 +439,23 @@ void bp_roll(float speed, int surf)
     SetSoundPitch(roll[roll_cur], p);
 }
 
+
 /* ================================================================== */
 /* the combo                                                          */
 /*                                                                    */
-/* Grid: eighth notes, swung 2:1, eight to the bar, eight bars to the */
-/* chorus. Everything below decides what to play when a step turns    */
-/* over, then the per-sample block renders whatever is ringing.       */
+/* Grid: eighth notes, swung 2:1, eight to the bar, SIXTEEN bars to a */
+/* chorus. Everything below decides what the players do when a step   */
+/* turns over; the per-sample block renders whatever is still ringing. */
+/*                                                                    */
+/* The first version of this picked every melody note independently   */
+/* at random from a scale, which is why it noodled: random notes in   */
+/* the right key still say nothing. What is here now has a rhythmic   */
+/* cell it commits to, a contour it follows, and an answering phrase  */
+/* that repeats the cell with the contour inverted — the cheapest     */
+/* thing you can do that makes a line sound composed rather than      */
+/* generated. Everything else (voice-led comping, sections, a horn    */
+/* that trades with the vibes) serves the same goal: sounding like    */
+/* four people who have played together before.                       */
 
 typedef struct { unsigned char root, type; } Chord;
 
@@ -435,57 +467,108 @@ static const signed char TONES[4][4] = {
     { 0, 4, 7, 11 },   /* maj7  */
     { 0, 3, 6, 10 },   /* m7b5  */
 };
-/* the scale the vibes player improvises out of, per chord type */
-static const signed char SCALE[4][6] = {
-    {  0,  3,  5,  7, 10, 14 },   /* minor pentatonic over m7        */
-    {  0,  4,  7,  9, 10, 14 },   /* mixolydian bones over 7         */
-    {  0,  2,  4,  7,  9, 11 },   /* major over maj7                 */
-    {  0,  3,  6, 10, 13, 15 },   /* half-diminished, with tensions  */
+/* The scale each soloist improvises out of, per chord type. Seven notes so
+ * stepwise motion has somewhere to go; the old six-note set kept forcing
+ * leaps, which is half of why it sounded restless. */
+static const signed char SCALE[4][7] = {
+    {  0,  2,  3,  5,  7,  9, 10 },   /* dorian over m7    */
+    {  0,  2,  4,  5,  7,  9, 10 },   /* mixolydian over 7 */
+    {  0,  2,  4,  5,  7,  9, 11 },   /* ionian over maj7  */
+    {  0,  1,  3,  5,  6,  8, 10 },   /* locrian over m7b5 */
 };
+/* Degrees 0,2,4,6 of those scales are the chord tones — the melody is pulled
+ * onto one whenever a bar turns over. */
+#define IS_CHORD_TONE(d) (((d) % 7) % 2 == 0)
 
-/* Three charts. 0 is the menu — a lazy major turnaround. 1 is the front
- * nine, a bright minor ii-V-i that keeps moving. 2 is the back nine: a slow
- * minor blues, because by hole ten it should feel late. */
-static const Chord PROG[3][8] = {
-    { {0,CH_MAJ7},{5,CH_MAJ7},{9,CH_M7},  {2,CH_DOM7},
-      {7,CH_M7},  {0,CH_MAJ7},{9,CH_M7},  {2,CH_DOM7} },
-    { {0,CH_M7},  {5,CH_M7},  {2,CH_M7B5},{7,CH_DOM7},
-      {0,CH_M7},  {8,CH_MAJ7},{2,CH_M7B5},{7,CH_DOM7} },
+#define FORM_BARS 16
+
+/* Three charts, sixteen bars each. Eight bars looped often enough that you
+ * heard the seam inside a single hole; sixteen with a different second half
+ * takes long enough that the ear stops counting. */
+static const Chord PROG[3][FORM_BARS] = {
+    /* 0 — menus: a lazy major turnaround in F, nothing urgent */
+    { {0,CH_MAJ7},{0,CH_MAJ7},{5,CH_MAJ7},{5,CH_MAJ7},
+      {4,CH_M7},  {9,CH_DOM7},{2,CH_M7},  {7,CH_DOM7},
+      {0,CH_MAJ7},{9,CH_M7},  {2,CH_M7},  {7,CH_DOM7},
+      {4,CH_M7},  {9,CH_DOM7},{2,CH_M7},  {7,CH_DOM7} },
+    /* 1 — front nine: a bright minor ii-V-i in C that keeps moving */
     { {0,CH_M7},  {0,CH_M7},  {5,CH_M7},  {5,CH_M7},
-      {0,CH_M7},  {8,CH_DOM7},{7,CH_DOM7},{7,CH_DOM7} },
+      {2,CH_M7B5},{7,CH_DOM7},{0,CH_M7},  {0,CH_M7},
+      {8,CH_MAJ7},{8,CH_MAJ7},{2,CH_M7B5},{7,CH_DOM7},
+      {0,CH_M7},  {5,CH_M7},  {2,CH_M7B5},{7,CH_DOM7} },
+    /* 2 — back nine: a slow minor blues in A with a four-bar tag, because by
+     * hole ten it should feel late */
+    { {0,CH_M7},  {5,CH_M7},  {0,CH_M7},  {0,CH_M7},
+      {5,CH_M7},  {5,CH_M7},  {0,CH_M7},  {0,CH_M7},
+      {8,CH_DOM7},{7,CH_DOM7},{0,CH_M7},  {7,CH_DOM7},
+      {0,CH_M7},  {5,CH_M7},  {0,CH_M7},  {7,CH_DOM7} },
 };
-static const int   BPM[3]     = { 116, 138, 92 };
-static const float TONIC[3]   = { 174.61f, 130.81f, 110.00f };   /* F3, C3, A2 */
+static const int   BPM[3]   = { 112, 136, 88 };
+static const float TONIC[3] = { 174.61f, 130.81f, 110.00f };   /* F3, C3, A2 */
+
+/* Rhythmic cells on the eighth grid, bit 0 = the downbeat. Every one of these
+ * is syncopated somewhere — a cell that plays on all four beats reads as an
+ * exercise, not a phrase. */
+static const unsigned char CELL[8] = {
+    0x92, 0x4A, 0x25, 0xA4, 0x52, 0x29, 0x8A, 0x45
+};
 
 static int   mus_mood = 0;        /* 0 silence, 1 front, 2 back, 3 menu */
 static int   mus_bar, mus_step, mus_pos, mus_len, mus_chorus;
 
-/* voice state */
-static float bass_ph, bass_env, bass_f, bass_lp;
-static float pf[3], pph[3], piano_env, trem_ph;
-static float ride_env, ride_hp, ride_prev, rph1, rph2;
-static float brush_env, brush_lp;
+/* ---- voice state ---- */
+static float bass_ph, bass_env, bass_f, bass_lp, bass_fenv, bass_click;
+static int   bass_semi;
+static float pph[4], pf[4], piano_env, piano_amp, trem_ph;
+static int   pv[3];                          /* current voicing, semitones    */
+static float ride_env, ride_hp, ride_prev, rph1, rph2, rph3, ride_bell;
+static float brush_env, brush_lp, swirl_lp, swirl_ph;
 static float kick_ph, kick_env, kick_f;
 static float vib_ph, vib_env, vib_f, vib_lfo;
+static float sax_ph, sax_env, sax_f, sax_tgt, sax_lp, sax_vib, sax_breath;
+
+/* ---- melody state ---- */
+static unsigned char mel_cell;               /* rhythm mask for this bar      */
+static signed char   mel_move[8];            /* contour: degree deltas        */
+static int           mel_deg;                /* current degree (7 per octave) */
+static int           mel_lead;               /* 0 = vibes, 1 = horn           */
 
 static float delay_l[DELAY_LEN], delay_r[DELAY_LEN];
 static int   delay_pos;
 static float delay_lp;
+static float hp_l, hp_r;             /* bus rumble filter state       */
 
 static float note_hz(float tonic, int semi)
 {
     return tonic * powf(2.0f, (float)semi / 12.0f);
 }
 
+/* Move `want` into the octave nearest `prev`. This is the entire trick behind
+ * comping that does not jump around the keyboard between chords. */
+static int voice_lead(int want, int prev)
+{
+    while (want - prev >  6) want -= 12;
+    while (prev - want >  6) want += 12;
+    return want;
+}
+
 static void music_reset(void)
 {
+    int j;
     mus_bar = mus_step = mus_pos = 0;
     mus_len = 1;
     mus_chorus = 0;
-    bass_env = piano_env = ride_env = brush_env = kick_env = vib_env = 0.0f;
+    bass_env = piano_env = ride_env = brush_env = kick_env = 0.0f;
+    vib_env = sax_env = ride_bell = 0.0f;
+    bass_semi = 0;
+    mel_deg = 7;
+    mel_cell = CELL[0];
+    for (j = 0; j < 8; ++j) mel_move[j] = 0;
+    pv[0] = 4; pv[1] = 10; pv[2] = 14;
     memset(delay_l, 0, sizeof(delay_l));
     memset(delay_r, 0, sizeof(delay_r));
     delay_pos = 0;
+    hp_l = hp_r = 0.0f;
 }
 
 /* how many samples this eighth lasts — swing lives entirely in here */
@@ -496,57 +579,135 @@ static int step_len(int m, int step)
     return (step & 1) ? (q - lng) : lng;
 }
 
-/* Called once at each step boundary: decide what the five players do. */
+/* Degree index -> semitones above the chord root, across octaves. */
+static int deg_semi(const signed char *sc, int deg)
+{
+    int oct = deg / 7, d = deg % 7;
+    if (d < 0) { d += 7; --oct; }
+    return sc[d] + 12 * oct;
+}
+
+/* Called once at each step boundary: decide what the players do. */
 static void music_step_begin(int m)
 {
     const Chord *ch = &PROG[m][mus_bar];
-    const Chord *nx = &PROG[m][(mus_bar + 1) & 7];
-    unsigned int sd = (unsigned int)((mus_chorus * 8 + mus_bar) * 8 + mus_step) * 2654435761u;
+    const Chord *nx = &PROG[m][(mus_bar + 1) % FORM_BARS];
+    unsigned int sd = (unsigned int)((mus_chorus * FORM_BARS + mus_bar) * 8 + mus_step)
+                      * 2654435761u;
+    unsigned int bs = (unsigned int)(mus_chorus * FORM_BARS + mus_bar) * 40503u;
     int s = mus_step, beat = s >> 1, onbeat = !(s & 1);
+    int last_bar = (mus_bar == FORM_BARS - 1);
     float tonic = TONIC[m];
+    /* Sections rotate every chorus: the head, then the horn takes it, then the
+     * vibes take it. Roughly forty seconds each, so a nine takes you through
+     * the whole cycle two or three times without repeating verbatim. */
+    int section = mus_chorus % 3;
+    float density = (section == 0) ? 0.72f : 1.0f;
 
-    /* --- walking bass: four to the bar, last beat leans into the next --- */
+    mel_lead = (section == 1);
+
+    /* --- walking bass ------------------------------------------------
+     * Four to the bar. Beat 1 is the root, 2 and 3 are chord tones, and 4 is a
+     * chromatic approach into the next bar's root. Octave choice is voice-led
+     * so the line walks instead of leaping. */
     if (onbeat) {
         int semi;
         switch (beat) {
         case 0:  semi = ch->root; break;
-        case 1:  semi = ch->root + TONES[ch->type][(mrnd(sd) < 0.5f) ? 2 : 1]; break;
+        case 1:  semi = ch->root + TONES[ch->type][(mrnd(sd) < 0.55f) ? 2 : 1]; break;
         case 2:  semi = ch->root + TONES[ch->type][(mrnd(sd + 1u) < 0.6f) ? 3 : 2]; break;
         default: semi = (int)nx->root + ((mrnd(sd + 2u) < 0.5f) ? -1 : 1); break;
         }
-        bass_f = note_hz(tonic * 0.25f, semi);
+        bass_semi = voice_lead(semi, bass_semi);
+        while (bass_semi >  14) bass_semi -= 12;    /* stay in the bottom */
+        while (bass_semi < -10) bass_semi += 12;
+        /* tonic/2, not tonic/4. At a quarter the root landed at 27-33 Hz —
+         * below the low E of a real double bass, inaudible on anything without
+         * a subwoofer, and still eating most of the mix energy. An octave up
+         * puts the line where an upright actually lives. */
+        bass_f = note_hz(tonic * 0.5f, bass_semi);
         bass_env = 1.0f;
+        bass_fenv = 1.0f;          /* the filter opens on the attack and shuts */
+        bass_click = 1.0f;         /* the finger on the string                 */
     }
 
-    /* --- piano comping: the Charleston, plus the odd extra push --- */
-    if (s == 0 || s == 3 || (s == 6 && mrnd(sd + 3u) < 0.45f)) {
+    /* --- piano comping ------------------------------------------------
+     * Rootless shell (3rd, 7th, 9th) voice-led off the previous chord, hit on
+     * the Charleston with an extra push in the busier sections. */
+    if (s == 0 || s == 3 || (s == 6 && mrnd(sd + 3u) < 0.35f * density) ||
+        (s == 5 && section == 2 && mrnd(sd + 8u) < 0.30f)) {
         const signed char *tn = TONES[ch->type];
-        /* rootless shell: 3rd, 7th, 9th. It is what a piano actually plays
-         * behind a bass that is already covering the root. */
-        pf[0] = note_hz(tonic, ch->root + tn[1]);
-        pf[1] = note_hz(tonic, ch->root + tn[3]);
-        pf[2] = note_hz(tonic, ch->root + 14);
-        piano_env = (s == 0) ? 0.85f : 0.60f;
+        int want[3];
+        int j;
+        want[0] = ch->root + tn[1];
+        want[1] = ch->root + tn[3];
+        want[2] = ch->root + 14;                    /* the 9th on top */
+        for (j = 0; j < 3; ++j) {
+            pv[j] = voice_lead(want[j], pv[j]);
+            while (pv[j] > 26) pv[j] -= 12;
+            while (pv[j] <  2) pv[j] += 12;
+            pf[j] = note_hz(tonic, pv[j]);
+        }
+        /* a fourth partial an octave under the 3rd gives the Rhodes some body */
+        pf[3] = note_hz(tonic, pv[0] - 12);
+        piano_env = 1.0f;
+        piano_amp = ((s == 0) ? 0.95f : 0.62f) * (0.75f + 0.25f * density);
     }
 
-    /* --- ride: ding, ding-a-ding. Beats plus the swung a of 2 and 4. --- */
-    if (s == 0 || s == 2 || s == 4 || s == 6) ride_env = (s == 2 || s == 6) ? 0.62f : 0.46f;
-    else if (s == 3 || s == 7)                ride_env = 0.34f;
+    /* --- ride: ding, ding-a-ding, with the bell on the turnaround --- */
+    if (s == 0 || s == 2 || s == 4 || s == 6) ride_env = (s == 2 || s == 6) ? 0.64f : 0.48f;
+    else if (s == 3 || s == 7)                ride_env = 0.36f;
+    if (last_bar && s == 4) ride_bell = 1.0f;
 
-    /* --- brushes on 2 and 4, kick feathered on 1 --- */
-    if (s == 2 || s == 6) brush_env = 0.55f;
-    if (s == 0 && (mus_bar & 1) == 0) { kick_env = 0.60f; kick_f = 74.0f; }
+    /* --- brushes on 2 and 4, plus a fill across the last bar --- */
+    if (s == 2 || s == 6) brush_env = 0.58f;
+    if (last_bar && s >= 4 && (s & 1) == 0) brush_env = 0.70f;
+    if (s == 0 && (mus_bar & 1) == 0) { kick_env = 0.58f; kick_f = 76.0f; }
+    if (last_bar && s == 6) { kick_env = 0.75f; kick_f = 80.0f; }
 
-    /* --- vibes: sparse, off-beat, phrased in twos and threes --- */
-    {
-        float want = onbeat ? 0.16f : 0.42f;
-        if (mus_bar == 3 || mus_bar == 7) want += 0.22f;    /* fill the turnaround */
+    /* --- melody -------------------------------------------------------
+     * A new rhythmic cell and contour every two bars. On the ANSWERING two
+     * bars the same cell returns with the contour inverted, which is what
+     * turns two phrases into a sentence. */
+    if (s == 0 && (mus_bar & 1) == 0) {
+        int answer = (mus_bar >> 1) & 1;    /* odd phrases answer even ones */
+        int j;
+        if (!answer) {
+            mel_cell = CELL[mhash(bs + 3u) % 8u];
+            for (j = 0; j < 8; ++j) {
+                float u = mrnd(bs + 10u + (unsigned int)j);
+                /* mostly steps, sometimes a third, rarely a leap */
+                mel_move[j] = (signed char)(u < 0.42f ?  1 : u < 0.72f ? -1 :
+                                            u < 0.86f ?  2 : u < 0.95f ? -2 :
+                                            u < 0.98f ?  4 : -4);
+            }
+        } else {
+            for (j = 0; j < 8; ++j) mel_move[j] = (signed char)(-mel_move[j]);
+        }
+    }
+
+    if (mel_cell & (1u << s)) {
+        const signed char *sc = SCALE[ch->type];
+        float want = (section == 0) ? 0.62f : 0.88f;
         if (mrnd(sd + 4u) < want) {
-            const signed char *sc = SCALE[ch->type];
-            int deg = (int)(mrnd(sd + 5u) * 5.999f);
-            int oct = (mrnd(sd + 6u) < 0.3f) ? 12 : 0;
-            vib_f = note_hz(tonic * 2.0f, ch->root + sc[deg] + oct);
-            vib_env = 0.34f + 0.20f * mrnd(sd + 7u);
+            int semi;
+            mel_deg += mel_move[s];
+            if (mel_deg > 13) mel_deg -= 7;         /* stay in an octave and a half */
+            if (mel_deg <  3) mel_deg += 7;
+            /* land on a chord tone when the bar turns over, so the line keeps
+             * agreeing with the harmony instead of drifting off it */
+            if (onbeat && !IS_CHORD_TONE(mel_deg))
+                mel_deg += (mrnd(sd + 5u) < 0.5f) ? 1 : -1;
+            semi = ch->root + deg_semi(sc, mel_deg);
+            if (mel_lead) {
+                sax_tgt = note_hz(tonic, semi);
+                if (sax_env < 0.02f) sax_f = sax_tgt;   /* no glide out of silence */
+                sax_env = 0.55f + 0.25f * mrnd(sd + 6u);
+                sax_breath = 1.0f;
+            } else {
+                vib_f = note_hz(tonic * 2.0f, semi);
+                vib_env = 0.40f + 0.22f * mrnd(sd + 6u);
+            }
         }
     }
 }
@@ -568,8 +729,13 @@ void bp_music_update(void)
 {
     int m;
     if (!ready) return;
-    /* moods are 1 front, 2 back, 3 menu; charts are indexed 1, 2, 0 */
-    m = (mus_mood == 3) ? 0 : mus_mood - 1;
+    /* Moods are 0 silence, 1 front, 2 back, 3 menu. Charts are 0 menu, 1 front,
+     * 2 back — so the menu is the only one that moves. The old expression here
+     * was `mus_mood - 1`, which quietly sent the front nine to the MENU chart
+     * and the back nine to the front-nine chart, and left the slow blues in
+     * PROG[2] unreachable for the entire game. make testmusic caught it: two
+     * different moods rendered byte-identical band energy. */
+    m = (mus_mood <= 0) ? -1 : (mus_mood == 3) ? 0 : mus_mood;
 
     while (IsAudioStreamProcessed(music)) {
         int i;
@@ -582,61 +748,96 @@ void bp_music_update(void)
                 mus_len = step_len(m, mus_step);
             }
 
-            /* bass: triangle through a fixed lowpass, plucked */
+            /* ---- upright bass ----
+             * Triangle through a lowpass whose cutoff falls across the note,
+             * plus a short noise transient. The filter envelope is what makes
+             * it read as plucked gut rather than a held synth tone. */
             if (bass_env > 0.0004f) {
-                float v;
+                float v, k;
                 bass_ph += bass_f / (float)SR;
                 if (bass_ph > 1.0f) bass_ph -= 1.0f;
                 v = (4.0f * fabsf(bass_ph - 0.5f) - 1.0f) * bass_env;
-                bass_lp += 0.14f * (v - bass_lp);
-                l += bass_lp * 0.50f; r += bass_lp * 0.50f;
-                bass_env *= 0.99992f;
+                if (bass_click > 0.001f) {
+                    v += nz() * bass_click * 0.30f;
+                    bass_click *= 0.9986f;
+                }
+                k = 0.105f + 0.30f * bass_fenv;
+                bass_lp += k * (v - bass_lp);
+                bass_fenv *= 0.99975f;
+                l += bass_lp * 0.30f; r += bass_lp * 0.30f;
+                bass_env *= 0.99991f;
             }
-            /* electric piano: three sines, tremolo, sits left of centre */
+
+            /* ---- Rhodes ----
+             * Four partials — the voicing plus an octave-down body note — and a
+             * bell partial on the attack that decays far faster than the
+             * fundamentals. That fast top is the tine; without it a stack of
+             * sines is an organ, not an electric piano. */
             if (piano_env > 0.0004f) {
-                float v = 0.0f;
+                float v = 0.0f, tine;
                 int j;
-                trem_ph += 5.2f / (float)SR;
+                trem_ph += 4.6f / (float)SR;
                 if (trem_ph > 1.0f) trem_ph -= 1.0f;
-                for (j = 0; j < 3; ++j) {
+                for (j = 0; j < 4; ++j) {
                     pph[j] += pf[j] / (float)SR;
                     if (pph[j] > 1.0f) pph[j] -= 1.0f;
-                    v += sinf(pph[j] * BP_TAU);
+                    v += sinf(pph[j] * BP_TAU) * (j == 3 ? 0.55f : 1.0f);
                 }
-                v *= piano_env * (0.86f + 0.14f * sinf(trem_ph * BP_TAU));
-                l += v * 0.115f; r += v * 0.075f;
-                piano_env *= 0.99984f;
+                tine = piano_env * piano_env;
+                tine *= tine;
+                v += sinf(pph[0] * BP_TAU * 4.0f) * tine * 1.6f;
+                v *= piano_env * piano_amp * (0.88f + 0.12f * sinf(trem_ph * BP_TAU));
+                l += v * 0.165f; r += v * 0.115f;
+                piano_env *= 0.99986f;
             }
-            /* ride cymbal: highpassed noise plus two inharmonic partials,
-             * parked right of centre so it does not fight the piano */
-            if (ride_env > 0.0004f) {
+
+            /* ---- ride cymbal ----
+             * Wash plus inharmonic partials, and a bell that only rings on the
+             * turnaround. Parked right of centre, away from the piano. */
+            if (ride_env > 0.0004f || ride_bell > 0.004f) {
                 float n = nz(), v;
                 ride_hp = 0.96f * (ride_hp + n - ride_prev);
                 ride_prev = n;
                 rph1 += 5240.0f / (float)SR; if (rph1 > 1.0f) rph1 -= 1.0f;
                 rph2 += 7930.0f / (float)SR; if (rph2 > 1.0f) rph2 -= 1.0f;
-                v = (ride_hp * 0.55f + sinf(rph1 * BP_TAU) * 0.14f +
-                     sinf(rph2 * BP_TAU) * 0.09f) * ride_env;
-                l += v * 0.070f; r += v * 0.135f;
-                ride_env *= 0.99955f;
+                rph3 += 3110.0f / (float)SR; if (rph3 > 1.0f) rph3 -= 1.0f;
+                v = (ride_hp * 0.52f + sinf(rph1 * BP_TAU) * 0.13f +
+                     sinf(rph2 * BP_TAU) * 0.08f) * ride_env;
+                v += sinf(rph3 * BP_TAU) * ride_bell * 0.22f;
+                l += v * 0.110f; r += v * 0.205f;
+                ride_env  *= 0.99955f;
+                ride_bell *= 0.99970f;
             }
-            /* brushes: a short swish, not a snare crack */
+
+            /* ---- brushes ----
+             * A continuous swirl under short accented swishes. The swirl is the
+             * brush never leaving the head, and it is most of what makes a jazz
+             * kit sound like a room rather than a drum machine. */
+            swirl_ph += 2.3f / (float)SR;
+            if (swirl_ph > 1.0f) swirl_ph -= 1.0f;
+            swirl_lp += 0.10f * (nz() - swirl_lp);
+            {
+                float sw = swirl_lp * (0.30f + 0.22f * sinf(swirl_ph * BP_TAU)) * 0.11f;
+                l += sw; r += sw * 0.92f;
+            }
             if (brush_env > 0.0004f) {
-                brush_lp += 0.16f * (nz() - brush_lp);
-                l += brush_lp * brush_env * 0.34f;
-                r += brush_lp * brush_env * 0.30f;
+                brush_lp += 0.17f * (nz() - brush_lp);
+                l += brush_lp * brush_env * 0.26f;
+                r += brush_lp * brush_env * 0.23f;
                 brush_env *= 0.99930f;
             }
-            /* kick: felt beater, mostly felt rather than heard */
+
+            /* ---- kick: felt beater, more felt than heard ---- */
             if (kick_env > 0.0004f) {
                 kick_ph += kick_f / (float)SR;
                 if (kick_ph > 1.0f) kick_ph -= 1.0f;
                 kick_f *= 0.99994f;
-                l += sinf(kick_ph * BP_TAU) * kick_env * 0.34f;
-                r += sinf(kick_ph * BP_TAU) * kick_env * 0.34f;
+                l += sinf(kick_ph * BP_TAU) * kick_env * 0.19f;
+                r += sinf(kick_ph * BP_TAU) * kick_env * 0.19f;
                 kick_env *= 0.99975f;
             }
-            /* vibraphone: sine with the motor running */
+
+            /* ---- vibraphone: sine with the motor running ---- */
             if (vib_env > 0.0004f) {
                 float v;
                 vib_ph += vib_f / (float)SR;
@@ -645,28 +846,70 @@ void bp_music_update(void)
                 if (vib_lfo > 1.0f) vib_lfo -= 1.0f;
                 v = sinf(vib_ph * BP_TAU) * vib_env *
                     (0.70f + 0.30f * sinf(vib_lfo * BP_TAU));
-                l += v * 0.150f; r += v * 0.170f;
+                v += sinf(vib_ph * BP_TAU * 4.02f) * vib_env * vib_env * 0.16f;
+                l += v * 0.215f; r += v * 0.240f;
                 vib_env *= 0.99978f;
             }
 
-            /* one slap back, cross-fed, lowpassed: a small club, not a hall */
+            /* ---- tenor ----
+             * Filtered saw with vibrato that fades IN across the note, a short
+             * glide between pitches, and a breath transient. Delayed vibrato is
+             * the single most identifiable thing a horn player does. */
+            if (sax_env > 0.0004f) {
+                float v, cut, vibd;
+                sax_f += (sax_tgt - sax_f) * 0.0016f;      /* portamento */
+                sax_vib += 5.1f / (float)SR;
+                if (sax_vib > 1.0f) sax_vib -= 1.0f;
+                vibd = (1.0f - sax_env) * 0.9f;            /* comes in late */
+                sax_ph += (sax_f * (1.0f + 0.010f * vibd * sinf(sax_vib * BP_TAU)))
+                          / (float)SR;
+                if (sax_ph > 1.0f) sax_ph -= 1.0f;
+                v = 2.0f * sax_ph - 1.0f;
+                if (sax_breath > 0.001f) {
+                    v += nz() * sax_breath * 0.45f;
+                    sax_breath *= 0.9982f;
+                }
+                cut = 0.10f + 0.16f * sax_env;
+                sax_lp += cut * (v - sax_lp);
+                l += sax_lp * sax_env * 0.225f;
+                r += sax_lp * sax_env * 0.190f;
+                sax_env *= 0.99982f;
+            }
+
+            /* ---- bus ----
+             * One slap back, cross-fed and lowpassed: a small club, not a hall.
+             * Then a soft knee, which glues six independent voices into
+             * something that sounds mixed rather than summed. */
             dry = (l + r) * 0.5f;
             wet = delay_l[delay_pos];
             delay_lp += 0.30f * (dry + wet * 0.30f - delay_lp);
             delay_l[delay_pos] = delay_lp;
             delay_r[delay_pos] = delay_lp * 0.85f;
             delay_pos = (delay_pos + 1) % DELAY_LEN;
-            l += delay_r[delay_pos] * 0.26f;
-            r += wet * 0.20f;
+            l += delay_r[delay_pos] * 0.24f;
+            r += wet * 0.19f;
 
-            mus_buf[i * 2]     = (short)(bp_clampf(l, -1.0f, 1.0f) * 8800.0f);
-            mus_buf[i * 2 + 1] = (short)(bp_clampf(r, -1.0f, 1.0f) * 8800.0f);
+            /* Rumble filter. Nothing musical lives under ~35 Hz here, but the
+             * kick and the bass both put energy there, and on a laptop speaker
+             * it is headroom spent on something nobody can hear. */
+            hp_l += 0.0068f * (l - hp_l);  l -= hp_l;
+            hp_r += 0.0068f * (r - hp_r);  r -= hp_r;
+
+            /* tanh-ish soft clip: cheap, and it never produces the hard edge a
+             * hard clamp does when the whole band lands on beat one together */
+            l = bp_clampf(l, -1.4f, 1.4f);
+            r = bp_clampf(r, -1.4f, 1.4f);
+            l = l - 0.28f * l * l * l;
+            r = r - 0.28f * r * r * r;
+
+            mus_buf[i * 2]     = (short)(bp_clampf(l, -1.0f, 1.0f) * 9200.0f);
+            mus_buf[i * 2 + 1] = (short)(bp_clampf(r, -1.0f, 1.0f) * 9200.0f);
 
             if (++mus_pos >= mus_len) {
                 mus_pos = 0;
                 if (++mus_step >= 8) {
                     mus_step = 0;
-                    if (++mus_bar >= 8) { mus_bar = 0; ++mus_chorus; }
+                    if (++mus_bar >= FORM_BARS) { mus_bar = 0; ++mus_chorus; }
                 }
             }
         }

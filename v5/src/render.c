@@ -997,10 +997,14 @@ void bp_render_title(int sw, int sh, int sel, float t, const BpHud *h)
     }
     {
         const char *tag = "mini golf with a cue stick";
-        int w = MeasureText(tag, 22);
-        DrawText(tag, sw / 2 - w / 2, (int)(sh * 0.15f) + 116, 22,
-                 (Color){ 188, 206, 232, 235 });
-        DrawRectangle(sw / 2 - w / 2 - 30, (int)(sh * 0.15f) + 128, w + 60, 2,
+        const int fs = 22;
+        int w = MeasureText(tag, fs);
+        int ty = (int)(sh * 0.15f) + 116;
+        DrawText(tag, sw / 2 - w / 2, ty, fs, (Color){ 188, 206, 232, 235 });
+        /* under the tagline, not through it: the rule used to sit at +128 while
+         * 22px text starting at +116 occupies +116..+138, so the neon line was
+         * struck through the middle of the words */
+        DrawRectangle(sw / 2 - w / 2 - 30, ty + fs + 10, w + 60, 2,
                       (Color){ pal.accent.r, pal.accent.g, pal.accent.b, 150 });
     }
     for (i = 0; i < 4; ++i) {
@@ -1039,23 +1043,39 @@ void bp_render_select(int sw, int sh, int sel, float t)
         neon_text(s, sw / 2 - w / 2, (int)(sh * 0.16f), 40,
                   (Color){ 244, 246, 252, 255 }, pal.accent, 0.9f);
     }
-    for (i = 0; i < 3; ++i) {
-        int w = MeasureText(ITEMS[i], 34);
-        int y = (int)(sh * 0.36f) + i * 88;
-        if (i == sel) {
-            float p = 0.5f + 0.5f * sinf(t * 4.5f);
-            DrawRectangle(sw / 2 - 250, y - 12, 500, 70,
-                          (Color){ pal.accent.r, pal.accent.g, pal.accent.b,
-                                   (unsigned char)(30 + 24 * p) });
-            marquee(sw / 2 - 250, y - 12, 500, 70, t, pal.accent);
-            neon_text(ITEMS[i], sw / 2 - w / 2, y, 34, (Color){ 255, 244, 220, 255 },
-                      pal.accent, 0.9f);
-        } else {
-            DrawText(ITEMS[i], sw / 2 - w / 2, y, 34, (Color){ 168, 184, 208, 235 });
+    /* The highlight box used to be a hard-coded 500x70. That is narrower than
+     * the marquee needs for the longest label and shorter than the title plus
+     * its subtitle, so the bulbs sat on top of the words and the bottom edge cut
+     * through the "par" line. Measure the widest row and size the box to it. */
+    {
+        int boxw = 0, boxh = 34 + 12 + 17 + 34;    /* title, gap, sub, padding */
+        int row = boxh + 22;                        /* keeps boxes from touching */
+        for (i = 0; i < 3; ++i) {
+            int a = MeasureText(ITEMS[i], 34), b = MeasureText(SUB[i], 17);
+            if (a > boxw) boxw = a;
+            if (b > boxw) boxw = b;
         }
-        {
-            int w2 = MeasureText(SUB[i], 17);
-            DrawText(SUB[i], sw / 2 - w2 / 2, y + 40, 17, (Color){ 140, 160, 190, 235 });
+        boxw += 128;                                /* room for the bulbs */
+        for (i = 0; i < 3; ++i) {
+            int w = MeasureText(ITEMS[i], 34);
+            int y = (int)(sh * 0.34f) + i * row;
+            int bx = sw / 2 - boxw / 2, by = y - 18;
+            if (i == sel) {
+                float p = 0.5f + 0.5f * sinf(t * 4.5f);
+                DrawRectangle(bx, by, boxw, boxh,
+                              (Color){ pal.accent.r, pal.accent.g, pal.accent.b,
+                                       (unsigned char)(30 + 24 * p) });
+                marquee(bx, by, boxw, boxh, t, pal.accent);
+                neon_text(ITEMS[i], sw / 2 - w / 2, y, 34, (Color){ 255, 244, 220, 255 },
+                          pal.accent, 0.9f);
+            } else {
+                DrawText(ITEMS[i], sw / 2 - w / 2, y, 34, (Color){ 168, 184, 208, 235 });
+            }
+            {
+                int w2 = MeasureText(SUB[i], 17);
+                DrawText(SUB[i], sw / 2 - w2 / 2, y + 34 + 12, 17,
+                         (Color){ 140, 160, 190, 235 });
+            }
         }
     }
     DrawText("ESC  back", 16, sh - 30, 17, (Color){ 120, 138, 168, 235 });

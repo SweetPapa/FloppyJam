@@ -1,0 +1,101 @@
+name: CI
+
+# Every push and PR: build the game statically and run all four suites. No
+# signing, no releases — this is the cheap gate that keeps `main` honest so the
+# `prod` release workflow never discovers a problem at the point where it is
+# about to publish something.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  RAYLIB_TAG: '5.5'
+
+jobs:
+  test:
+    name: build + test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux build deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential libasound2-dev libx11-dev libxrandr-dev libxi-dev \
+            libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev libwayland-dev libxkbcommon-dev
+
+      - name: Cache raylib
+        id: raylib-cache
+        uses: actions/cache@v4
+        with:
+          path: raylib-install
+          key: raylib-${{ env.RAYLIB_TAG }}-${{ matrix.os }}-trimmed-v2
+
+      # scripts/build-raylib.sh is the same script used locally and by the
+      # release workflow: it disables every file-format decoder the game never
+      # touches. Without that trim the static Windows build is 1,837,056 bytes,
+      # which is over the floppy ceiling.
+      - name: Build raylib (static, trimmed)
+        if: steps.raylib-cache.outputs.cache-hit != 'true'
+        run: ./scripts/build-raylib.sh --out raylib-install
+
+      - name: Build
+        working-directory: v5
+        run: |
+          make RAYLIB_CFLAGS="-I$GITHUB_WORKSPACE/raylib-install/include" \
+               RAYLIB_LIBS="$GITHUB_WORKSPACE/raylib-install/lib/libraylib.a"
+          make size RAYLIB_CFLAGS="-I$GITHUB_WORKSPACE/raylib-install/include" \
+               RAYLIB_LIBS="$GITHUB_WORKSPACE/raylib-install/lib/libraylib.a"
+
+      # The physics, course and music suites are headless by construction —
+      # physics and course never touch raylib, and the music harness stubs out
+      # the audio calls. The camera suite links raylib but opens no window.
+      - name: Test
+        working-directory: v5
+        run: |
+          FLAGS="RAYLIB_CFLAGS=-I$GITHUB_WORKSPACE/raylib-install/include"
+          LIBS="RAYLIB_LIBS=$GITHUB_WORKSPACE/raylib-install/lib/libraylib.a"
+          make test "$FLAGS" "$LIBS"
+          make testcourse "$FLAGS" "$LIBS"
+          make testmusic "$FLAGS" "$LIBS"
+          make testcamera "$FLAGS" "$LIBS"
+
+      - name: Upload rendered music
+        if: matrix.os == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: music-preview
+          path: v5/build/music-*.wav
+          if-no-files-found: warn
+
+  site:
+    name: promo site
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: promo-site/package-lock.json
+      - run: npm ci
+        working-directory: promo-site
+      - run: npm run build
+        working-directory: promo-site
+      - uses: actions/upload-artifact@v4
+        with:
+          name: promo-site
+          path: promo-site/dist

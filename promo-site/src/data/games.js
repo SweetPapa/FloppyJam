@@ -1,0 +1,104 @@
+/* The catalogue. One object per game; everything the site renders comes from
+ * here, so adding the next game is one entry and a folder of screenshots under
+ * public/games/<slug>/ — no component changes.
+ *
+ * `downloads` links are placeholders pointing at the GitHub releases page until
+ * the prod pipeline has cut a tagged release with real assets attached.
+ */
+
+export const REPO = 'https://github.com/SweetPapa/FloppyJam'
+
+export const games = [
+  {
+    slug: 'break-par',
+    title: 'BREAK PAR',
+    tagline: 'Mini golf with a cue stick.',
+    status: 'released',
+    year: 2026,
+    blurb:
+      'It looks like mini golf — eighteen 3D holes with ramps, bumpers, gaps and ' +
+      'gimmicks. But you are not putting, you are shooting pool. Walk the cue ' +
+      'around the ball, pick your line, pick your power, and pick your english.',
+    long: [
+      'Every hole has two answers. The safe route can be parred by a player who ' +
+        'only ever hits centre ball and pays attention to power. The hero line is a ' +
+        'shorter route hiding in the same geometry that saves a stroke or two and ' +
+        'needs a bank, a draw, running english or a combo — and it always costs you ' +
+        'something when you miss.',
+      'The table is set up in the middle of a city at two in the morning: neon ' +
+        'rails, festoon lights on poles, a wet plaza with traffic circling it, a ' +
+        'skyline that is different on every hole, a ferris wheel somewhere over your ' +
+        'shoulder, and a jazz trio playing the whole time.',
+      'It ships as one self-contained native executable with no installer, no ' +
+        'runtime and no asset files of any kind. The whole download fits on a 1.44 MB ' +
+        'floppy disk, which was the rule it was built to. Every mesh, palette, texture ' +
+        'and sound is generated at startup or synthesised at runtime — the skyline ' +
+        'included, seeded off the hole index so hole 7 has the same view every time.',
+    ],
+    hero: './games/breakpar/keyart.jpg',
+    titleShot: './games/breakpar/hero-title.png',
+    icon: './games/breakpar/icon-512.png',
+    accent: '#5cf0b0',
+    accent2: '#ff5ca8',
+    facts: [
+      { label: 'Holes', value: '18' },
+      { label: 'Download', value: '1.4 MB' },
+      { label: 'Asset files', value: 'zero' },
+      { label: 'Written in', value: 'C11 + raylib' },
+    ],
+    features: [
+      {
+        title: 'Real pool physics',
+        body: 'A deterministic 1/240 s simulation with slide, roll and spin friction, ' +
+          'throw on ball-to-ball contact, and english that actually curves the ball. ' +
+          'The trajectory preview is not an estimate — it replays your shot on a copy ' +
+          'of the world with the same solver.',
+      },
+      {
+        title: 'Procedural everything',
+        body: 'No textures, no meshes, no audio files, no fonts. Palettes walk a hue ' +
+          'wheel across the eighteen, the city is hashed from the hole index, and the ' +
+          'soundtrack is a jazz combo generated one sample at a time.',
+      },
+      {
+        title: 'Four camera views',
+        body: 'Over the shoulder, high angle, overhead plan, and down the cue with your ' +
+          'eye on the felt. Pick one and the game keeps giving it to you for every shot.',
+      },
+      {
+        title: 'Fits on a floppy',
+        body: 'A hard 1,474,560-byte ceiling — one 1.44 MB floppy — for the entire ' +
+          'shipped file, statically linked with nothing beside it. The game code is ' +
+          'about 170 KB of that; the rest is the graphics library. Every build checks ' +
+          'the number and fails if it goes over.',
+      },
+    ],
+    shots: [
+      { src: './games/breakpar/hero-title.png', caption: 'The title screen, rendered live over hole 1' },
+      { src: './games/breakpar/shot-shoulder.png', caption: 'Hole 1 — the working three-quarter view' },
+      { src: './games/breakpar/shot-plan.png', caption: 'The overhead plan view reads a dogleg as geometry' },
+      { src: './games/breakpar/shot-bumpers.png', caption: 'Bumper City — fifteen bumpers, genius or chaos' },
+      { src: './games/breakpar/shot-billiards.png', caption: 'Billiards Room — a full rack to blast or pick apart' },
+      { src: './games/breakpar/shot-rack.png', caption: 'The Rack — the cup is capped until you pot the eight' },
+      { src: './games/breakpar/shot-card.png', caption: 'The final card, with best moments' },
+    ],
+    controls: [
+      ['Aim', '← / → — detented, one audible click per notch'],
+      ['Fine aim', 'hold SHIFT'],
+      ['Power', 'hold SPACE, release to strike'],
+      ['English', 'A / D left and right, W follow, S draw'],
+      ['Change view', '↑'],
+      ['Aim at the hole', '↓'],
+      ['Camera', 'drag any mouse button, or Q / E'],
+    ],
+    downloads: [
+      { platform: 'Windows', arch: 'x64', note: 'signed', href: `${REPO}/releases/latest`, icon: 'windows' },
+      { platform: 'macOS', arch: 'Apple silicon & Intel', note: 'signed & notarized', href: `${REPO}/releases/latest`, icon: 'apple' },
+      { platform: 'Source', arch: 'C11 + raylib', note: 'make and run', href: `${REPO}/tree/main/v5`, icon: 'code' },
+    ],
+  },
+]
+
+export function gameBySlug(slug) {
+  return games.find((g) => g.slug === slug)
+}
