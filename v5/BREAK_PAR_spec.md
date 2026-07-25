@@ -111,6 +111,8 @@ This section is the contract. Everything else observes it.
 ### 5.2 Ball model & motion states
 The ball is a sphere: radius **R = 0.0286 m**, mass **m = 0.17 kg** (standard pool ball; keeps all constants in familiar territory). State: position, velocity `v`, angular velocity `ω` (full 3D vector — english lives here).
 
+Radius is per-ball. The cue is R; every *target* ball is **1.8 R** (`BP_R_OBJ`). A holes-length of table makes a real-scale target ball a three-pixel dot from the tee, and you cannot aim a cut at something you cannot see. Mass stays equal on both sides of a ball-ball impulse — a bigger target is easier to hit, not harder to move. The ceiling on that multiplier is the golf cup, which is only 2.2 R across and still has to swallow a target ball; `make test` asserts both the fit and the capture depth.
+
 On the surface, the ball is in one of three regimes, exactly as real billiards models do:
 
 1. **SLIDING** — contact-point velocity `u = v + ω × (R·n̂)` is non-zero. Friction `μ_slide` acts opposite `u`, decelerating `v` and torquing `ω` toward rolling. This is where draw/follow/stun physics happen.

@@ -447,6 +447,7 @@ static void draw_ball(const BpWorld *w, int i, const BpPalette *pal)
     const BpBall *b = &w->balls[i];
     Color base;
     V3 p = b->p;
+    float br = b->r;            /* object balls are bigger than the cue */
     float g;
     if (b->state == BS_GONE) return;
 
@@ -456,14 +457,14 @@ static void draw_ball(const BpWorld *w, int i, const BpPalette *pal)
     /* blob shadow (12.1) */
     g = bp_ground_h(w, p.x, p.z, p.y, NULL);
     if (g > -1e8f) {
-        float lift = bp_clampf((p.y - BP_R - g) * 3.0f, 0.0f, 1.0f);
-        float r = BP_R * bp_lerpf(1.15f, 1.9f, lift);
+        float lift = bp_clampf((p.y - br - g) * 3.0f, 0.0f, 1.0f);
+        float r = br * bp_lerpf(1.15f, 1.9f, lift);
         unsigned char a = (unsigned char)(bp_lerpf(120.0f, 34.0f, lift));
         DrawCircle3D(rv(v3(p.x, g + 0.004f, p.z)), r, rv(v3(1, 0, 0)), 90.0f,
                      (Color){ 0, 0, 0, a });
     }
 
-    DrawSphereEx(rv(p), BP_R, 10, 12, base);
+    DrawSphereEx(rv(p), br, 10, 12, base);
 
     /* Two-tone marks so spin reads at a glance (10.5). */
     {
@@ -472,21 +473,21 @@ static void draw_ball(const BpWorld *w, int i, const BpPalette *pal)
         V3 rt = mat_apply(m, v3(1, 0, 0));
         Color mark = (b->kind == BALL_CUE) ? (Color){ 220, 60, 60, 255 }
                                            : (Color){ 248, 248, 244, 255 };
-        DrawSphereEx(rv(v3add(p, v3mul(up,  BP_R * 0.80f))), BP_R * 0.40f, 6, 8, mark);
-        DrawSphereEx(rv(v3add(p, v3mul(up, -BP_R * 0.80f))), BP_R * 0.40f, 6, 8, mark);
+        DrawSphereEx(rv(v3add(p, v3mul(up,  br * 0.80f))), br * 0.40f, 6, 8, mark);
+        DrawSphereEx(rv(v3add(p, v3mul(up, -br * 0.80f))), br * 0.40f, 6, 8, mark);
         if (b->kind != BALL_CUE) {
-            DrawSphereEx(rv(v3add(p, v3mul(rt,  BP_R * 0.86f))), BP_R * 0.26f, 6, 8,
+            DrawSphereEx(rv(v3add(p, v3mul(rt,  br * 0.86f))), br * 0.26f, 6, 8,
                          (Color){ 250, 250, 250, 255 });
         }
         if (b->kind == BALL_EIGHT) {
-            DrawSphereEx(rv(v3add(p, v3mul(rt, BP_R * 0.84f))), BP_R * 0.34f, 6, 8,
+            DrawSphereEx(rv(v3add(p, v3mul(rt, br * 0.84f))), br * 0.34f, 6, 8,
                          (Color){ 250, 250, 250, 255 });
         }
     }
     /* idle sheen */
     if (b->state == BS_REST) {
-        DrawSphereEx(rv(v3add(p, v3(-0.010f, BP_R * 0.62f, -0.010f))), BP_R * 0.16f, 5, 6,
-                     (Color){ 255, 255, 255, 150 });
+        DrawSphereEx(rv(v3add(p, v3(-0.010f, br * 0.62f, -0.010f))),
+                     br * 0.16f, 5, 6, (Color){ 255, 255, 255, 150 });
     }
 
     /* Night rim light. Two translucent shells pick the ball out against dark
@@ -494,10 +495,10 @@ static void draw_ball(const BpWorld *w, int i, const BpPalette *pal)
      * of the same colour on the floor keeps it readable from orbit height. */
     {
         Color k = (b->kind == BALL_CUE) ? (Color){ 210, 232, 255, 255 } : base;
-        DrawSphereEx(rv(p), BP_R * 1.22f, 8, 10, (Color){ k.r, k.g, k.b, 26 });
-        DrawSphereEx(rv(p), BP_R * 1.55f, 6, 8, (Color){ k.r, k.g, k.b, 12 });
-        if (g > -1e8f && p.y - BP_R - g < 0.05f)
-            ring3(v3(p.x, g + 0.003f, p.z), BP_R * 1.3f, BP_R * 3.4f,
+        DrawSphereEx(rv(p), br * 1.22f, 8, 10, (Color){ k.r, k.g, k.b, 26 });
+        DrawSphereEx(rv(p), br * 1.55f, 6, 8, (Color){ k.r, k.g, k.b, 12 });
+        if (g > -1e8f && p.y - br - g < 0.05f)
+            ring3(v3(p.x, g + 0.003f, p.z), br * 1.3f, br * 3.4f,
                   (Color){ k.r, k.g, k.b, 22 }, 12);
     }
     (void)pal;
@@ -542,9 +543,10 @@ static void draw_guide(const BpWorld *w, const BpShot *sh)
     if (g->kind == 2) {
         /* ghost ball + the object ball's departure line (4.3) */
         V3 ghost = v3(g->point.x, cb->p.y, g->point.z);
-        DrawSphereWires(rv(ghost), BP_R, 6, 8, (Color){ 255, 255, 255, 120 });
+        DrawSphereWires(rv(ghost), cb->r, 6, 8, (Color){ 255, 255, 255, 120 });
         for (t = 0.0f; t < 0.55f; t += step) {
-            V3 p = v3add(w->balls[g->ball].p, v3mul(g->objdir, BP_R * 2.0f + t));
+            V3 p = v3add(w->balls[g->ball].p,
+                         v3mul(g->objdir, w->balls[g->ball].r * 1.4f + t));
             DrawCube(rv(p), 0.014f, 0.014f, 0.014f, (Color){ 255, 214, 92, 220 });
         }
     } else if (g->kind == 1) {
@@ -747,7 +749,7 @@ static void draw_minimap(const BpWorld *w, int x, int y, int size, Color accent)
         if (b->state == BS_GONE) continue;
         px = x + (int)((b->p.x - lo.x) * sc);
         py = y + (int)((b->p.z - lo.z) * sc);
-        DrawCircle(px, py, i == 0 ? 3.5f : 2.5f,
+        DrawCircle(px, py, 3.0f * (b->r / BP_R),
                    i == 0 ? (Color){ 255, 255, 255, 255 } : BALL_COL[b->color & 7]);
     }
     DrawRectangleLines(x - 6, y - 6, size + 12, size + 12, (Color){ 50, 60, 80, 220 });
@@ -1192,7 +1194,8 @@ void bp_render_preview(const BpWorld *w, const BpPreview *pv, float t)
         }
         if (pv->obj[i].n > 1) {
             V3 e = pv->obj[i].pt[pv->obj[i].n - 1];
-            DrawCircle3D(rv(v3(e.x, e.y + 0.012f, e.z)), BP_R * 1.5f,
+            /* obj[] only ever tracks target balls, so this ring is theirs */
+            DrawCircle3D(rv(v3(e.x, e.y + 0.012f, e.z)), BP_R_OBJ * 1.2f,
                          rv(v3(1, 0, 0)), 90.0f, base);
         }
     }

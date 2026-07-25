@@ -73,6 +73,7 @@ void bp_course_build(BpWorld *w, int index)
     memset(&w->balls[0], 0, sizeof(BpBall));
     w->balls[0].kind = BALL_CUE;
     w->balls[0].state = BS_REST;
+    w->balls[0].r = BP_R;
     w->balls[0].axis = v3(1.0f, 0.0f, 0.0f);
 
     for (i = 0; i < H->nballs && w->nballs < BP_MAX_BALLS; ++i) {
@@ -83,6 +84,7 @@ void bp_course_build(BpWorld *w, int index)
         b->color = d->color;
         b->num = d->num;
         b->state = BS_REST;
+        b->r = BP_R_OBJ;
         b->axis = v3(1.0f, 0.0f, 0.0f);
         b->p = v3(d->x, 0.0f, d->z);
     }
@@ -95,7 +97,7 @@ void bp_course_build(BpWorld *w, int index)
         BpBall *b = &w->balls[i];
         float g = bp_ground_h(w, b->p.x, b->p.z, 50.0f, NULL);
         if (g < -1e8f) g = 0.0f;
-        b->p.y = g + BP_R;
+        b->p.y = g + b->r;
         b->home = b->p;
         b->prev = b->p;
     }

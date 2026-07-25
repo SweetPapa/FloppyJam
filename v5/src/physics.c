@@ -133,7 +133,10 @@ V3 bp_pad_normal_at(const BpWorld *w, int pad)
 
 float bp_ground_h(const BpWorld *w, float x, float z, float bally, int *pad_out)
 {
-    float ref = bally - BP_R + 0.06f;   /* tolerate a 6 cm step up */
+    /* Tolerate a step up of roughly 6 cm. Measured off the cue radius for
+     * every ball: this is a search hint, not a contact test, and the smallest
+     * real step on any hole is 25 cm. */
+    float ref = bally - BP_R + 0.06f;
     float best = -1e9f, lowest = 1e9f;
     int bi = -1, li = -1, i;
     for (i = 0; i < w->npads; ++i) {
@@ -208,7 +211,7 @@ static void contact_impulse(BpBall *b, V3 n, float e, float mu, float boost,
     if (vn > 0.0f) vn = 0.0f;
     jn = -(1.0f + e) * vn + boost;
     jn_fric = -(1.0f + (e > 1.0f ? 1.0f : e)) * vn;
-    r = v3mul(n, -BP_R);
+    r = v3mul(n, -b->r);
     u = v3add(b->v, v3cross(b->w, r));
     ut = v3tan(u, n);
     b->v = v3add(b->v, v3mul(n, jn));
@@ -220,7 +223,7 @@ static void contact_impulse(BpBall *b, V3 n, float e, float mu, float boost,
         uh = v3mul(ut, 1.0f / us);
         J = v3mul(uh, -jt);
         b->v = v3add(b->v, J);
-        b->w = v3add(b->w, v3mul(v3cross(r, J), 5.0f / (2.0f * BP_R * BP_R)));
+        b->w = v3add(b->w, v3mul(v3cross(r, J), 5.0f / (2.0f * b->r * b->r)));
     }
 
     /* Rails must never serve the ball. Two things conspire otherwise: a
@@ -259,7 +262,7 @@ static void surface_step(BpBall *b, V3 n, const BpSurfDef *s, float h)
     /* slope acceleration */
     b->v = v3add(b->v, v3mul(gtan, h));
 
-    r = v3mul(n, -BP_R);
+    r = v3mul(n, -b->r);
     u = v3add(b->v, v3cross(b->w, r));
     ut = v3tan(u, n);
     us = v3len(ut);
@@ -273,7 +276,7 @@ static void surface_step(BpBall *b, V3 n, const BpSurfDef *s, float h)
         V3 uh = v3mul(ut, 1.0f / us);
         b->v = v3sub(b->v, v3mul(uh, mu * N * dt));
         b->w = v3add(b->w, v3mul(v3cross(n, uh),
-                                 (5.0f * mu * N) / (2.0f * BP_R) * dt));
+                                 (5.0f * mu * N) / (2.0f * b->r) * dt));
     } else {
         /* ROLLING: only rolling resistance; regear omega to pure roll but
          * keep the vertical-axis english, which decays on its own below. */
@@ -285,12 +288,12 @@ static void surface_step(BpBall *b, V3 n, const BpSurfDef *s, float h)
             b->v = v3add(v3mul(n, v3dot(b->v, n)), v3mul(vt, k));
         }
         wn = v3dot(b->w, n);
-        b->w = v3add(v3mul(v3cross(n, b->v), 1.0f / BP_R), v3mul(n, wn));
+        b->w = v3add(v3mul(v3cross(n, b->v), 1.0f / b->r), v3mul(n, wn));
     }
 
     /* vertical-axis spin bleeds off independently (mu_spin) */
     wn = v3dot(b->w, n);
-    dwn = (5.0f * s->mu_spin * N) / (2.0f * BP_R) * h;
+    dwn = (5.0f * s->mu_spin * N) / (2.0f * b->r) * h;
     if (fabsf(wn) <= dwn) b->w = v3sub(b->w, v3mul(n, wn));
     else                  b->w = v3sub(b->w, v3mul(n, (wn > 0 ? dwn : -dwn)));
 }
@@ -320,8 +323,8 @@ static int box_active(const BpWorld *w, const BpBox *bx)
 }
 
 /* closest point on a yaw-oriented box, world space; returns penetration */
-static int box_contact(V3 p, V3 c, float yaw, float hx, float hy, float hz,
-                       V3 *n_out, float *pen_out)
+static int box_contact(V3 p, float br, V3 c, float yaw, float hx, float hy,
+                       float hz, V3 *n_out, float *pen_out)
 {
     float cs = cosf(yaw), sn = sinf(yaw);
     V3 d = v3sub(p, c);
@@ -336,14 +339,14 @@ static int box_contact(V3 p, V3 c, float yaw, float hx, float hy, float hz,
     V3 nl;
     if (d2 > 1e-12f) {
         float dist = sqrtf(d2);
-        if (dist >= BP_R) return 0;
+        if (dist >= br) return 0;
         nl = v3(ex / dist, ey / dist, ez / dist);
-        *pen_out = BP_R - dist;
+        *pen_out = br - dist;
     } else {
         float px = hx - fabsf(lx), py = hy - fabsf(ly), pz = hz - fabsf(lz);
-        if (px <= py && px <= pz)      { nl = v3(lx < 0 ? -1.f : 1.f, 0, 0); *pen_out = px + BP_R; }
-        else if (py <= pz)             { nl = v3(0, ly < 0 ? -1.f : 1.f, 0); *pen_out = py + BP_R; }
-        else                           { nl = v3(0, 0, lz < 0 ? -1.f : 1.f); *pen_out = pz + BP_R; }
+        if (px <= py && px <= pz)      { nl = v3(lx < 0 ? -1.f : 1.f, 0, 0); *pen_out = px + br; }
+        else if (py <= pz)             { nl = v3(0, ly < 0 ? -1.f : 1.f, 0); *pen_out = py + br; }
+        else                           { nl = v3(0, 0, lz < 0 ? -1.f : 1.f); *pen_out = pz + br; }
     }
     n_out->x = nl.x * cs - nl.z * sn;
     n_out->y = nl.y;
@@ -383,7 +386,7 @@ static void resolve_boxes(BpWorld *w, int bi)
         V3 c, vel, n; float yaw, pen, vn, e, speed;
         if (!box_active(w, bx)) continue;
         box_pose(w, bx, &c, &yaw, &vel);
-        if (!box_contact(b->p, c, yaw, bx->hx, bx->hy, bx->hz, &n, &pen)) continue;
+        if (!box_contact(b->p, b->r, c, yaw, bx->hx, bx->hy, bx->hz, &n, &pen)) continue;
         b->p = v3add(b->p, v3mul(n, pen + 1e-4f));
         b->v = v3sub(b->v, vel);                 /* work in the mover frame */
         vn = v3dot(b->v, n);
@@ -430,12 +433,12 @@ static void resolve_posts(BpWorld *w, int bi)
         if (dxz > po->r) { nx = dx * (1.0f - po->r / dxz); nz = dz * (1.0f - po->r / dxz); }
         else             { nx = 0.0f; nz = 0.0f; }
         dist = sqrtf(nx * nx + ny * ny + nz * nz);
-        if (dist >= BP_R) continue;
-        if (dist > 1e-6f) { n = v3(nx / dist, ny / dist, nz / dist); pen = BP_R - dist; }
+        if (dist >= b->r) continue;
+        if (dist > 1e-6f) { n = v3(nx / dist, ny / dist, nz / dist); pen = b->r - dist; }
         else {
             float ld = (dxz > 1e-6f) ? dxz : 1e-6f;
             n = v3(dx / ld, 0.0f, dz / ld);
-            pen = BP_R + (po->r - dxz);
+            pen = b->r + (po->r - dxz);
         }
         b->p = v3add(b->p, v3mul(n, pen + 1e-4f));
         b->v = v3sub(b->v, vel);
@@ -485,9 +488,9 @@ static void resolve_pocket_geom(BpWorld *w, int bi)
         if (pk->kind == PK_CUP && w->cup_sealed) continue;
         dx = b->p.x - pk->x; dz = b->p.z - pk->z;
         dxz = sqrtf(dx * dx + dz * dz);
-        if (dxz > pr + 2.0f * BP_R) continue;
-        if (b->p.y > pk->y + 2.0f * BP_R) continue;
-        if (b->p.y < pk->y - BP_CUP_DEPTH - BP_R) continue;
+        if (dxz > pr + 2.0f * b->r) continue;
+        if (b->p.y > pk->y + 2.0f * b->r) continue;
+        if (b->p.y < pk->y - BP_CUP_DEPTH - b->r) continue;
 
         if (dxz > 1e-6f) { ux = dx / dxz; uz = dz / dxz; }
         else             { ux = 1.0f; uz = 0.0f; }
@@ -501,9 +504,9 @@ static void resolve_pocket_geom(BpWorld *w, int bi)
         rimp = v3(pk->x + ux * pr, pk->y, pk->z + uz * pr);
         diff = v3sub(b->p, rimp);
         dist = v3len(diff);
-        if (dist < BP_R && dist > 1e-6f) {
+        if (dist < b->r && dist > 1e-6f) {
             n = v3mul(diff, 1.0f / dist);
-            pen = BP_R - dist;
+            pen = b->r - dist;
             b->p = v3add(b->p, v3mul(n, pen + 1e-4f));
             vn = v3dot(b->v, n);
             if (vn < -0.05f) {
@@ -517,9 +520,9 @@ static void resolve_pocket_geom(BpWorld *w, int bi)
 
 cylinder:
         /* inner cylinder: rattling around inside the cup */
-        if (b->p.y < pk->y - 0.2f * BP_R && dxz + BP_R > pr) {
+        if (b->p.y < pk->y - 0.2f * b->r && dxz + b->r > pr) {
             n = v3(-ux, 0.0f, -uz);
-            pen = dxz + BP_R - pr;
+            pen = dxz + b->r - pr;
             b->p = v3add(b->p, v3mul(n, pen + 1e-4f));
             vn = v3dot(b->v, n);
             if (vn < 0.0f) {
@@ -545,10 +548,10 @@ static void pocket_capture(BpWorld *w, int bi, int pi)
         float sp = sqrtf(b->v.x * b->v.x + b->v.z * b->v.z);
         if (sp < 0.6f) sp = 0.6f;
         if (v3len2(dir) < 0.5f) dir = v3(0.0f, 0.0f, 1.0f);
-        b->p = v3(ex->x + dir.x * (BP_POCKET_R + BP_R * 2.5f), ex->y + BP_R * 1.02f,
-                  ex->z + dir.z * (BP_POCKET_R + BP_R * 2.5f));
+        b->p = v3(ex->x + dir.x * (BP_POCKET_R + b->r * 2.5f), ex->y + b->r * 1.02f,
+                  ex->z + dir.z * (BP_POCKET_R + b->r * 2.5f));
         b->v = v3mul(dir, sp);
-        b->w = v3mul(v3cross(v3(0.0f, 1.0f, 0.0f), b->v), 1.0f / BP_R);
+        b->w = v3mul(v3cross(v3(0.0f, 1.0f, 0.0f), b->v), 1.0f / b->r);
         b->state = BS_ROLL;
         b->cool = 48;          /* don't re-enter the partner on the way out */
         return;
@@ -586,13 +589,17 @@ static void resolve_balls(BpWorld *w)
             if (b->state == BS_GONE) continue;
             d = v3sub(b->p, a->p);
             dist = v3len(d);
-            if (dist >= 2.0f * BP_R || dist < 1e-6f) continue;
+            if (dist >= a->r + b->r || dist < 1e-6f) continue;
             n = v3mul(d, 1.0f / dist);
-            pen = 2.0f * BP_R - dist;
+            pen = a->r + b->r - dist;
             a->p = v3sub(a->p, v3mul(n, pen * 0.5f + 1e-5f));
             b->p = v3add(b->p, v3mul(n, pen * 0.5f + 1e-5f));
             rel = v3dot(v3sub(b->v, a->v), n);
             if (rel < 0.0f) {
+                /* Equal masses on purpose, even though object balls are 1.8x
+                 * the cue's size. A ball you can see should still be a ball
+                 * you can move: giving it real volumetric mass (4x) would
+                 * make every cut shot a nudge. */
                 jimp = -(1.0f + BP_E_BALL) * rel * 0.5f;
                 a->v = v3sub(a->v, v3mul(n, jimp));
                 b->v = v3add(b->v, v3mul(n, jimp));
@@ -633,7 +640,7 @@ static void ball_step(BpWorld *w, int bi, float h)
     }
     if (padi < 0 && !in_pocket) support = -1e9f;
 
-    grounded = (support > -1e8f) && (b->p.y - BP_R <= support + CONTACT_TOL);
+    grounded = (support > -1e8f) && (b->p.y - b->r <= support + CONTACT_TOL);
     b->grounded = (unsigned char)grounded;
     if (b->surf != surf && grounded && !in_pocket) {
         ev_push(w, EV_SURFACE, bi, (signed char)surf, v3len(b->v), b->p);
@@ -643,7 +650,7 @@ static void ball_step(BpWorld *w, int bi, float h)
 
     if (grounded) {
         float vn = v3dot(b->v, n);
-        if (b->p.y < support + BP_R) b->p.y = support + BP_R;
+        if (b->p.y < support + b->r) b->p.y = support + b->r;
         if (vn < -0.30f) {
             contact_impulse(b, n, BP_E_FLOOR, s->mu_slide, 0.0f, BP_NO_LIFT_CAP);
             ev_push(w, EV_LAND, bi, (signed char)surf, -vn, b->p);
@@ -664,7 +671,7 @@ static void ball_step(BpWorld *w, int bi, float h)
                     ev_push(w, EV_KICK, bi, (signed char)padi, p->ks, b->p);
             }
             b->v = v3(dir.x * p->ks, b->v.y, dir.z * p->ks);
-            b->w = v3mul(v3cross(n, b->v), 1.0f / BP_R);
+            b->w = v3mul(v3cross(n, b->v), 1.0f / b->r);
         }
         /* sand: hard speed ceiling (6.2 #8) */
         if (s->cap > 0.0f) {
@@ -697,7 +704,7 @@ static void ball_step(BpWorld *w, int bi, float h)
     pi = (b->cool > 0) ? -1 : bp_pocket_at(w, b->p.x, b->p.z, -1e9f);
     if (pi >= 0) {
         const BpPocket *pk = &w->pockets[pi];
-        float sink = (pk->kind == PK_CUP) ? 0.9f * BP_R : 0.05f * BP_R;
+        float sink = (pk->kind == PK_CUP) ? 0.9f * b->r : 0.05f * b->r;
         if (b->p.y < pk->y - sink && fabsf(pk->y - gh) < 0.35f) {
             pocket_capture(w, bi, pi);
             return;
@@ -716,7 +723,7 @@ static void ball_step(BpWorld *w, int bi, float h)
     /* rest test */
     if (grounded && b->state != BS_REST) {
         float sp = v3len(b->v);
-        float wr = v3len(v3tan(b->w, n)) * BP_R;
+        float wr = v3len(v3tan(b->w, n)) * b->r;
         if (sp < BP_REST_V && wr < 0.09f) {
             V3 gv = v3(0.0f, -BP_G, 0.0f);
             V3 gtan = v3sub(gv, v3mul(n, v3dot(gv, n)));
@@ -757,6 +764,14 @@ void bp_world_finalize(BpWorld *w)
 {
     int i;
     float t = RAIL_T * 0.5f, hh = RAIL_H * 0.5f;
+
+    /* Ball radius is per-ball now. A zeroed BpBall is a legitimate way to
+     * build a world — the test harnesses do exactly that — so fill in the
+     * radius from the kind rather than letting a zero-radius ball fall
+     * through the floor. */
+    for (i = 0; i < w->nballs; ++i)
+        if (w->balls[i].r <= 0.0f)
+            w->balls[i].r = (w->balls[i].kind == BALL_CUE) ? BP_R : BP_R_OBJ;
 
     for (i = 0; i < w->npads; ++i) {
         const BpPad *p = &w->pads[i];
@@ -835,8 +850,8 @@ void bp_strike(BpWorld *w, float aim, float power, float tx, float ty)
     dir = v3(sinf(aim), 0.0f, cosf(aim));
     right = v3cross(dir, up);                    /* screen-right of the aim */
     b->v = v3mul(dir, speed);
-    q = v3add(v3mul(right, tx * BP_R), v3mul(up, ty * BP_R));
-    b->w = v3mul(v3cross(q, b->v), BP_K_SPIN / (BP_R * BP_R));
+    q = v3add(v3mul(right, tx * b->r), v3mul(up, ty * b->r));
+    b->w = v3mul(v3cross(q, b->v), BP_K_SPIN / (b->r * b->r));
     b->state = BS_ROLL;
 }
 
@@ -923,7 +938,7 @@ void bp_guide(const BpWorld *w, int bi, float aim, BpGuideHit *out)
             if (i == bi || ob->state == BS_GONE) continue;
             dx = ob->p.x - p.x; dz = ob->p.z - p.z;
             d2 = dx * dx + dz * dz;
-            if (d2 < (2.0f * BP_R) * (2.0f * BP_R)) {
+            if (d2 < (cb->r + ob->r) * (cb->r + ob->r)) {
                 V3 od = v3norm(v3(ob->p.x - p.x, 0.0f, ob->p.z - p.z));
                 out->kind = 2;
                 out->ball = i;
@@ -941,7 +956,7 @@ void bp_guide(const BpWorld *w, int bi, float aim, BpGuideHit *out)
             const BpPocket *pk = &w->pockets[i];
             float dx, dz, pr;
             if (pk->kind == PK_CUP && w->cup_sealed) continue;
-            if (fabsf(pk->y - cb->p.y + BP_R) > 0.25f) continue;
+            if (fabsf(pk->y - cb->p.y + cb->r) > 0.25f) continue;
             dx = p.x - pk->x; dz = p.z - pk->z;
             pr = pocket_radius(pk) * 0.75f;
             if (dx * dx + dz * dz < pr * pr) {
@@ -959,7 +974,7 @@ void bp_guide(const BpWorld *w, int bi, float aim, BpGuideHit *out)
             V3 c, vel, n; float yaw, pen;
             if (!box_active(w, bx)) continue;
             box_pose(w, bx, &c, &yaw, &vel);
-            if (!box_contact(p, c, yaw, bx->hx, bx->hy, bx->hz, &n, &pen)) continue;
+            if (!box_contact(p, cb->r, c, yaw, bx->hx, bx->hy, bx->hz, &n, &pen)) continue;
             if (fabsf(n.y) > 0.8f) continue;
             n.y = 0.0f; n = v3norm(n);
             out->kind = 1;
@@ -980,10 +995,10 @@ void bp_guide(const BpWorld *w, int bi, float aim, BpGuideHit *out)
                 bp_mover_pose(w, po->mover - 1, w->ftick, &off, &dy);
                 c = v3add(c, off);
             }
-            if (p.y < c.y - BP_R || p.y > c.y + po->h + BP_R) continue;
+            if (p.y < c.y - cb->r || p.y > c.y + po->h + cb->r) continue;
             dx = p.x - c.x; dz = p.z - c.z;
             dxz = sqrtf(dx * dx + dz * dz);
-            rr = po->r + BP_R;
+            rr = po->r + cb->r;
             if (dxz < rr) {
                 n = v3norm(v3(dx, 0.0f, dz));
                 out->kind = 1;

@@ -90,6 +90,7 @@ typedef struct {
     V3 p, v, w;            /* position, velocity, angular velocity       */
     V3 home;               /* spawn (object balls respawn here)          */
     V3 prev;               /* rest position before the current shot      */
+    float r;               /* BP_R for the cue, BP_R_OBJ for a target    */
     unsigned char kind;
     unsigned char state;
     unsigned char color;   /* palette slot                               */
