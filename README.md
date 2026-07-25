@@ -83,19 +83,30 @@ security add-generic-password -s spt-notary -a you@example.com -w
 
 ### `scripts/sign-windows.sh`
 
-Authenticode signing through Azure Trusted Signing, which is a web service — so
-this runs on **macOS, Linux or Windows**. Only the *build* needs a Windows
-toolchain, and even that is handled by MinGW cross-compilation.
+Authenticode signing through Azure Trusted Signing.
 
 ```sh
-./scripts/sign-windows.sh --verify-setup     # check az login + the cert profile
-./scripts/sign-windows.sh v5/breakpar.exe
+./scripts/sign-windows.sh --verify-setup     # works on any platform
+./scripts/sign-windows.sh v5/breakpar.exe    # Windows only — see below
 ```
 
 Auth is whatever the environment already has: your `az login` session locally,
-the federated OIDC identity in CI. Nothing here ever takes a password. Signing
-itself needs the cross-platform [`sign`](https://github.com/dotnet/sign) tool,
-which the script installs on first use if the .NET SDK is present.
+the federated OIDC identity in CI. Nothing here ever takes a password.
+
+**The signing step has to run on Windows.** Trusted Signing is a web service and
+`--verify-setup` works from anywhere, but the Microsoft client
+([dotnet/sign](https://github.com/dotnet/sign)) P/Invokes `SetDllDirectoryW`
+from `kernel32.dll` in its very first initialiser, so on Linux and macOS it
+aborts with `System.DllNotFoundException: Unable to load shared library
+'kernel32.dll'` — despite shipping as a portable .NET tool. There is no
+supported cross-platform Authenticode signer for Trusted Signing today:
+`osslsigncode` cannot talk to the service, and driving the REST API directly
+means implementing PE digest embedding yourself. The script now fails with that
+explanation instead of letting the tool abort.
+
+So the release workflow splits it: the MinGW cross-compile runs on Linux, the
+resulting `.exe` is handed to a `windows-latest` job, and only the signature is
+applied there.
 
 ## The release pipeline
 
@@ -109,8 +120,9 @@ on Linux and macOS, runs all four suites, and builds the promo site.
 2. **verify** — all four suites. Nothing is published if anything fails.
 3. **macOS** — static raylib for both arches, `lipo` into one universal binary,
    sign, notarize, staple, and build a `.dmg`.
-4. **Windows** — MinGW cross-compile with the icon and version block linked in by
-   `windres`, then Azure Trusted Signing from the same Linux runner.
+4. **Windows** — MinGW cross-compile on Linux with the icon and version block
+   linked in by `windres`, then a `windows-latest` job applies the Azure Trusted
+   Signing signature (see above for why that cannot happen on Linux).
 5. **release** — checksums, generated notes, and a GitHub Release with the
    artifacts attached. Re-running replaces assets instead of failing.
 

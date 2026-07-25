@@ -254,7 +254,7 @@ jobs:
 
   # ------------------------------------------------------------------
   windows:
-    name: Windows x64 (signed)
+    name: Windows x64 (build)
     needs: [version, test]
     runs-on: ubuntu-latest
     steps:
@@ -281,6 +281,32 @@ jobs:
           make windows RAYLIB_WIN="$GITHUB_WORKSPACE/mingw-raylib"
           ls -la breakpar.exe
 
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-unsigned
+          path: v5/breakpar.exe
+          if-no-files-found: error
+
+  # ------------------------------------------------------------------
+  # Signing has to happen on Windows. dotnet/sign is distributed as a portable
+  # .NET tool but P/Invokes SetDllDirectoryW from kernel32.dll in its first
+  # initialiser, so on Linux it aborts with a DllNotFoundException. There is no
+  # supported cross-platform Authenticode signer for Trusted Signing, so the
+  # build stays on Linux (where the MinGW cross-compile lives) and only the
+  # signature is applied here.
+  windows-sign:
+    name: Windows x64 (sign)
+    needs: [version, windows]
+    runs-on: windows-latest
+    outputs:
+      signed: ${{ steps.sign.outputs.signed }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-unsigned
+          path: v5
+
       - name: Azure login (OIDC)
         id: az
         if: vars.AZURE_CLIENT_ID != ''
@@ -291,29 +317,33 @@ jobs:
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
       - name: Sign with Azure Trusted Signing
+        id: sign
         if: steps.az.outcome == 'success'
+        shell: bash
         env:
           SIGN_DESCRIPTION: BREAK PAR
         run: |
           set -euo pipefail
-          # dotnet/sign is a .NET tool and authenticates with
-          # DefaultAzureCredential, so it picks up the OIDC login above with
-          # nothing else configured.
           dotnet tool install --global sign --prerelease
           export PATH="$PATH:$HOME/.dotnet/tools"
           ./scripts/sign-windows.sh v5/breakpar.exe
+          echo "signed=true" >> "$GITHUB_OUTPUT"
 
       - name: Warn if unsigned
         if: steps.az.outcome != 'success'
+        shell: bash
         run: echo "::warning::no AZURE_CLIENT_ID variable — publishing an unsigned Windows build"
 
       - name: Package
+        shell: bash
         env:
           VERSION: ${{ needs.version.outputs.version }}
         run: |
+          set -euo pipefail
           mkdir -p dist
           cp v5/breakpar.exe "dist/BREAK-PAR-$VERSION-windows-x64.exe"
-          cd dist && zip -9 "BREAK-PAR-$VERSION-windows-x64.zip" "BREAK-PAR-$VERSION-windows-x64.exe"
+          cd dist
+          7z a -mx=9 "BREAK-PAR-$VERSION-windows-x64.zip" "BREAK-PAR-$VERSION-windows-x64.exe" >/dev/null
           ls -la
 
       - uses: actions/upload-artifact@v4
@@ -324,7 +354,7 @@ jobs:
   # ------------------------------------------------------------------
   release:
     name: publish release
-    needs: [version, macos, windows]
+    needs: [version, macos, windows-sign]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
