@@ -51,7 +51,7 @@ static float g_step_acc;
 /* pending: walk there first, then do the thing */
 static int   g_pending = -1;
 static char  g_inspect[TEXT_MAX];
-static float g_inspect_t;
+static bool  g_inspect_open;
 static int   g_inspect_page, g_inspect_next = -1;
 
 const char *scene_current(void) { return g_id; }
@@ -315,6 +315,8 @@ bool scene_load(const char *id)
 {
     Block b;
     if (!content_block("scene", id, &b)) return false;
+    char previous[48];
+    snprintf(previous, sizeof previous, "%s", g_id);
     snprintf(g_id, sizeof g_id, "%s", id);
     g_nhot = g_nactors = 0;
     g_title[0] = 0;
@@ -325,7 +327,7 @@ bool scene_load(const char *id)
     g_px = 300; g_py = 610;
     g_pending = -1;
     g_inspect[0] = 0;
-    g_inspect_t = 0;
+    g_inspect_open = false;
 
     Cursor c;
     cur_open(&c, &b);
@@ -407,6 +409,22 @@ bool scene_load(const char *id)
             }
         }
     }
+
+    /* Arrive beside the exit that leads back to the scene we just left.
+     * This makes walking right and then returning left put the detective
+     * back on the right-hand edge of the original screen instead of at its
+     * authored first-visit spawn every time. */
+    if (previous[0] && !eq(previous, id)) {
+        for (int i = 0; i < g_nhot; i++) {
+            Hot *h = &g_hot[i];
+            if (h->kind != SC_EXIT || !eq(h->arg, previous)) continue;
+            float cx = h->r.x + h->r.width * 0.5f;
+            g_px = cx < VW * 0.5f ? g_walk.x + 45.0f
+                                  : g_walk.x + g_walk.width - 45.0f;
+            g_py = g_walk.y + g_walk.height * 0.62f;
+            break;
+        }
+    }
     g_tx = g_px; g_ty = g_py;
     g_walking = false;
     music_mood(g_mood);
@@ -432,14 +450,14 @@ static void fire(int i)
         trust_add("pip", 1);        /* the hint economy IS the relationship (§5.2) */
         sfx_play(SFX_FEATHER);
         snprintf(g_inspect, sizeof g_inspect, "%s", ui_str("feather.found"));
-        g_inspect_t = 3.0f;
+        g_inspect_open = true;
         g_inspect_page = 0;
         g_inspect_next = -1;
         return;
     }
     if (h->kind == SC_NONE) {
         snprintf(g_inspect, sizeof g_inspect, "%s", h->label);
-        g_inspect_t = 5.0f;
+        g_inspect_open = true;
         g_inspect_page = 0;
         g_inspect_next = -1;
         sfx_play(SFX_TICK);
@@ -451,7 +469,6 @@ static void fire(int i)
 scene_request scene_update(float dt)
 {
     g_time += dt;
-    if (g_inspect_t > 0) g_inspect_t -= dt;
 
     /* on_enter runs once per scene, guarded by a flag so a revisit is quiet.
      * The cutscene goes first: a scene that opens on a cutscene should open
@@ -480,7 +497,9 @@ scene_request scene_update(float dt)
     }
 
     Vector2 m = art_mouse();
-    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && g_inspect_t <= 0) {
+    bool advance = IsMouseButtonPressed(MOUSE_BUTTON_LEFT) ||
+                   IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ENTER);
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !g_inspect_open) {
         int hit = -1;
         for (int i = 0; i < g_nhot; i++)
             if (hot_live(&g_hot[i]) && CheckCollisionPointRec(m, g_hot[i].r)) hit = i;
@@ -497,10 +516,12 @@ scene_request scene_update(float dt)
             g_tx = m.x; g_ty = m.y;
             g_walking = true;
         }
-    } else if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        /* click turns the page, and only dismisses on the last one */
-        if (g_inspect_next >= 0) { g_inspect_page = g_inspect_next; g_inspect_t = 5.0f; }
-        else                     { g_inspect_t = 0; }
+    } else if (g_inspect_open && advance) {
+        /* Inspection text waits indefinitely. Click, Space or Enter turns
+         * the page, and the same inputs close only after the final page. */
+        if (g_inspect_next >= 0) g_inspect_page = g_inspect_next;
+        else                     g_inspect_open = false;
+        sfx_play(SFX_PAGE);
     }
 
     if (g_walking) {
@@ -578,14 +599,19 @@ void scene_draw(void)
         art_text(lab, r.x + 13, r.y + 6, 17, col_ink());
     }
 
-    if (g_inspect_t > 0) {
+    if (g_inspect_open) {
         Rectangle r = { 200, VH - 210, VW - 400, 150 };
         paper_panel(r, 3.0f, 1300);
         g_inspect_next = art_text_flow(g_inspect, g_inspect_page, r.x + 24, r.y + 22,
                                        r.width - 48, r.height - 44, 18, col_ink(),
                                        -1, true, NULL);
-        if (g_inspect_next >= 0) {
-            float mx = r.x + r.width - 30, my = r.y + r.height - 20;
+        {
+            const char *cue = g_inspect_next >= 0 ? "SPACE / click: next"
+                                                  : "SPACE / click: close";
+            float cw = art_text_w(cue, 12);
+            art_text(cue, r.x + r.width - cw - 48, r.y + r.height - 25,
+                     12, col_ink_soft());
+            float mx = r.x + r.width - 25, my = r.y + r.height - 18;
             ink_line(mx - 8, my - 4, mx, my + 4, 2.4f, 0.5f, 1301, col_accent_b());
             ink_line(mx + 8, my - 4, mx, my + 4, 2.4f, 0.5f, 1302, col_accent_b());
         }
