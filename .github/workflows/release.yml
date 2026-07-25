@@ -360,15 +360,24 @@ jobs:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
 
+      # Only the packaged artifacts. `windows-unsigned` is the hand-off between
+      # the build and the signing job and must not reach the release — the first
+      # run published a raw unsigned breakpar.exe next to the signed one, which
+      # is exactly the file nobody should download.
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
+          pattern: '{macos,windows}'
           merge-multiple: true
 
       - name: Checksums
         working-directory: artifacts
         run: |
           ls -la
+          if ls breakpar.exe >/dev/null 2>&1; then
+            echo "::error::the unsigned build artifact reached the release stage"
+            exit 1
+          fi
           sha256sum * > SHA256SUMS.txt
           cat SHA256SUMS.txt
 

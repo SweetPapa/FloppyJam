@@ -179,12 +179,24 @@ resolves).
 
 ## The site
 
+Live at **https://sweetpapa-games.web.app** (Firebase Hosting, site
+`sweetpapa-games` in project `fofoapps-934be`).
+
 ```sh
 cd promo-site && npm install && npm run dev
+npm run build && firebase deploy --only hosting --project fofoapps-934be
 ```
 
-Vue 3 + Vite, static output, hash routing so it works from a GitHub Pages
-subpath. Adding a game is one entry in `src/data/games.js` plus a folder of
+Download links point at real release assets, not the releases page. Asset names
+carry the version, so "latest" cannot be a static URL — `scripts/update-site-downloads.sh`
+reads the newest release with `gh` and regenerates `src/data/releases.js`:
+
+```sh
+./scripts/update-site-downloads.sh          # newest release
+./scripts/update-site-downloads.sh v2026.07.25-a9f2462
+```
+
+Vue 3 + Vite, static output, hash routing so it works from any subpath. Adding a game is one entry in `src/data/games.js` plus a folder of
 screenshots — see [`promo-site/README.md`](promo-site/README.md).
 
 ## Artwork

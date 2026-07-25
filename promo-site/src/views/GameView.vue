@@ -42,9 +42,13 @@ watch(() => route.params.slug, () => (active.value = 0))
             <span class="sub">{{ d.note }}</span>
           </a>
         </div>
-        <p class="placeholder mono">
-          Download links point at the GitHub releases page — a tagged release from
-          the <code>prod</code> branch attaches the signed builds there.
+        <p v-if="game.release" class="relinfo mono">
+          <a :href="game.release.notes" target="_blank" rel="noopener">{{ game.release.tag }}</a>
+          · signed &amp; notarized
+          <template v-if="game.release.checksums">
+            ·
+            <a :href="game.release.checksums" target="_blank" rel="noopener">SHA256SUMS</a>
+          </template>
         </p>
       </div>
     </section>
@@ -154,8 +158,8 @@ h1 {
 }
 .tag { margin: 8px 0 30px; font-size: 21px; color: var(--accent); font-weight: 600; }
 .dl { display: flex; flex-wrap: wrap; gap: 12px; }
-.placeholder { margin: 18px 0 0; font-size: 12.5px; color: var(--ink-faint); max-width: 62ch; }
-.placeholder code { color: var(--ink-dim); }
+.relinfo { margin: 18px 0 0; font-size: 12.5px; color: var(--ink-faint); }
+.relinfo a { color: var(--ink-dim); }
 
 /* ---- facts ---- */
 .facts {
