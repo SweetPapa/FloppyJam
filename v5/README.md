@@ -62,8 +62,8 @@ Keyboard-and-mouse first; **keyboard alone is fully playable**.
 
 | Action | Input |
 | --- | --- |
-| Aim | `←` / `→` — detented, one audible click per notch. Tap for exactly one click, hold to sweep |
-| Fine aim | hold `SHIFT` (same detents, six times smaller) |
+| Aim | `←` / `→` — detented, one audible click per notch. Tap for exactly one click, hold and the clicks accelerate |
+| Fine aim | hold `SHIFT` (same detents, five times smaller) |
 | Invert aim | OPTIONS → INVERT AIM swaps which arrow turns the cue left |
 | Change camera view | `↑` — cycles over the shoulder → high angle → overhead plan → down the cue |
 | Aim the cue at the hole | `↓` — points the cue straight at it and re-frames the current view |
@@ -83,10 +83,13 @@ shot**: `A`/`D`/`W`/`S` move the strike point on the cue-ball face while `Q`/`E`
 swing the camera. The mouse is camera-only, so nothing fights over a button.
 Aiming is detented rather than continuous: each notch clicks, so you can line
 up off a rail and count three clicks left instead of nudging a slider and
-hoping. A coarse detent is 0.60 deg (about 15 cm of aim at a far cup) and a
-fine one is 0.10 deg (~2.5 cm), tight enough to thread a gap on the far side of
-the hole. `↓` lines the cue up straight at the hole. The two aim keys can be
-swapped in OPTIONS.
+hoping. A coarse detent is 0.25 deg (about 6 cm of aim at a far cup) and a fine
+one is 0.05 deg (~1.2 cm), tight enough to thread a gap on the far side of the
+hole. A **tap is exactly one detent** — never a detent plus however long your
+finger stayed down — and holding an arrow starts repeating after a quarter of a
+second and winds up from a crawl to a full swing over about a second and a half,
+so the same key does both surgery and getting across the dial. `↓` lines the cue
+up straight at the hole. The two aim keys can be swapped in OPTIONS.
 
 `↑` steps through four camera views, and the one you pick comes back for every
 shot after it — pick a framing once and the game keeps giving it to you.
