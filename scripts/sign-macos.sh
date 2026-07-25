@@ -3,7 +3,7 @@
 # sign-macos.sh — sign, notarize and staple a macOS build.
 #
 #   ./scripts/sign-macos.sh v5/breakpar
-#   ./scripts/sign-macos.sh v5/breakpar --identity redacted-org
+#   ./scripts/sign-macos.sh v5/breakpar --identity "Some Other Org"
 #   ./scripts/sign-macos.sh v5/breakpar --dmg
 #   ./scripts/sign-macos.sh SomeApp.app --dry-run
 #
@@ -35,14 +35,16 @@
 # Security -> App-Specific Passwords):
 #
 #   security add-generic-password -s spt-notary -a you@example.com -w
-#   security add-generic-password -s notary     -a you@example.com -w
 #
 set -euo pipefail
 
-# ---- account presets -------------------------------------------------
-# name        keychain service   apple id                team id      cert match
-PRESET_SPT=(      "spt-notary" "fterry24v2@gmail.com" "6Y5SZ2K5XY" "Developer ID Application: Forrester Terry" )
-PRESET_OTHER=( "notary"     "redacted@example.com"  "REDACTEDTM1" "Developer ID Application: <redacted org>" )
+# ---- account preset --------------------------------------------------
+# The default signing account. Anything else is selected by passing the
+# certificate name (or a unique part of it) to --identity, so a machine that
+# holds Developer IDs for other organisations does not have to name any of them
+# in a public repo.
+# name       keychain service   apple id                team id      cert match
+PRESET_SPT=( "spt-notary" "fterry24v2@gmail.com" "6Y5SZ2K5XY" "Developer ID Application: Forrester Terry" )
 
 IDENTITY_PRESET="spt"
 BUNDLE_ID=""
@@ -75,7 +77,8 @@ usage() {
     cat <<'EOF'
 
 Options:
-  --identity <spt|redacted-org|NAME>  signing account (default: spt)
+  --identity <spt|NAME>          signing account, or any Developer ID name
+                                 or unique substring of one (default: spt)
   --bundle-id <id>               CFBundleIdentifier (default: com.sweetpapa.<name>)
   --app-name <Name>              .app display name (default: derived from the binary)
   --dmg                          also build and notarize a .dmg for distribution
@@ -119,9 +122,10 @@ command -v xcrun    >/dev/null || die "xcrun not found — install the Xcode com
 
 # ---- resolve the account --------------------------------------------
 case "$IDENTITY_PRESET" in
-    spt)      P=( "${PRESET_SPT[@]}" ) ;;
-    redacted-org) P=( "${PRESET_OTHER[@]}" ) ;;
-    *)        P=( "" "" "" "$IDENTITY_PRESET" ) ;;   # treat as a literal cert name
+    spt) P=( "${PRESET_SPT[@]}" ) ;;
+    # anything else is matched against the certificate name in the keychain;
+    # the team id is then read out of the certificate rather than hardcoded
+    *)   P=( "" "" "" "$IDENTITY_PRESET" ) ;;
 esac
 KEYCHAIN_SERVICE="${OVERRIDE_KEYCHAIN_SERVICE:-${P[0]}}"
 APPLE_ID_USED="${OVERRIDE_APPLE_ID:-${P[1]}}"

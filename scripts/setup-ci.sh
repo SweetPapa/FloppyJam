@@ -207,8 +207,8 @@ if [ "$DO_APPLE" = 1 ]; then
     # --- 3. or walk the export by hand --------------------------------
     if [ -z "$P12" ]; then
         # Pick the identity FIRST, and never silently. The old code took
-        # `head -1` of the codesigning identities, which on a machine with both
-        # a personal and a <redacted org> Developer ID hands you whichever sorts
+        # `head -1` of the codesigning identities, which on a machine holding
+        # Developer IDs for more than one organisation hands you whichever sorts
         # first and tells you it is the answer.
         # A read loop rather than `mapfile`: macOS ships bash 3.2, where mapfile
         # does not exist, and every other script here has to run on it too.

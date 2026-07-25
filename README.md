@@ -69,14 +69,15 @@ and able to reach Apple. Wrapping is the difference between "notarised" and
 "actually opens on someone else's Mac".
 
 ```sh
-./scripts/sign-macos.sh v5/breakpar                     # SweetPapa cert (default)
-./scripts/sign-macos.sh v5/breakpar --identity redacted-org # <redacted org> cert
-./scripts/sign-macos.sh v5/breakpar --dry-run           # sign + verify, no upload
+./scripts/sign-macos.sh v5/breakpar                       # default signing account
+./scripts/sign-macos.sh v5/breakpar --identity "Some Org" # any other Developer ID
+./scripts/sign-macos.sh v5/breakpar --dry-run             # sign + verify, no upload
 ```
 
-Credentials come from the login keychain and are never printed. The two accounts
-are presets; `--dry-run` does everything except talk to Apple, which makes it
-safe to run while you are still editing the script.
+Credentials come from the login keychain and are never printed. One account is a
+preset; any other is selected by passing the certificate name (or a unique part
+of it) to `--identity`. `--dry-run` does everything except talk to Apple, which
+makes it safe to run while you are still editing the script.
 
 Notarisation prefers an App Store Connect API key and finds it on its own — from
 the keychain, or from `ASC_KEY_PATH` / `ASC_KEY_B64`. `--no-asc-key` forces the
@@ -168,8 +169,8 @@ Two credentials, two jobs, and it is worth being precise about which does what:
   walks you through the export — and if the keychain holds more than one
   Developer ID it **asks which one** rather than taking whichever sorts first.
   `--identity <substring>` answers that up front. (It used to `head -1` the
-  list, which on a machine with a personal *and* a <redacted org> Developer ID
-  confidently handed you <redacted org>.)
+  list, which on a machine holding Developer IDs for more than one organisation
+  confidently handed you the wrong one.)
 
   It validates the `.p12` with `security import` into a throwaway keychain —
   the same call CI makes — rather than with `openssl`. OpenSSL 3 refuses the
