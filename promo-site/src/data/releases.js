@@ -4,24 +4,24 @@
  * Re-run the script after each release (or from the release workflow) and the
  * site follows.
  *
- * Release v2026.07.25-c1a773a, published 2026-07-25T05:04:34Z
- * Regenerated 2026-07-25T05:05:00Z
+ * Release v2026.07.25-cfe313d, published 2026-07-25T05:13:04Z
+ * Regenerated 2026-07-25T05:14:17Z
  */
 
 export const REPO = 'https://github.com/SweetPapa/FloppyJam'
 
 export const latest = {
-  tag: 'v2026.07.25-c1a773a',
-  notes: `${REPO}/releases/tag/v2026.07.25-c1a773a`,
-  checksums: 'https://github.com/SweetPapa/FloppyJam/releases/download/v2026.07.25-c1a773a/SHA256SUMS.txt',
+  tag: 'v2026.07.25-cfe313d',
+  notes: `${REPO}/releases/tag/v2026.07.25-cfe313d`,
+  checksums: 'https://github.com/SweetPapa/FloppyJam/releases/download/v2026.07.25-cfe313d/SHA256SUMS.txt',
   windows: {
-    name: 'BREAK-PAR-v2026.07.25-c1a773a-windows-x64.zip',
+    name: 'BREAK-PAR-v2026.07.25-cfe313d-windows-x64.zip',
     size: '518 KB',
-    url: 'https://github.com/SweetPapa/FloppyJam/releases/download/v2026.07.25-c1a773a/BREAK-PAR-v2026.07.25-c1a773a-windows-x64.zip',
+    url: 'https://github.com/SweetPapa/FloppyJam/releases/download/v2026.07.25-cfe313d/BREAK-PAR-v2026.07.25-cfe313d-windows-x64.zip',
   },
   macos: {
-    name: 'BREAK-PAR-v2026.07.25-c1a773a-macos.dmg',
-    size: '925 KB',
-    url: 'https://github.com/SweetPapa/FloppyJam/releases/download/v2026.07.25-c1a773a/BREAK-PAR-v2026.07.25-c1a773a-macos.dmg',
+    name: 'BREAK-PAR-v2026.07.25-cfe313d-macos.dmg',
+    size: '924 KB',
+    url: 'https://github.com/SweetPapa/FloppyJam/releases/download/v2026.07.25-cfe313d/BREAK-PAR-v2026.07.25-cfe313d-macos.dmg',
   },
 }
