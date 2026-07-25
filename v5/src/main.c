@@ -574,24 +574,41 @@ static void skip_to_rest(void)
  * visible click, so a player can count clicks to a line instead of eyeballing
  * a continuous slider. Fine aim subdivides the same detent.
  *
- * Sizes chosen for precision at range: a 0.60 deg detent 14 m from the cup is
- * ~15 cm of aim at the target (was 26 cm), and fine at 0.10 deg is ~2.5 cm —
- * tight enough to thread a gap or split a ball on the far side of the hole. */
-#define AIM_DETENT      (0.60f * BP_DEG)
-#define AIM_DETENT_FINE (0.10f * BP_DEG)
+ * Sizes chosen for precision at range: a 0.25 deg detent 14 m from the cup is
+ * ~6 cm of aim at the target, and fine at 0.05 deg is ~1.2 cm — tight enough
+ * to thread a gap or split a ball on the far side of the hole. */
+#define AIM_DETENT      (0.25f * BP_DEG)
+#define AIM_DETENT_FINE (0.05f * BP_DEG)
 
-static float aim_click_acc = 0.0f;
+/* Key repeat, hand-rolled rather than left to the OS, because the two things
+ * a player wants from an aim key pull in opposite directions: a tap has to be
+ * exactly ONE detent (otherwise there is no such thing as counting clicks),
+ * and a hold has to cross the whole dial without the player ageing. So: tap =
+ * one detent, nothing else. Hold past the delay and the clicks start, slowly,
+ * then wind up quadratically to a full swing. */
+#define AIM_HOLD_DELAY  0.24f      /* held this long before repeat starts     */
+#define AIM_RATE_MIN    6.0f       /* detents/s the moment repeat kicks in    */
+#define AIM_RATE_MAX    260.0f     /* detents/s once fully wound up           */
+#define AIM_RAMP        1.30f      /* seconds of repeat to reach RATE_MAX     */
+#define AIM_TICK_GAP    0.040f     /* min seconds between detent clicks (sfx) */
 
-static void aim_click(float delta, int fine)
+static int   aim_hold_dir = 0;     /* -1 LEFT, +1 RIGHT, 0 neither/both      */
+static float aim_hold_t   = 0.0f;  /* seconds the current key has been held  */
+static float aim_repeat_acc = 0.0f;/* fractional detents owed                */
+static float aim_tick_cd  = 0.0f;  /* click-sound cooldown                   */
+static float aim_last_t   = -1e9f; /* G.t the last time aim_input ran        */
+
+/* Turn the cue by n whole detents. One click of feedback per call, throttled,
+ * so a wound-up hold reads as a rising purr instead of 260 overlapping ticks. */
+static void aim_detent(float dir, int fine, int n)
 {
-    float step = fine ? AIM_DETENT_FINE : AIM_DETENT;
-    G.shot.aim += delta;
-    aim_click_acc += fabsf(delta);
-    while (aim_click_acc >= step) {
-        aim_click_acc -= step;
+    if (n <= 0) return;
+    G.shot.aim += dir * (fine ? AIM_DETENT_FINE : AIM_DETENT) * (float)n;
+    if (aim_tick_cd <= 0.0f) {
+        aim_tick_cd = AIM_TICK_GAP;
         bp_sfx(SFX_TICK, fine ? 1.55f : 1.0f, fine ? 0.10f : 0.16f);
-        G.shot.aim_tick = 1.0f;
     }
+    G.shot.aim_tick = 1.0f;
 }
 
 /* Camera: mouse drag, plus Q/E swing and Z/X zoom on the keyboard. Vertical
@@ -622,20 +639,50 @@ static void camera_input(float dt)
 static void aim_input(float dt)
 {
     int fine = (IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT));
-    /* 0.35 rad/s coarse is ~20 deg/s: unhurried, so the finer detents don't
-     * make a full swing take forever. Fine aim is ~7x slower again (4.1). */
-    float rate = fine ? 0.050f : 0.35f;
-    float step = fine ? AIM_DETENT_FINE : AIM_DETENT;
     /* invert just flips which arrow turns the cue which way, for players who
      * read left/right the other round. `left` is the sign applied to LEFT. */
     float left = G.save.invert_aim ? 1.0f : -1.0f;
+    int held = 0;
+    float dir;
     float p;
 
-    /* AIM is on the arrow keys: LEFT / RIGHT rotate the cue, detented. */
-    if (IsKeyDown(KEY_LEFT))  aim_click(left * rate * dt, fine);
-    if (IsKeyDown(KEY_RIGHT)) aim_click(-left * rate * dt, fine);
-    if (IsKeyPressed(KEY_LEFT))  aim_click(left * step, fine);
-    if (IsKeyPressed(KEY_RIGHT)) aim_click(-left * step, fine);
+    if (aim_tick_cd > 0.0f) aim_tick_cd -= dt;
+
+    /* Aiming is not the only state. A key still down after a shot, a pause or
+     * the scorecard must not come back already wound up and yank the cue, so
+     * any gap in this function starts the hold over from a tap. */
+    if (G.t - aim_last_t > 0.20f) {
+        aim_hold_dir   = 0;
+        aim_hold_t     = 0.0f;
+        aim_repeat_acc = 0.0f;
+    }
+    aim_last_t = G.t;
+
+    /* AIM is on the arrow keys: LEFT / RIGHT rotate the cue, detented. Both
+     * arrows at once cancel out — that is a fumble, not an instruction. */
+    if (IsKeyDown(KEY_LEFT))  held -= 1;
+    if (IsKeyDown(KEY_RIGHT)) held += 1;
+    dir = (float)held * -left;
+
+    if (held != aim_hold_dir) {
+        /* fresh press, or a reversal: one detent, then start the clock over */
+        aim_hold_dir  = held;
+        aim_hold_t    = 0.0f;
+        aim_repeat_acc = 0.0f;
+        aim_tick_cd   = 0.0f;
+        aim_detent(dir, fine, 1);
+    } else if (held) {
+        aim_hold_t += dt;
+        if (aim_hold_t > AIM_HOLD_DELAY) {
+            float u = bp_clampf((aim_hold_t - AIM_HOLD_DELAY) / AIM_RAMP, 0.0f, 1.0f);
+            float rate = bp_lerpf(AIM_RATE_MIN, AIM_RATE_MAX, u * u);
+            int n;
+            aim_repeat_acc += rate * dt;
+            n = (int)aim_repeat_acc;
+            aim_repeat_acc -= (float)n;
+            aim_detent(dir, fine, n);
+        }
+    }
 
     /* UP  steps through the camera views: over the shoulder, high angle,
      * overhead plan, down the cue. DOWN swings the cue round to point straight

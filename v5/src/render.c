@@ -236,6 +236,42 @@ static void pit3(V3 c, float r, float depth, Color rim, Color inner)
 /* ------------------------------------------------------------------ */
 /* world                                                               */
 
+/* Overlapping pads are authored COPLANAR: holes.h lists the special-surface
+ * patch first and lays the felt floor under it at the same height, because
+ * bp_ground_h resolves a tie to the lowest pad index. Two floors on one plane
+ * is a coin-flip for the depth buffer, and because each pad tessellates to its
+ * own grid the coin lands differently per pixel and per frame — which is the
+ * speckle that made the sand traps and the ice rink strobe as the camera moved.
+ *
+ * So rendering settles the tie the way physics already does: a pad sinks by a
+ * hair for every earlier pad it shares ground with. Sub-millimetre, invisible
+ * against a 28 mm ball, and enough to give the depth test something to decide.
+ * Pads at genuinely different heights are already separated, so they are not
+ * counted — that keeps the offset one or two layers deep, never a staircase. */
+#define PAD_LAYER_EPS 0.0012f
+
+static float pad_depth_bias(const BpWorld *w, int i)
+{
+    const BpPad *p = &w->pads[i];
+    int j, under = 0;
+    for (j = 0; j < i; ++j) {
+        const BpPad *q = &w->pads[j];
+        float ox0, ox1, oz0, oz1, mx, mz;
+        /* strict overlap: pads that merely share an edge do not fight */
+        ox0 = p->x0 > q->x0 ? p->x0 : q->x0;
+        ox1 = p->x1 < q->x1 ? p->x1 : q->x1;
+        oz0 = p->z0 > q->z0 ? p->z0 : q->z0;
+        oz1 = p->z1 < q->z1 ? p->z1 : q->z1;
+        if (ox1 - ox0 < 1e-3f || oz1 - oz0 < 1e-3f) continue;
+        mx = 0.5f * (ox0 + ox1);
+        mz = 0.5f * (oz0 + oz1);
+        if (fabsf(bp_pad_height(w, i, mx, mz) - bp_pad_height(w, j, mx, mz)) > 0.02f)
+            continue;
+        ++under;
+    }
+    return -PAD_LAYER_EPS * (float)under;
+}
+
 static void draw_pads(const BpWorld *w, const BpPalette *pal)
 {
     int i;
@@ -243,6 +279,7 @@ static void draw_pads(const BpWorld *w, const BpPalette *pal)
         const BpPad *p = &w->pads[i];
         V3 n = bp_pad_normal_at(w, i);
         float lam = lambert(n);
+        float bias = pad_depth_bias(w, i);
         float wx = p->x1 - p->x0, wz = p->z1 - p->z0;
         int nx = bp_clampi((int)(wx / 0.75f + 0.5f), 1, 24);
         int nz = bp_clampi((int)(wz / 0.75f + 0.5f), 1, 32);
@@ -254,19 +291,19 @@ static void draw_pads(const BpWorld *w, const BpPalette *pal)
                 float z0 = p->z0 + wz * (float)b / (float)nz;
                 float z1 = p->z0 + wz * (float)(b + 1) / (float)nz;
                 Color c = shade(surf_color(p->surf, pal, (a + b) & 1), lam);
-                quad3(v3(x0, bp_pad_height(w, i, x0, z0), z0),
-                      v3(x1, bp_pad_height(w, i, x1, z0), z0),
-                      v3(x1, bp_pad_height(w, i, x1, z1), z1),
-                      v3(x0, bp_pad_height(w, i, x0, z1), z1), c);
+                quad3(v3(x0, bp_pad_height(w, i, x0, z0) + bias, z0),
+                      v3(x1, bp_pad_height(w, i, x1, z0) + bias, z0),
+                      v3(x1, bp_pad_height(w, i, x1, z1) + bias, z1),
+                      v3(x0, bp_pad_height(w, i, x0, z1) + bias, z1), c);
             }
         }
         /* zone outline so surface changes read from orbit distance */
         if (p->surf != SURF_FELT) {
             Color e = shade(surf_color(p->surf, pal, 1), 1.5f);
-            float y0 = bp_pad_height(w, i, p->x0, p->z0) + 0.004f;
-            float y1 = bp_pad_height(w, i, p->x1, p->z0) + 0.004f;
-            float y2 = bp_pad_height(w, i, p->x1, p->z1) + 0.004f;
-            float y3 = bp_pad_height(w, i, p->x0, p->z1) + 0.004f;
+            float y0 = bp_pad_height(w, i, p->x0, p->z0) + bias + 0.004f;
+            float y1 = bp_pad_height(w, i, p->x1, p->z0) + bias + 0.004f;
+            float y2 = bp_pad_height(w, i, p->x1, p->z1) + bias + 0.004f;
+            float y3 = bp_pad_height(w, i, p->x0, p->z1) + bias + 0.004f;
             DrawLine3D(rv(v3(p->x0, y0, p->z0)), rv(v3(p->x1, y1, p->z0)), e);
             DrawLine3D(rv(v3(p->x1, y1, p->z0)), rv(v3(p->x1, y2, p->z1)), e);
             DrawLine3D(rv(v3(p->x1, y2, p->z1)), rv(v3(p->x0, y3, p->z1)), e);
@@ -275,7 +312,7 @@ static void draw_pads(const BpWorld *w, const BpPalette *pal)
         /* kicker arrow */
         if (p->surf == SURF_KICK) {
             float cx = 0.5f * (p->x0 + p->x1), cz = 0.5f * (p->z0 + p->z1);
-            float y = bp_pad_height(w, i, cx, cz) + 0.008f;
+            float y = bp_pad_height(w, i, cx, cz) + bias + 0.008f;
             V3 d = v3(sinf(p->ka), 0.0f, cosf(p->ka));
             V3 s = v3(d.z, 0.0f, -d.x);
             float len = 0.32f;
