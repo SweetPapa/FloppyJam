@@ -45,6 +45,12 @@ and no audio files (every sound is synthesised at runtime), so `dr_mp3`,
 them gets Windows to **1,432,064** bytes and the macOS universal binary to
 **1,166,416**.
 
+Mind the difference between the built and the *shipped* size: an Authenticode
+signature adds about 14 KB, so the `.exe` people actually download is
+**1,446,616** — only 27,944 bytes under the ceiling. `make windows` can only
+measure the unsigned file, so the release workflow re-checks the number after
+signing and warns when the headroom drops under 46 KB.
+
 ## Shipping
 
 | what | how |

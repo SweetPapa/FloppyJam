@@ -334,6 +334,26 @@ jobs:
         shell: bash
         run: echo "::warning::no AZURE_CLIENT_ID variable — publishing an unsigned Windows build"
 
+      # The ceiling has to be checked HERE, not at build time. `make windows`
+      # measures the unsigned binary, but the Authenticode signature adds about
+      # 14 KB to the file that actually ships — so the build could pass its own
+      # check and still produce an over-ceiling artifact. This is the number
+      # anybody downloads.
+      - name: Check the signed binary against the floppy ceiling
+        shell: bash
+        run: |
+          set -euo pipefail
+          SIZE=$(wc -c < v5/breakpar.exe | tr -d ' ')
+          printf 'signed breakpar.exe: %s bytes of 1474560 (%s bytes spare)\n' \
+            "$SIZE" "$((1474560 - SIZE))"
+          if [ "$SIZE" -gt 1474560 ]; then
+            echo "::error::the SIGNED executable is over the 1,474,560-byte floppy ceiling ($SIZE)"
+            exit 1
+          fi
+          if [ "$SIZE" -gt 1428000 ]; then
+            echo "::warning::under 46 KB of headroom left after signing ($SIZE bytes)"
+          fi
+
       - name: Package
         shell: bash
         env:
