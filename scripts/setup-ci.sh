@@ -5,6 +5,8 @@
 #   ./scripts/setup-ci.sh                 # everything
 #   ./scripts/setup-ci.sh --branch        # just create + protect prod
 #   ./scripts/setup-ci.sh --apple         # signing certificate + notarisation
+#   ./scripts/setup-ci.sh --apple --identity "Forrester Terry"
+#   ./scripts/setup-ci.sh --apple --cert ~/spt-sign.p12
 #   ./scripts/setup-ci.sh --notary        # just the notarisation credential
 #   ./scripts/setup-ci.sh --azure         # just the Azure OIDC variables
 #   ./scripts/setup-ci.sh --show          # what is configured right now
@@ -13,8 +15,15 @@
 #
 # The Apple half needs a Developer ID Application certificate exported as a .p12.
 # That export cannot be automated — macOS will not release a private key without
-# a GUI prompt, verified — so the script tells you exactly what to click and then
-# takes the file. Nothing is written to disk that is not cleaned up.
+# a GUI prompt — so there are three ways in, in order of preference:
+#
+#   1. Point .env at one you already exported. Non-interactive and repeatable:
+#        CERT_LOCATION=/path/to/your.p12
+#        CERT_PASS=the-password
+#   2. --cert /path/to.p12
+#   3. Let the script walk you through the export. If the keychain holds more
+#      than one Developer ID it ASKS which one rather than taking the first;
+#      --identity <substring> answers that up front.
 #
 # Notarisation is fully automatic: --notary finds an App Store Connect API key in
 # the keychain (service 'asc-mcp') or on disk and sets it as three secrets. An
@@ -24,6 +33,12 @@ set -euo pipefail
 
 REPO="${REPO:-SweetPapa/FloppyJam}"
 DO_BRANCH=0 DO_APPLE=0 DO_AZURE=0 DO_SHOW=0 DO_NOTARY=0
+IDENTITY_WANT=""            # substring of the Developer ID to use
+CERT_P12_ARG=""             # path to an already-exported .p12
+
+# The .env lives next to the repo root, is gitignored, and is the intended way
+# to make --apple non-interactive:  CERT_LOCATION=... / CERT_PASS=...
+ENV_FILE="${ENV_FILE:-$(cd "$(dirname "$0")/.." && pwd)/.env}"
 
 die()  { printf '\033[31merror:\033[0m %s\n' "$*" >&2; exit 1; }
 info() { printf '\033[36m==>\033[0m %s\n' "$*"; }
@@ -37,9 +52,12 @@ while [ $# -gt 0 ]; do
         --apple)  DO_APPLE=1;  shift ;;
         --azure)  DO_AZURE=1;  shift ;;
         --notary) DO_NOTARY=1; shift ;;
+        --identity) IDENTITY_WANT="${2:?--identity needs a value}"; shift 2 ;;
+        --cert)     CERT_P12_ARG="${2:?--cert needs a path}"; shift 2 ;;
+        --env)      ENV_FILE="${2:?--env needs a path}"; shift 2 ;;
         --show)   DO_SHOW=1;   shift ;;
         --repo)   REPO="${2:?}"; shift 2 ;;
-        -h|--help) sed -n '2,16p' "$0" | sed 's/^#//;s/^ //'; exit 0 ;;
+        -h|--help) sed -n '2,30p' "$0" | sed 's/^#//;s/^ //'; exit 0 ;;
         *) die "unknown option: $1" ;;
     esac
 done
@@ -162,48 +180,136 @@ fi
 
 # ------------------------------------------------------------------
 if [ "$DO_APPLE" = 1 ]; then
-    info "Apple signing secrets"
+    info "Apple signing certificate"
 
-    IDENT=$(security find-identity -v -p codesigning 2>/dev/null \
-            | grep -F "Developer ID Application" | head -1 || true)
-    [ -n "$IDENT" ] || die "no Developer ID Application certificate in the keychain"
-    NAME=$(printf '%s' "$IDENT" | sed 's/.*"\(.*\)".*/\1/')
-    TEAM=$(printf '%s' "$NAME" | sed -n 's/.*(\([A-Z0-9]\{10\}\))$/\1/p')
-    echo "    identity: $NAME"
-    echo "    team:     $TEAM"
+    P12=""; P12PASS=""; OWN_TMP=""
 
-    P12="$(mktemp -d)/cert.p12"
-    trap 'rm -rf "$(dirname "$P12")"' EXIT
-    cat <<EOF
+    # --- 1. an already-exported .p12 named in .env ---------------------
+    # By far the best path: you export once, put the path and password in a
+    # gitignored .env, and this becomes non-interactive and repeatable. It also
+    # sidesteps the guessing entirely — the certificate is whichever one you
+    # chose to export, not whichever one the keychain happens to list first.
+    if [ -f "$ENV_FILE" ]; then
+        # shellcheck disable=SC1090
+        set -a; . "$ENV_FILE"; set +a
+        if [ -n "${CERT_LOCATION:-}" ]; then
+            P12="${CERT_LOCATION/#\~/$HOME}"
+            P12PASS="${CERT_PASS:-}"
+            echo "    using the .p12 named in $ENV_FILE"
+        fi
+    fi
 
-    The private key cannot be exported without a GUI prompt, so:
+    # --- 2. or a path given on the command line ------------------------
+    if [ -z "$P12" ] && [ -n "$CERT_P12_ARG" ]; then
+        P12="${CERT_P12_ARG/#\~/$HOME}"
+    fi
 
-      1. Keychain Access is about to open on "My Certificates".
-      2. Right-click  $NAME
-      3. Export...  ->  Personal Information Exchange (.p12)
+    # --- 3. or walk the export by hand --------------------------------
+    if [ -z "$P12" ]; then
+        # Pick the identity FIRST, and never silently. The old code took
+        # `head -1` of the codesigning identities, which on a machine with both
+        # a personal and a <redacted org> Developer ID hands you whichever sorts
+        # first and tells you it is the answer.
+        # A read loop rather than `mapfile`: macOS ships bash 3.2, where mapfile
+        # does not exist, and every other script here has to run on it too.
+        IDENTS=()
+        while IFS= read -r line; do
+            [ -n "$line" ] && IDENTS+=("$line")
+        done < <(security find-identity -v -p codesigning 2>/dev/null \
+                 | grep -F "Developer ID Application" || true)
+        [ "${#IDENTS[@]}" -gt 0 ] || die "no Developer ID Application certificate in the keychain"
+
+        CHOICE=""
+        if [ -n "$IDENTITY_WANT" ]; then
+            for line in "${IDENTS[@]}"; do
+                case "$line" in *"$IDENTITY_WANT"*) CHOICE="$line"; break ;; esac
+            done
+            [ -n "$CHOICE" ] || die "no Developer ID matching '$IDENTITY_WANT'. available:
+$(printf '  %s\n' "${IDENTS[@]}")"
+        elif [ "${#IDENTS[@]}" -eq 1 ]; then
+            CHOICE="${IDENTS[0]}"
+        else
+            echo "    more than one Developer ID Application certificate:"
+            i=1
+            for line in "${IDENTS[@]}"; do
+                printf '      %d) %s\n' "$i" "$(printf '%s' "$line" | sed 's/.*"\(.*\)".*/\1/')"
+                i=$((i + 1))
+            done
+            ask "which one? [1-${#IDENTS[@]}]"
+            read -r PICK
+            case "$PICK" in
+                ''|*[!0-9]*) die "not a number: '$PICK'" ;;
+            esac
+            [ "$PICK" -ge 1 ] && [ "$PICK" -le "${#IDENTS[@]}" ] || die "out of range: $PICK"
+            CHOICE="${IDENTS[$((PICK - 1))]}"
+        fi
+
+        NAME=$(printf '%s' "$CHOICE" | sed 's/.*"\(.*\)".*/\1/')
+        echo "    identity: $NAME"
+
+        OWN_TMP="$(mktemp -d)"
+        P12="$OWN_TMP/cert.p12"
+        trap 'rm -rf "$OWN_TMP"' EXIT
+        cat <<EOF
+
+    macOS will not release a private key without a GUI prompt, so:
+
+      1. Keychain Access is about to open.
+      2. Find  $NAME  under "My Certificates".
+      3. Right-click -> Export... -> Personal Information Exchange (.p12)
       4. Save it to:  $P12
-      5. Give it a password and remember it — you will paste it below.
+      5. Give it a password — you will paste it below.
+
+    To skip this next time, export it once somewhere permanent and add to
+    $ENV_FILE:
+
+      CERT_LOCATION=/path/to/your.p12
+      CERT_PASS=the-password
 
 EOF
-    ask "press RETURN to open Keychain Access, or Ctrl-C to abort"; read -r _
-    open -a "Keychain Access" 2>/dev/null || warn "could not open Keychain Access; export it manually"
+        ask "press RETURN to open Keychain Access, or Ctrl-C to abort"; read -r _
+        open -a "Keychain Access" 2>/dev/null || warn "could not open Keychain Access; export it manually"
+        while [ ! -s "$P12" ]; do
+            ask "waiting for $P12 — press RETURN once it is saved"; read -r _
+        done
+    fi
 
-    while [ ! -s "$P12" ]; do
-        ask "waiting for $P12 — press RETURN once it is saved"; read -r _
-    done
-
-    ask "the password you exported the .p12 with:"
-    read -rs P12PASS; echo
+    [ -f "$P12" ] || die "no .p12 at $P12"
+    if [ -z "$P12PASS" ]; then
+        ask "the password the .p12 was exported with:"
+        read -rs P12PASS; echo
+    fi
     [ -n "$P12PASS" ] || die "an empty .p12 password will not import in CI"
-    # fail here rather than in a release
-    openssl pkcs12 -in "$P12" -passin pass:"$P12PASS" -noout 2>/dev/null \
-        || die "that password does not open the .p12"
+
+    # Validate with `security import` into a throwaway keychain, which is the
+    # same call the release workflow makes. openssl is a poor proxy here:
+    # OpenSSL 3 refuses the legacy cipher Keychain Access exports with unless
+    # you pass -legacy, so it reports a perfectly good .p12 as a bad password.
+    PROBE="$HOME/.setup-ci-probe.keychain-db"
+    PROBE_PASS=$(openssl rand -hex 16)
+    security delete-keychain "$PROBE" 2>/dev/null || true
+    security create-keychain -p "$PROBE_PASS" "$PROBE"
+    security unlock-keychain -p "$PROBE_PASS" "$PROBE"
+    if security import "$P12" -k "$PROBE" -P "$P12PASS" -T /usr/bin/codesign >/dev/null 2>&1; then
+        FOUND=$(security find-identity -v -p codesigning "$PROBE" \
+                | grep -F "Developer ID Application" | head -1 || true)
+        NAME=$(printf '%s' "$FOUND" | sed 's/.*"\(.*\)".*/\1/')
+        # the team comes out of the certificate itself, not out of a guess
+        TEAM=$(printf '%s' "$NAME" | sed -n 's/.*(\([A-Z0-9]\{10\}\))$/\1/p')
+        security delete-keychain "$PROBE" 2>/dev/null || true
+        [ -n "$NAME" ] || die "the .p12 imported but holds no Developer ID Application identity"
+        echo "    contains: $NAME"
+        echo "    team:     $TEAM"
+    else
+        security delete-keychain "$PROBE" 2>/dev/null || true
+        die "could not import the .p12 — wrong password, or it has no private key"
+    fi
 
     base64 -i "$P12" | gh secret set APPLE_CERT_P12            -R "$REPO"
     printf '%s' "$P12PASS" | gh secret set APPLE_CERT_PASSWORD  -R "$REPO"
     printf '%s' "$TEAM"    | gh secret set APPLE_TEAM_ID        -R "$REPO"
-    echo "    certificate secrets set"
-    rm -rf "$(dirname "$P12")"; trap - EXIT
+    echo "    3 secrets set (APPLE_CERT_P12, APPLE_CERT_PASSWORD, APPLE_TEAM_ID)"
+    [ -n "$OWN_TMP" ] && { rm -rf "$OWN_TMP"; trap - EXIT; }
     set_notary_secrets
 fi
 
