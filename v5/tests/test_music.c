@@ -14,25 +14,25 @@
 #include <string.h>
 #include <math.h>
 
-/* ---- raylib audio stubs -------------------------------------------- */
-typedef struct { unsigned int frameCount, sampleRate, sampleSize, channels; void *data; } Wave;
-typedef struct { int id; } Sound;
-typedef struct { int id; } AudioStream;
+/* ---- raylib audio stubs --------------------------------------------
+ *
+ * These use raylib's OWN types, and that is not a style choice. The first
+ * version of this harness declared its own one-int Sound / AudioStream / Wave.
+ * synth.c includes the real raylib.h, so it was passing and returning 32-byte
+ * structs by value to functions compiled here as taking 4-byte ones — an ABI
+ * mismatch that scribbles on the stack. arm64 macOS happened to survive it;
+ * x86-64 Linux caught it as "*** buffer overflow detected ***" and aborted the
+ * whole test binary. Including the real header means the compiler checks every
+ * signature against the declarations synth.c is compiled against.
+ *
+ * Nothing links libraylib, so these definitions are what synth.c calls.
+ */
+#include "raylib.h"
 
 static short  cap_buf[1 << 22];      /* captured stereo frames */
 static int    cap_frames = 0;
 static int    cap_limit  = 0;
 
-void  InitAudioDevice(void) {}
-int   IsAudioDeviceReady(void) { return 1; }
-void  CloseAudioDevice(void) {}
-Sound LoadSoundFromWave(Wave w) { Sound s; (void)w; s.id = 1; return s; }
-void  UnloadSound(Sound s) { (void)s; }
-void  PlaySound(Sound s) { (void)s; }
-void  StopSound(Sound s) { (void)s; }
-int   IsSoundPlaying(Sound s) { (void)s; return 0; }
-void  SetSoundPitch(Sound s, float p) { (void)s; (void)p; }
-void  SetSoundVolume(Sound s, float v) { (void)s; (void)v; }
 /* raylib sizes a stream's sub-buffer as max(defaultSize, devicePeriod) and then
  * UpdateAudioStream fills ONE WHOLE sub-buffer, zeroing whatever the caller did
  * not supply. Modelling that here rather than accepting any frameCount is the
@@ -44,25 +44,53 @@ static int stub_default_size = 0;
 static int stub_subbuffer = STUB_DEVICE_PERIOD;
 static int stub_short_writes = 0;
 
+void InitAudioDevice(void) {}
+void CloseAudioDevice(void) {}
+bool IsAudioDeviceReady(void) { return true; }
+
+Sound LoadSoundFromWave(Wave wave)
+{
+    Sound s;
+    (void)wave;
+    memset(&s, 0, sizeof s);
+    return s;
+}
+void UnloadSound(Sound sound) { (void)sound; }
+void PlaySound(Sound sound) { (void)sound; }
+void StopSound(Sound sound) { (void)sound; }
+bool IsSoundPlaying(Sound sound) { (void)sound; return false; }
+void SetSoundVolume(Sound sound, float volume) { (void)sound; (void)volume; }
+void SetSoundPitch(Sound sound, float pitch) { (void)sound; (void)pitch; }
+
 void SetAudioStreamBufferSizeDefault(int size) { stub_default_size = size; }
 
-AudioStream LoadAudioStream(unsigned int r, unsigned int b, unsigned int c)
+AudioStream LoadAudioStream(unsigned int sampleRate, unsigned int sampleSize,
+                            unsigned int channels)
 {
-    AudioStream a; (void)r; (void)b; (void)c; a.id = 1;
+    AudioStream a;
+    memset(&a, 0, sizeof a);
+    a.sampleRate = sampleRate;
+    a.sampleSize = sampleSize;
+    a.channels = channels;
     stub_subbuffer = (stub_default_size > STUB_DEVICE_PERIOD)
                    ? stub_default_size : STUB_DEVICE_PERIOD;
     return a;
 }
-void  UnloadAudioStream(AudioStream a) { (void)a; }
-void  PlayAudioStream(AudioStream a) { (void)a; }
-void  SetAudioStreamVolume(AudioStream a, float v) { (void)a; (void)v; }
-int   IsAudioStreamProcessed(AudioStream a)
-{ (void)a; return cap_frames + stub_subbuffer <= cap_limit; }
-void  UpdateAudioStream(AudioStream a, const void *data, int frames)
+void UnloadAudioStream(AudioStream stream) { (void)stream; }
+void PlayAudioStream(AudioStream stream) { (void)stream; }
+void SetAudioStreamVolume(AudioStream stream, float volume) { (void)stream; (void)volume; }
+
+bool IsAudioStreamProcessed(AudioStream stream)
 {
-    int filled = frames, pad;
-    (void)a;
-    if (frames > stub_subbuffer) return;          /* raylib logs and drops these */
+    (void)stream;
+    return cap_frames + stub_subbuffer <= cap_limit;
+}
+
+void UpdateAudioStream(AudioStream stream, const void *data, int frameCount)
+{
+    int filled = frameCount, pad;
+    (void)stream;
+    if (frameCount > stub_subbuffer) return;      /* raylib logs and drops these */
     pad = stub_subbuffer - filled;
     if (pad > 0) ++stub_short_writes;             /* raylib would zero this much */
     if (cap_frames + stub_subbuffer > cap_limit) return;
