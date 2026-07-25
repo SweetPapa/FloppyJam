@@ -38,7 +38,7 @@
 @node otto_midnight
   set ch1.met_otto = 1
   OTTO(worried): You will have heard I was on the green after midnight. I
-  was. I have been every night this week.
+  was. I have been going up since Iris vanished.
   grant clue.midnight_figure
   YOU:
     * (kind) You do not have to tell me why.  -> otto_free
@@ -52,7 +52,7 @@
 
 @node otto_why
   OTTO(sad): There is a bird up that tower that has not eaten properly in a
-  week, because this town decided he was a thief and this town stopped
+  morning, because this town decided he was a thief and this town stopped
   putting things out.
   grant clue.pip_hungry
   OTTO: So I take a pail up. Fish heads, mostly. He does not come down while

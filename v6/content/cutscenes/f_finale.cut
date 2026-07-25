@@ -23,7 +23,7 @@ cut f_iris_found
   SAY iris "...Is somebody there?"
   WAIT 0.8
   EMOTE iris sad
-  SAY iris "I have been saying that for seven days. I have got quite good at it."
+  SAY iris "I have been saying that since dawn. I have got quite good at it."
   MOVE you 620 538 2.0
   WAIT 2.0
   EMOTE you moved
@@ -33,7 +33,7 @@ cut f_iris_found
   WAIT 0.8
   EMOTE iris moved
   SAY iris "I was going to be down in an hour. That was the plan. An hour, and nobody any the wiser."
-  SAY you "That was a week ago."
+  SAY you "That was last night."
   EMOTE iris sad
   SAY iris "...Yes."
   WAIT 1.2
@@ -77,7 +77,7 @@ cut f_festival
   DOODLE lantern 1160 498 24
   DOODLE bird 700 300 30
   MOVE you 640 520 2.0
-  SAY you "Up you go, then. All of you. She has been waiting a week."
+  SAY you "Up you go, then. All of you. She has been waiting since dawn."
   WAIT 1.6
   SFX mend
   SHAKE 5 0.8

@@ -5,13 +5,13 @@
 @node f_iris_talk
   IRIS(worried): Please do not tell anyone how long I have been up here.
   YOU:
-    * (kind) Seven days. And nobody is going to laugh.  -> f_iris_kind
+    * (kind) Since last night. And nobody is going to laugh.  -> f_iris_kind
     * (curious) You have been here the whole time.  -> f_iris_whole
     * (dry) I have been paid quite a lot of a small town's savings to tell people exactly that.  -> f_iris_dry
 
 @node f_iris_kind
   IRIS(moved): ...You counted the sill.
-  IRIS: I have been rehearsing being found for six days and I had it much
+  IRIS: I have been rehearsing being found all morning and I had it much
   better than this.
   goto f_iris_why
 
@@ -50,7 +50,7 @@
 
 @node f_iris_alone
   IRIS(sad): Yes. And the stair went behind me, and Pip has been shouting at
-  the entire town for a week on my behalf, and they decided he was a thief.
+  the entire town since dawn on my behalf, and they decided he was a thief.
   goto f_iris_noticed
 
 @node f_iris_noticed
@@ -60,7 +60,7 @@
   YOU:
     * (kind) I know exactly how it works. So do you.  -> f_iris_how
     * (curious) Then how does it work?  -> f_iris_how
-    * (dry) Fortunately I have spent four days meeting absolutely everyone.  -> f_iris_how
+    * (dry) Fortunately I have spent all day meeting absolutely everyone.  -> f_iris_how
 
 @node f_iris_how
   IRIS(sad): It drinks a gathering. The whole town on the green with a light

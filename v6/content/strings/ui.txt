@@ -8,16 +8,22 @@ title.foot = One town, one bird, one tower, no villains.
 name.prompt = The council's letter is addressed to a detective. What shall we call you?
 name.begin = Take the case
 name.back = Not yet
+name.overwrite = Starting a new case replaces your current autosave.
 
 recap.title = Previously, in Prismbrook...
 recap.go = Carry on
 
 hud.journal = Journal
-hud.menu = Menu
+hud.settings = Settings
+hud.ready = All evidence found — return to the Prismworks.
+hud.climb = The way is open — climb to the lantern room.
+hud.closed = Case closed — Prismbrook is bright again.
 
 set.title = Settings
 set.back = Back
-set.note = Reduce motion turns off screen shake and fast pans everywhere, cutscenes included.
+set.resume = Resume case
+set.titleback = Save & return to title
+set.note = Progress autosaves. Reduce motion disables shake and fast pans.
 
 journal.close = Close the book
 
@@ -167,4 +173,4 @@ who.mayor = Mayor of Prismbrook. Will discuss anything at all except the tower.
 who.nona = Retired lamplighter. Lit the Prism for forty years, then stopped being asked.
 who.wick = Groundskeeper. Talks to the tower more comfortably than he talks to people.
 who.iris = The Tinter. Tends the Prism, tells nobody anything, and is missed enormously.
-who.pip = Iris's magpie. Has been trying to tell the whole town something for a week.
+who.pip = Iris's magpie. Has been trying to tell the whole town something since dawn.

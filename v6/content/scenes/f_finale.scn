@@ -13,7 +13,7 @@ scene f_lantern
   actor iris 700 524 sit
   hot 640 356 130 190 talk f_iris_ask "Iris Marlow"
   hot 400 334 140 130 look "The Prism, in its cradle, dark. Up close the crack is obvious. Up close it has been obvious for three years to exactly one person."
-  hot 940 324 150 140 look "A camp bed made of rolled canvas, a jar of water, and a tally of days scratched into the sill. Seven of them. She has been rationing the water and not the tally."
+  hot 940 324 150 140 look "A camp bed made of rolled canvas, a jar of water, and the night's hours scratched into the sill. She has been rationing the water and not the tally."
   hot 200 204 120 160 talk f_rally "Ring the bell for the whole town" if flag f.iris_told
   feather 1020 204 f_fin1
   hot 1150 464 110 110 exit tower "Back down the stair"
