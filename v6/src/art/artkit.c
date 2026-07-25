@@ -106,7 +106,7 @@ Color pal_at(Color c, float x, float y)
      * pulled down a little. Without that darkening a pale sky and pale paper
      * land on the same value and the whole town reads as a blank page —
      * gray has to keep its tonal drawing or there is nothing to restore. */
-    float lum = (0.299f * c.r + 0.587f * c.g + 0.114f * c.b) * 0.82f;
+    float lum = (0.299f * c.r + 0.587f * c.g + 0.114f * c.b) * 0.78f;
     float gr = lum * 1.03f, gg = lum * 1.00f, gb = lum * 0.93f;
     float k = amt;
     Color o;
@@ -122,9 +122,9 @@ Color pal(Color c) { return pal_at(c, g_last_x, g_last_y); }
 /* Authored slot colours. These are the *full spectrum* values; the player
  * earns them back one band at a time. */
 Color col_ink(void)        { return (Color){  38,  34,  40, 255 }; }
-Color col_ink_soft(void)   { return (Color){  86,  80,  90, 255 }; }
+Color col_ink_soft(void)   { return (Color){  74,  69,  78, 255 }; }
 Color col_paper(void)      { return (Color){ 241, 233, 218, 255 }; }
-Color col_paper_dark(void) { return (Color){ 214, 203, 184, 255 }; }
+Color col_paper_dark(void) { return (Color){ 207, 195, 176, 255 }; }
 Color col_accent_a(void)   { return pal((Color){ 232, 188,  58, 255 }); }  /* yellow */
 Color col_accent_b(void)   { return pal((Color){ 196,  74,  70, 255 }); }  /* red    */
 Color col_sky(void)        { return pal((Color){ 122, 168, 214, 255 }); }  /* blue   */
@@ -619,13 +619,18 @@ void sparkle(float x, float y, float r, float t)
     if (!settings()->highlight) return;
     if (settings()->reduce_motion) t = 0.35f;
     Color c = pal_at((Color){ 232, 188, 58, 255 }, x, y);
-    for (int i = 0; i < 4; i++) {
-        float a = t * 1.5f + i * (PI * 0.5f);
+    Color orbit = c;
+    orbit.a = 82;
+    DrawEllipseLines((int)x, (int)y, r * 0.62f, r * 0.43f, orbit);
+    DrawEllipseLines((int)(x + 1), (int)y, r * 0.48f, r * 0.33f,
+                     (Color){ orbit.r, orbit.g, orbit.b, 48 });
+    for (int i = 0; i < 6; i++) {
+        float a = t * 1.2f + i * (PI / 3.0f);
         float rr = r * (0.72f + 0.24f * sinf(t * 2.4f + i));
         float px = x + cosf(a) * rr, py = y + sinf(a) * rr * 0.7f;
-        float s = 3.4f + sinf(t * 3.0f + i * 2.1f) * 1.3f;
-        DrawLineEx((Vector2){ px - s, py }, (Vector2){ px + s, py }, 1.7f, c);
-        DrawLineEx((Vector2){ px, py - s }, (Vector2){ px, py + s }, 1.7f, c);
+        float s = 4.1f + sinf(t * 3.0f + i * 2.1f) * 1.2f;
+        DrawLineEx((Vector2){ px - s, py }, (Vector2){ px + s, py }, 2.0f, c);
+        DrawLineEx((Vector2){ px, py - s }, (Vector2){ px, py + s }, 2.0f, c);
     }
 }
 
