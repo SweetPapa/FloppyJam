@@ -610,11 +610,17 @@ const char *bp_score_flair(int strokes, int par)
     return "let's call that a learning hole.";
 }
 
-static void draw_meter(int x, int y, int hgt, float p, int charging)
+/* `held` means the shot is in flight and `p` is the power that was actually
+ * released. The meter freezes there for the whole ride instead of dropping to
+ * empty the instant the ball leaves, so "how hard did I hit that" is still on
+ * screen while you watch the consequences — which is when you want it. */
+static void draw_meter(int x, int y, int hgt, float p, int charging, int held)
 {
     int i, seg = 26;
     DrawRectangle(x - 4, y - 4, 26, hgt + 8, (Color){ 6, 8, 16, 200 });
-    DrawRectangleLines(x - 4, y - 4, 26, hgt + 8, (Color){ 50, 60, 80, 220 });
+    DrawRectangleLines(x - 4, y - 4, 26, hgt + 8,
+                       held ? (Color){ 120, 140, 175, 235 }
+                            : (Color){ 50, 60, 80, 220 });
     for (i = 0; i < seg; ++i) {
         float u = (float)i / (float)(seg - 1);
         int yy = y + hgt - (int)(u * hgt) - 4;
@@ -625,16 +631,24 @@ static void draw_meter(int x, int y, int hgt, float p, int charging)
             DrawRectangle(x, yy, 18, 4, (Color){ 28, 32, 44, 255 });
             continue;
         }
-        /* lit segments get a halo, so a full meter genuinely glows */
-        DrawRectangle(x - 3, yy - 1, 24, 6, (Color){ c.r, c.g, c.b, 45 });
-        DrawRectangle(x, yy, 18, 4, c);
+        /* a held bar reads dimmer than a live one, so the two never get
+         * mistaken for each other at a glance */
+        if (held) {
+            DrawRectangle(x - 2, yy - 1, 22, 6, (Color){ c.r, c.g, c.b, 26 });
+            DrawRectangle(x, yy, 18, 4, (Color){ c.r, c.g, c.b, 190 });
+        } else {
+            DrawRectangle(x - 3, yy - 1, 24, 6, (Color){ c.r, c.g, c.b, 45 });
+            DrawRectangle(x, yy, 18, 4, c);
+        }
     }
-    if (charging) {
-        int yy = y + hgt - (int)(p * hgt) - 5;
+    if (charging || held) {
+        int yy = y + hgt - (int)(bp_clampf(p, 0.0f, 1.0f) * hgt) - 5;
+        unsigned char a = charging ? 240 : 200;
         DrawRectangle(x - 10, yy - 1, 38, 4, (Color){ 255, 255, 255, 70 });
-        DrawRectangle(x - 8, yy, 34, 2, (Color){ 255, 255, 255, 240 });
+        DrawRectangle(x - 8, yy, 34, 2, (Color){ 255, 255, 255, a });
     }
-    DrawText("PWR", x - 3, y + hgt + 8, 12, (Color){ 150, 165, 185, 255 });
+    DrawText(held ? "HIT" : "PWR", x - 3, y + hgt + 8, 12,
+             held ? (Color){ 226, 234, 250, 255 } : (Color){ 150, 165, 185, 255 });
 }
 
 static const char *power_word(float p)
@@ -648,13 +662,15 @@ static const char *power_word(float p)
 
 /* How hard did I just hit that? Shown right where the meter was, so the
  * number and the word land in the same place your eye already is. */
-static void draw_strike_readout(int x, int y, float flash, float power)
+static void draw_strike_readout(int x, int y, float flash, float power, int held)
 {
     char buf[32];
     int a, fs, w;
     float pop;
-    if (flash <= 0.001f) return;
-    a = (int)(bp_clampf(flash * 1.6f, 0.0f, 1.0f) * 255.0f);
+    if (flash <= 0.001f && !held) return;
+    /* the pop animation still runs off `flash`; `held` only stops it fading,
+     * so the word and the number stay legible for the whole ride */
+    a = held ? 255 : (int)(bp_clampf(flash * 1.6f, 0.0f, 1.0f) * 255.0f);
     pop = 1.0f + (1.0f - bp_clampf(flash * 3.0f, 0.0f, 1.0f)) * 0.0f +
           bp_clampf((flash - 0.75f) * 4.0f, 0.0f, 1.0f) * 0.45f;
     fs = (int)(26.0f * pop);
@@ -796,8 +812,14 @@ void bp_render_hud(const BpWorld *w, const BpHud *h, int sw, int sh)
         DrawText(s, sw / 2 - bw / 2, 50, 20, (Color){ 255, 180, 170, 255 });
     }
 
-    draw_meter(26, sh - 230, 150, h->charging ? h->power : 0.0f, h->charging);
-    draw_strike_readout(16, sh - 252, h->pow_flash, h->pow_value);
+    {
+        /* charging shows the live meter; riding freezes it at what you let go
+         * of; at rest it is empty and waiting */
+        float shown = h->charging ? h->power : (h->riding ? h->pow_value : 0.0f);
+        draw_meter(26, sh - 230, 150, shown, h->charging, h->riding && !h->charging);
+        draw_strike_readout(16, sh - 252, h->pow_flash, h->pow_value,
+                            h->riding && !h->charging);
+    }
     draw_spin_widget(120, sh - 118, 44, h->tx, h->ty);
     draw_minimap(w, sw - 178, sh - 178, 160, pal.accent);
 
@@ -822,7 +844,7 @@ void bp_render_hud(const BpWorld *w, const BpHud *h, int sw, int sh)
     /* controls hint strip */
     if (!h->riding) {
         const char *k = "LEFT/RIGHT aim   SHIFT fine   SPACE power   A/D/W/S english   "
-                        "UP focus hole   DOWN aim at hole   MOUSE/QE cam   TAB card   ESC pause";
+                        "UP change view   DOWN aim at hole   MOUSE/QE cam   TAB card   ESC pause";
         DrawText(k, 14, sh - 26, 15, (Color){ 128, 146, 170, 205 });
     } else {
         DrawText("R  skip to rest", 14, sh - 26, 15, (Color){ 128, 146, 170, 205 });

@@ -93,6 +93,46 @@ int main(void)
              worst_survey, worst_survey_h);
     ok(worst_survey < 0.60f, "orbiting past walls does not pop the eye", buf);
 
+    /* The eye must never end a frame inside geometry. It used to, routinely:
+     * eye_dist was EASED toward the safe distance, so for a third of a second
+     * after you orbited into a rail the camera was sitting inside it, and
+     * posts were not tested at all — hole 17 has fifteen of them. Sweep every
+     * hole at four pitches through a full revolution and count. */
+    printf("\neye never enters geometry\n");
+    {
+        static const float PITCH[4] = { 6.0f, 26.0f, 52.0f, 79.0f };
+        int inside = 0, worst_h = 0, p, z;
+        for (h = 0; h < BP_NHOLES; ++h) {
+            BpWorld w;
+            bp_course_build(&w, h);
+            for (p = 0; p < 4; ++p) {
+                for (z = 0; z < 4; ++z) {
+                    BpCam c;
+                    int i;
+                    bp_cam_init(&c, w.balls[0].p);
+                    c.pitch = PITCH[p] * BP_DEG;
+                    c.zoom = z;
+                    bp_cam_update(&c, &w, w.balls[0].p, v3zero(), 0.0f, 1.0f / 60.0f);
+                    for (i = 0; i < 180; ++i) {   /* a full turn, 2 deg a frame */
+                        bp_cam_orbit(&c, 0.0349f, 0.0f);
+                        bp_cam_update(&c, &w, w.balls[0].p, v3zero(), 0.0f, 1.0f / 60.0f);
+                        if (bp_cam_eye_blocked(&c, &w)) {
+                            if (!inside) worst_h = h + 1;
+                            ++inside;
+                        }
+                    }
+                }
+            }
+        }
+        if (inside)
+            snprintf(buf, sizeof buf, "%d frames inside, first on hole %d",
+                     inside, worst_h);
+        else
+            snprintf(buf, sizeof buf, "clean across %d sampled frames",
+                     BP_NHOLES * 4 * 4 * 180);
+        ok(inside == 0, "orbiting never puts the eye inside geometry", buf);
+    }
+
     /* A long frame must not teleport the camera: exponential smoothing is
      * frame-rate independent, the old dt*rate clamp was not. */
     {

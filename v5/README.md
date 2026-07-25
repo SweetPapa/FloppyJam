@@ -15,7 +15,7 @@ festoon lights on poles, a wet plaza with traffic circling it, a skyline that
 is different on every hole, a ferris wheel somewhere over your shoulder, and a
 jazz trio playing the whole time.
 
-Single native executable, ~150 KB, no asset files of any kind. Every mesh,
+Single native executable, ~166 KB, no asset files of any kind. Every mesh,
 palette, texture and sound is generated at startup or synthesised at runtime,
 and all eighteen holes are compiled-in C arrays. The skyline included — it is
 seeded off the hole index, so hole 7 has the same view every time you play it
@@ -44,7 +44,7 @@ make windows RAYLIB_WIN=/path/to/mingw-raylib     # -> breakpar.exe
 
 That link line is `-static -static-libgcc -mwindows`, so the result runs on a
 stock Windows 10/11 machine with no runtime installs and no DLLs beside it.
-The current macOS release build is **150 KB** against a 1,474,560 byte ceiling.
+The current macOS release build is **166 KB** against a 1,474,560 byte ceiling.
 
 ## Controls
 
@@ -55,8 +55,8 @@ Keyboard-and-mouse first; **keyboard alone is fully playable**.
 | Aim | `←` / `→` — detented, one audible click per notch. Tap for exactly one click, hold to sweep |
 | Fine aim | hold `SHIFT` (same detents, six times smaller) |
 | Invert aim | OPTIONS → INVERT AIM swaps which arrow turns the cue left |
-| Focus camera on the hole | `↑` — swings behind the ball and zooms out for a clear line |
-| Aim the cue at the hole | `↓` — points the cue straight at it and focuses the camera |
+| Change camera view | `↑` — cycles over the shoulder → high angle → overhead plan → down the cue |
+| Aim the cue at the hole | `↓` — points the cue straight at it and re-frames the current view |
 | Power | hold `SPACE`, release to strike — the meter climbs, falls, climbs |
 | English (cue-ball face) | `A` / `D` left and right, `W` follow, `S` draw |
 | Centre the english | `C` |
@@ -75,8 +75,19 @@ Aiming is detented rather than continuous: each notch clicks, so you can line
 up off a rail and count three clicks left instead of nudging a slider and
 hoping. A coarse detent is 0.60 deg (about 15 cm of aim at a far cup) and a
 fine one is 0.10 deg (~2.5 cm), tight enough to thread a gap on the far side of
-the hole. When a far hole is hard to read, `↑` frames it for you and `↓` also
-lines the cue up straight at it. The two aim keys can be swapped in OPTIONS.
+the hole. `↓` lines the cue up straight at the hole. The two aim keys can be
+swapped in OPTIONS.
+
+`↑` steps through four camera views, and the one you pick comes back for every
+shot after it — pick a framing once and the game keeps giving it to you.
+
+- **Over the shoulder** — the working three-quarter view.
+- **High angle** — pulled back and up: read the whole line at once.
+- **Overhead plan** — near-vertical, scaled to the distance to the hole, so a
+  dogleg or a blind ledge can be read as geometry instead of guessed at.
+- **Down the cue** — eye on the felt behind the ball, looking along the line.
+  In this one the camera *is* the aim, so turning the cue turns the view and
+  `Q`/`E` step aside until you leave it.
 
 English resets to centre at the start of each **hole**, not each shot: leaving
 your last spin dialled in is a small mastery reward and a small trap.
@@ -140,6 +151,12 @@ layered in above 42%, one crisp frame of hitstop, shockwave radius, dust count,
 camera kick, a rim flash past 78%, and a word plus percentage that lands right
 where the power meter was. You can tell how hard you hit it with your eyes shut,
 and release is immediate — the ball leaves the frame after you let go.
+
+On release the meter **freezes at the power you actually let go of** and holds
+there, dimmed, with its label switched from `PWR` to `HIT`, until the ball comes
+to rest. It used to empty the instant the ball left, which threw the number away
+at exactly the moment you were watching the consequences and trying to work out
+whether to hit the next one harder.
 
 Aiming is **detented**. Each notch of `←`/`→` clicks audibly and ticks the compass
 strip on the HUD, so a line can be counted rather than eyeballed, and `SHIFT`
@@ -216,7 +233,7 @@ that passed them.
 ```sh
 make test         # headless physics suite — no window, no audio device
 make testcourse   # geometry, preview fidelity, and a bot that plays all 18 holes
-make testcamera   # camera smoothness and frame-rate independence
+make testcamera   # camera smoothness, wall clearance, frame-rate independence
 ```
 
 `make test` covers the Definition of Done: 1000 bit-identical re-sims of the
@@ -234,6 +251,13 @@ finds in one or two strokes, which is the hero line existing in geometry rather
 than in the design document. `./bp_test_course -h` re-runs it with a coarser
 planner and human-sized execution error as a difficulty probe — it is a rough
 signal, not a gate, because a greedy bot never plays for position.
+
+`make testcamera` holds the eye to two invariants. It must not judder — measured
+as frame-to-frame change in step size relative to the mean, over the opening
+flyover and a full orbit on every hole. And it must **never end a frame inside
+geometry**: 51,840 sampled frames, every hole at four pitches and four zooms
+through a full revolution, zero inside. That number was 2,133 before the fix, so
+the check is load-bearing rather than decorative.
 
 ## Layout
 
@@ -260,6 +284,7 @@ v5/
   tests/
     test_physics.c
     test_course.c
+    test_camera.c
 ```
 
 All names, geometry, text and sounds are original.
