@@ -2,11 +2,26 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { gameBySlug } from '../data/games.js'
+import { useLatestRelease } from '../data/useLatestRelease.js'
 
 const route = useRoute()
 const game = computed(() => gameBySlug(route.params.slug))
 const active = ref(0)
 watch(() => route.params.slug, () => (active.value = 0))
+
+/* Resolved from the GitHub API on mount, with the build-time data as the
+ * fallback, so the download links follow new releases without a redeploy. */
+const release = useLatestRelease()
+const downloads = computed(() => {
+  const g = game.value
+  if (!g) return []
+  const r = release.value
+  return [
+    { platform: 'Windows', note: `signed · ${r.windows.size}`, href: r.windows.url, kind: 'bin' },
+    { platform: 'macOS', note: `notarized · ${r.macos.size}`, href: r.macos.url, kind: 'bin' },
+    ...g.downloads.filter((d) => d.icon === 'code').map((d) => ({ ...d, kind: 'code' })),
+  ]
+})
 </script>
 
 <template>
@@ -30,10 +45,10 @@ watch(() => route.params.slug, () => (active.value = 0))
         <p class="tag">{{ game.tagline }}</p>
         <div class="dl">
           <a
-            v-for="d in game.downloads"
+            v-for="d in downloads"
             :key="d.platform"
             class="btn"
-            :class="{ 'btn-primary': d.icon !== 'code' }"
+            :class="{ 'btn-primary': d.kind !== 'code' }"
             :href="d.href"
             target="_blank"
             rel="noopener"
@@ -42,12 +57,12 @@ watch(() => route.params.slug, () => (active.value = 0))
             <span class="sub">{{ d.note }}</span>
           </a>
         </div>
-        <p v-if="game.release" class="relinfo mono">
-          <a :href="game.release.notes" target="_blank" rel="noopener">{{ game.release.tag }}</a>
+        <p class="relinfo mono">
+          <a :href="release.notes" target="_blank" rel="noopener">{{ release.tag }}</a>
           · signed &amp; notarized
-          <template v-if="game.release.checksums">
+          <template v-if="release.checksums">
             ·
-            <a :href="game.release.checksums" target="_blank" rel="noopener">SHA256SUMS</a>
+            <a :href="release.checksums" target="_blank" rel="noopener">SHA256SUMS</a>
           </template>
         </p>
       </div>

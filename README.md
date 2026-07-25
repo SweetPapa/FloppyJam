@@ -194,12 +194,18 @@ npm run build && firebase deploy --only hosting --project fofoapps-934be
 ```
 
 Download links point at real release assets, not the releases page. Asset names
-carry the version, so "latest" cannot be a static URL — `scripts/update-site-downloads.sh`
-reads the newest release with `gh` and regenerates `src/data/releases.js`:
+carry the version, so "latest" cannot be written as a static URL — which would
+mean regenerating and redeploying the site after every release, and being wrong
+in between. Instead the page asks the public releases API on mount and uses the
+build-time data as its fallback, so **new releases appear without a redeploy**
+and a rate-limited or offline visitor still gets working links to the last known
+release.
+
+`scripts/update-site-downloads.sh` refreshes that fallback:
 
 ```sh
 ./scripts/update-site-downloads.sh          # newest release
-./scripts/update-site-downloads.sh v2026.07.25-a9f2462
+./scripts/update-site-downloads.sh v2026.07.25-c1a773a
 ```
 
 Vue 3 + Vite, static output, hash routing so it works from any subpath. Adding a game is one entry in `src/data/games.js` plus a folder of
