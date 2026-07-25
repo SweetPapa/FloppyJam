@@ -7,10 +7,19 @@
 #   ./scripts/sign-windows.sh dist/*.exe --description "BREAK PAR"
 #   ./scripts/sign-windows.sh v5/breakpar.exe --dry-run
 #
-# Runs anywhere the Azure CLI runs — macOS, Linux, Windows. The build still has
-# to happen on Windows (or through MinGW), but signing does not: Trusted Signing
-# is a web service and the signing tool is a cross-platform .NET tool. That is
-# the whole reason to prefer it over a local .pfx.
+# Trusted Signing itself is a web service, and --verify-setup works from any
+# platform with the Azure CLI. The SIGNING step does not: the Microsoft client
+# (dotnet/sign) P/Invokes SetDllDirectoryW from kernel32.dll in its very first
+# initialiser, so it aborts on Linux and macOS with
+#
+#   System.DllNotFoundException: Unable to load shared library 'kernel32.dll'
+#
+# despite being distributed as a portable .NET tool. There is no supported
+# cross-platform Authenticode signer for Trusted Signing today — osslsigncode
+# cannot talk to the service, and driving the REST API by hand means
+# implementing PE digest embedding. So the actual signing has to run on Windows,
+# which is what the release workflow does: it cross-compiles on Linux and then
+# signs on a windows-latest runner.
 #
 # Auth is deliberately whatever the environment already has. Interactively that
 # is your `az login` session; in CI it is the federated credential the workflow
@@ -101,6 +110,21 @@ fi
 [ ${#TARGETS[@]} -gt 0 ] || { usage; exit 1; }
 for f in "${TARGETS[@]}"; do [ -f "$f" ] || die "no such file: $f"; done
 
+# ---- platform gate ---------------------------------------------------
+# Fail here with an explanation rather than let the tool abort with a
+# DllNotFoundException nobody can act on.
+case "$(uname -s)" in
+    CYGWIN*|MINGW*|MSYS*|Windows_NT) IS_WINDOWS=1 ;;
+    *)                               IS_WINDOWS=0 ;;
+esac
+if [ "$IS_WINDOWS" = 0 ] && [ "$DRY_RUN" = 0 ]; then
+    die "Authenticode signing has to run on Windows.
+  The Microsoft client (dotnet/sign) P/Invokes kernel32.dll on startup, so it
+  aborts on $(uname -s) even though it ships as a portable .NET tool.
+  --verify-setup and --dry-run work here; the release workflow signs on a
+  windows-latest runner."
+fi
+
 # ---- the signing tool ------------------------------------------------
 # dotnet/sign is the cross-platform Trusted Signing client. It authenticates
 # with DefaultAzureCredential, which means it picks up the same `az login`
@@ -137,6 +161,9 @@ for f in "${TARGETS[@]}"; do
     DESC="${DESCRIPTION:-$(basename "${f%.exe}")}"
     DIR="$(cd "$(dirname "$f")" && pwd)"
     FILE="$(basename "$f")"
+    # Under git bash the tool is a native Windows binary and will not understand
+    # an MSYS path like /d/a/repo, so hand it a real one.
+    command -v cygpath >/dev/null 2>&1 && DIR="$(cygpath -w "$DIR")"
 
     set -- code trusted-signing "$FILE" \
         --base-directory "$DIR" \

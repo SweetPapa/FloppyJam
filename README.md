@@ -45,6 +45,12 @@ and no audio files (every sound is synthesised at runtime), so `dr_mp3`,
 them gets Windows to **1,432,064** bytes and the macOS universal binary to
 **1,166,416**.
 
+Mind the difference between the built and the *shipped* size: an Authenticode
+signature adds about 14 KB, so the `.exe` people actually download is
+**1,446,616** — only 27,944 bytes under the ceiling. `make windows` can only
+measure the unsigned file, so the release workflow re-checks the number after
+signing and warns when the headroom drops under 46 KB.
+
 ## Shipping
 
 | what | how |
@@ -83,19 +89,30 @@ security add-generic-password -s spt-notary -a you@example.com -w
 
 ### `scripts/sign-windows.sh`
 
-Authenticode signing through Azure Trusted Signing, which is a web service — so
-this runs on **macOS, Linux or Windows**. Only the *build* needs a Windows
-toolchain, and even that is handled by MinGW cross-compilation.
+Authenticode signing through Azure Trusted Signing.
 
 ```sh
-./scripts/sign-windows.sh --verify-setup     # check az login + the cert profile
-./scripts/sign-windows.sh v5/breakpar.exe
+./scripts/sign-windows.sh --verify-setup     # works on any platform
+./scripts/sign-windows.sh v5/breakpar.exe    # Windows only — see below
 ```
 
 Auth is whatever the environment already has: your `az login` session locally,
-the federated OIDC identity in CI. Nothing here ever takes a password. Signing
-itself needs the cross-platform [`sign`](https://github.com/dotnet/sign) tool,
-which the script installs on first use if the .NET SDK is present.
+the federated OIDC identity in CI. Nothing here ever takes a password.
+
+**The signing step has to run on Windows.** Trusted Signing is a web service and
+`--verify-setup` works from anywhere, but the Microsoft client
+([dotnet/sign](https://github.com/dotnet/sign)) P/Invokes `SetDllDirectoryW`
+from `kernel32.dll` in its very first initialiser, so on Linux and macOS it
+aborts with `System.DllNotFoundException: Unable to load shared library
+'kernel32.dll'` — despite shipping as a portable .NET tool. There is no
+supported cross-platform Authenticode signer for Trusted Signing today:
+`osslsigncode` cannot talk to the service, and driving the REST API directly
+means implementing PE digest embedding yourself. The script now fails with that
+explanation instead of letting the tool abort.
+
+So the release workflow splits it: the MinGW cross-compile runs on Linux, the
+resulting `.exe` is handed to a `windows-latest` job, and only the signature is
+applied there.
 
 ## The release pipeline
 
@@ -109,8 +126,9 @@ on Linux and macOS, runs all four suites, and builds the promo site.
 2. **verify** — all four suites. Nothing is published if anything fails.
 3. **macOS** — static raylib for both arches, `lipo` into one universal binary,
    sign, notarize, staple, and build a `.dmg`.
-4. **Windows** — MinGW cross-compile with the icon and version block linked in by
-   `windres`, then Azure Trusted Signing from the same Linux runner.
+4. **Windows** — MinGW cross-compile on Linux with the icon and version block
+   linked in by `windres`, then a `windows-latest` job applies the Azure Trusted
+   Signing signature (see above for why that cannot happen on Linux).
 5. **release** — checksums, generated notes, and a GitHub Release with the
    artifacts attached. Re-running replaces assets instead of failing.
 
@@ -167,12 +185,30 @@ resolves).
 
 ## The site
 
+Live at **https://sweetpapa-games.web.app** (Firebase Hosting, site
+`sweetpapa-games` in project `fofoapps-934be`).
+
 ```sh
 cd promo-site && npm install && npm run dev
+npm run build && firebase deploy --only hosting --project fofoapps-934be
 ```
 
-Vue 3 + Vite, static output, hash routing so it works from a GitHub Pages
-subpath. Adding a game is one entry in `src/data/games.js` plus a folder of
+Download links point at real release assets, not the releases page. Asset names
+carry the version, so "latest" cannot be written as a static URL — which would
+mean regenerating and redeploying the site after every release, and being wrong
+in between. Instead the page asks the public releases API on mount and uses the
+build-time data as its fallback, so **new releases appear without a redeploy**
+and a rate-limited or offline visitor still gets working links to the last known
+release.
+
+`scripts/update-site-downloads.sh` refreshes that fallback:
+
+```sh
+./scripts/update-site-downloads.sh          # newest release
+./scripts/update-site-downloads.sh v2026.07.25-c1a773a
+```
+
+Vue 3 + Vite, static output, hash routing so it works from any subpath. Adding a game is one entry in `src/data/games.js` plus a folder of
 screenshots — see [`promo-site/README.md`](promo-site/README.md).
 
 ## Artwork

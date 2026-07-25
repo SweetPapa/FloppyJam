@@ -254,7 +254,7 @@ jobs:
 
   # ------------------------------------------------------------------
   windows:
-    name: Windows x64 (signed)
+    name: Windows x64 (build)
     needs: [version, test]
     runs-on: ubuntu-latest
     steps:
@@ -281,6 +281,32 @@ jobs:
           make windows RAYLIB_WIN="$GITHUB_WORKSPACE/mingw-raylib"
           ls -la breakpar.exe
 
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-unsigned
+          path: v5/breakpar.exe
+          if-no-files-found: error
+
+  # ------------------------------------------------------------------
+  # Signing has to happen on Windows. dotnet/sign is distributed as a portable
+  # .NET tool but P/Invokes SetDllDirectoryW from kernel32.dll in its first
+  # initialiser, so on Linux it aborts with a DllNotFoundException. There is no
+  # supported cross-platform Authenticode signer for Trusted Signing, so the
+  # build stays on Linux (where the MinGW cross-compile lives) and only the
+  # signature is applied here.
+  windows-sign:
+    name: Windows x64 (sign)
+    needs: [version, windows]
+    runs-on: windows-latest
+    outputs:
+      signed: ${{ steps.sign.outputs.signed }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-unsigned
+          path: v5
+
       - name: Azure login (OIDC)
         id: az
         if: vars.AZURE_CLIENT_ID != ''
@@ -291,29 +317,53 @@ jobs:
           subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
 
       - name: Sign with Azure Trusted Signing
+        id: sign
         if: steps.az.outcome == 'success'
+        shell: bash
         env:
           SIGN_DESCRIPTION: BREAK PAR
         run: |
           set -euo pipefail
-          # dotnet/sign is a .NET tool and authenticates with
-          # DefaultAzureCredential, so it picks up the OIDC login above with
-          # nothing else configured.
           dotnet tool install --global sign --prerelease
           export PATH="$PATH:$HOME/.dotnet/tools"
           ./scripts/sign-windows.sh v5/breakpar.exe
+          echo "signed=true" >> "$GITHUB_OUTPUT"
 
       - name: Warn if unsigned
         if: steps.az.outcome != 'success'
+        shell: bash
         run: echo "::warning::no AZURE_CLIENT_ID variable — publishing an unsigned Windows build"
 
+      # The ceiling has to be checked HERE, not at build time. `make windows`
+      # measures the unsigned binary, but the Authenticode signature adds about
+      # 14 KB to the file that actually ships — so the build could pass its own
+      # check and still produce an over-ceiling artifact. This is the number
+      # anybody downloads.
+      - name: Check the signed binary against the floppy ceiling
+        shell: bash
+        run: |
+          set -euo pipefail
+          SIZE=$(wc -c < v5/breakpar.exe | tr -d ' ')
+          printf 'signed breakpar.exe: %s bytes of 1474560 (%s bytes spare)\n' \
+            "$SIZE" "$((1474560 - SIZE))"
+          if [ "$SIZE" -gt 1474560 ]; then
+            echo "::error::the SIGNED executable is over the 1,474,560-byte floppy ceiling ($SIZE)"
+            exit 1
+          fi
+          if [ "$SIZE" -gt 1428000 ]; then
+            echo "::warning::under 46 KB of headroom left after signing ($SIZE bytes)"
+          fi
+
       - name: Package
+        shell: bash
         env:
           VERSION: ${{ needs.version.outputs.version }}
         run: |
+          set -euo pipefail
           mkdir -p dist
           cp v5/breakpar.exe "dist/BREAK-PAR-$VERSION-windows-x64.exe"
-          cd dist && zip -9 "BREAK-PAR-$VERSION-windows-x64.zip" "BREAK-PAR-$VERSION-windows-x64.exe"
+          cd dist
+          7z a -mx=9 "BREAK-PAR-$VERSION-windows-x64.zip" "BREAK-PAR-$VERSION-windows-x64.exe" >/dev/null
           ls -la
 
       - uses: actions/upload-artifact@v4
@@ -324,21 +374,30 @@ jobs:
   # ------------------------------------------------------------------
   release:
     name: publish release
-    needs: [version, macos, windows]
+    needs: [version, macos, windows-sign]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
 
+      # Only the packaged artifacts. `windows-unsigned` is the hand-off between
+      # the build and the signing job and must not reach the release — the first
+      # run published a raw unsigned breakpar.exe next to the signed one, which
+      # is exactly the file nobody should download.
       - uses: actions/download-artifact@v4
         with:
           path: artifacts
+          pattern: '{macos,windows}'
           merge-multiple: true
 
       - name: Checksums
         working-directory: artifacts
         run: |
           ls -la
+          if ls breakpar.exe >/dev/null 2>&1; then
+            echo "::error::the unsigned build artifact reached the release stage"
+            exit 1
+          fi
           sha256sum * > SHA256SUMS.txt
           cat SHA256SUMS.txt
 

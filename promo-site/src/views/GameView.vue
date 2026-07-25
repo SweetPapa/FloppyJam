@@ -2,11 +2,26 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { gameBySlug } from '../data/games.js'
+import { useLatestRelease } from '../data/useLatestRelease.js'
 
 const route = useRoute()
 const game = computed(() => gameBySlug(route.params.slug))
 const active = ref(0)
 watch(() => route.params.slug, () => (active.value = 0))
+
+/* Resolved from the GitHub API on mount, with the build-time data as the
+ * fallback, so the download links follow new releases without a redeploy. */
+const release = useLatestRelease()
+const downloads = computed(() => {
+  const g = game.value
+  if (!g) return []
+  const r = release.value
+  return [
+    { platform: 'Windows', note: `signed · ${r.windows.size}`, href: r.windows.url, kind: 'bin' },
+    { platform: 'macOS', note: `notarized · ${r.macos.size}`, href: r.macos.url, kind: 'bin' },
+    ...g.downloads.filter((d) => d.icon === 'code').map((d) => ({ ...d, kind: 'code' })),
+  ]
+})
 </script>
 
 <template>
@@ -30,10 +45,10 @@ watch(() => route.params.slug, () => (active.value = 0))
         <p class="tag">{{ game.tagline }}</p>
         <div class="dl">
           <a
-            v-for="d in game.downloads"
+            v-for="d in downloads"
             :key="d.platform"
             class="btn"
-            :class="{ 'btn-primary': d.icon !== 'code' }"
+            :class="{ 'btn-primary': d.kind !== 'code' }"
             :href="d.href"
             target="_blank"
             rel="noopener"
@@ -42,9 +57,13 @@ watch(() => route.params.slug, () => (active.value = 0))
             <span class="sub">{{ d.note }}</span>
           </a>
         </div>
-        <p class="placeholder mono">
-          Download links point at the GitHub releases page — a tagged release from
-          the <code>prod</code> branch attaches the signed builds there.
+        <p class="relinfo mono">
+          <a :href="release.notes" target="_blank" rel="noopener">{{ release.tag }}</a>
+          · signed &amp; notarized
+          <template v-if="release.checksums">
+            ·
+            <a :href="release.checksums" target="_blank" rel="noopener">SHA256SUMS</a>
+          </template>
         </p>
       </div>
     </section>
@@ -154,8 +173,8 @@ h1 {
 }
 .tag { margin: 8px 0 30px; font-size: 21px; color: var(--accent); font-weight: 600; }
 .dl { display: flex; flex-wrap: wrap; gap: 12px; }
-.placeholder { margin: 18px 0 0; font-size: 12.5px; color: var(--ink-faint); max-width: 62ch; }
-.placeholder code { color: var(--ink-dim); }
+.relinfo { margin: 18px 0 0; font-size: 12.5px; color: var(--ink-faint); }
+.relinfo a { color: var(--ink-dim); }
 
 /* ---- facts ---- */
 .facts {

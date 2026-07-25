@@ -31,3 +31,5 @@ sa-key.json
 *.keychain-db
 
 .env
+# firebase deploy cache
+promo-site/.firebase/
