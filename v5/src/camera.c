@@ -20,6 +20,7 @@ void bp_cam_init(BpCam *c, V3 target)
      * frame and still reads as a three-quarter view for aiming. */
     c->pitch = 26.0f * BP_DEG;
     c->zoom = 1;
+    c->dist_mul = 1.0f;
     c->target = target;
     c->eye_dist = ZOOM_DIST[1];
     c->pos = v3add(target, v3(0.0f, 1.0f, -2.0f));
@@ -58,7 +59,15 @@ void bp_cam_set_mode(BpCam *c, int mode, const BpWorld *w, V3 tee, V3 cup)
     if (mode == CAM_FLYOVER) { c->fly_a = cup; c->fly_b = tee; }
 }
 
-/* Would the camera sphere be inside any solid box here? */
+/* The near plane is 0.01 and the eye is a point, so "clear" has to mean clear
+ * by a margin or geometry still slices into the frame. */
+#define CAM_SKIN 0.16f
+
+/* Would the camera sphere be inside any solid geometry here?
+ *
+ * Posts count. They did not use to, which is why the eye could be driven
+ * straight through a mushroom bumper on hole 17 — fifteen of them, each one a
+ * place the camera could get stuck inside with no way to orbit out. */
 static int occluded(const BpWorld *w, V3 p)
 {
     int i;
@@ -69,10 +78,19 @@ static int occluded(const BpWorld *w, V3 p)
         if (!bp_box_visible(w, i)) continue;
         cs = cosf(b->yaw); sn = sinf(b->yaw);
         q = v3sub(p, v3(b->cx, b->cy, b->cz));
-        if (fabsf(q.y) > b->hy + 0.16f) continue;
+        if (fabsf(q.y) > b->hy + CAM_SKIN) continue;
         lx =  q.x * cs + q.z * sn;
         lz = -q.x * sn + q.z * cs;
-        if (fabsf(lx) < b->hx + 0.16f && fabsf(lz) < b->hz + 0.16f) return 1;
+        if (fabsf(lx) < b->hx + CAM_SKIN && fabsf(lz) < b->hz + CAM_SKIN) return 1;
+    }
+    for (i = 0; i < w->nposts; ++i) {
+        const BpPost *po = &w->posts[i];
+        float r = po->r + CAM_SKIN, dx, dz;
+        V3 c;
+        bp_post_pose(w, i, &c);
+        if (p.y < c.y - CAM_SKIN || p.y > c.y + po->h + CAM_SKIN) continue;
+        dx = p.x - c.x; dz = p.z - c.z;
+        if (dx * dx + dz * dz < r * r) return 1;
     }
     return 0;
 }
@@ -155,9 +173,26 @@ void bp_cam_update(BpCam *c, const BpWorld *w, V3 ball, V3 vel, float cupdist, f
         want_dist = 1.55f;
         t_rate = 6.0f;
         break;
+    case CAM_FIRST: {
+        /* Down the cue. The look-at point is put a metre and a bit AHEAD of
+         * the ball rather than on it, so the ball sits low in the frame and
+         * the line to the cup is what you are actually looking at. The eye
+         * then lands about a quarter of a metre behind the ball. Callers keep
+         * c->yaw locked to the aim, so turning the cue turns the view. */
+        V3 fwd = v3(-sinf(c->yaw), 0.0f, -cosf(c->yaw));
+        want_t = v3add(v3add(ball, v3mul(fwd, 1.15f)), v3(0.0f, 0.11f, 0.0f));
+        pitch = 5.0f * BP_DEG;
+        want_dist = 1.42f;
+        t_rate = 18.0f;
+        /* the eye is deliberately parked inches off the felt behind the ball;
+         * letting the wall-avoid lift it defeats the entire point of the view */
+        avoid_walls = 0;
+        break;
+    }
     case CAM_SURVEY:
     default:
         want_t = v3add(ball, v3(0.0f, 0.06f, 0.0f));
+        want_dist *= (c->dist_mul > 0.01f) ? c->dist_mul : 1.0f;
         t_rate = 14.0f;
         break;
     }
@@ -178,16 +213,20 @@ void bp_cam_update(BpCam *c, const BpWorld *w, V3 ball, V3 vel, float cupdist, f
     if (avoid_walls) {
         float want_lift = 0.0f;
         int k;
-        for (k = 0; k < 8; ++k) {
+        for (k = 0; k < 16; ++k) {
             float p = pitch + want_lift;
             V3 d = v3(sinf(yaw) * cosf(p), sinf(p), cosf(yaw) * cosf(p));
             /* the test is the same one pullback uses, so a lift that clears
              * it means pullback will not fire at all this frame */
             if (pullback_dist(w, c->target, d, want_dist) >= want_dist - 1e-4f) break;
-            want_lift += 4.0f * BP_DEG;
+            want_lift += 2.0f * BP_DEG;
         }
-        if (c->snap) c->lift = want_lift;
-        else         c->lift += (want_lift - c->lift) * smooth_k(9.0f, sdt);
+        /* Asymmetric, and that asymmetry is the whole point. Rising is a
+         * collision response and happens on the frame it is needed; sinking
+         * back is a preference and eases. Easing the rise as well is what put
+         * the eye inside a rail for a third of a second at a time. */
+        if (c->snap || want_lift > c->lift) c->lift = want_lift;
+        else c->lift += (want_lift - c->lift) * smooth_k(4.0f, sdt);
         pitch = bp_clampf(pitch + c->lift, 0.0f, 84.0f * BP_DEG);
     } else {
         c->lift = 0.0f;
@@ -205,17 +244,44 @@ void bp_cam_update(BpCam *c, const BpWorld *w, V3 ball, V3 vel, float cupdist, f
         allowed = avoid_walls ? pullback_dist(w, c->target, dir, want_dist)
                               : want_dist;
         desired = allowed < want_dist ? allowed : want_dist;
-        /* duck in quickly so we never clip a rail, ease back out gently */
-        c->eye_dist += (desired - c->eye_dist) *
-                       smooth_k(desired < c->eye_dist ? 24.0f : 7.0f, sdt);
+        /* Pulling in is not negotiable and is not smoothed: an eye that eases
+         * toward the safe distance is an eye INSIDE the rail until it gets
+         * there. Easing back out stays gentle. */
+        if (desired < c->eye_dist) c->eye_dist = desired;
+        else c->eye_dist += (desired - c->eye_dist) * smooth_k(7.0f, sdt);
     }
 
     c->pos = v3add(c->target, v3mul(dir, c->eye_dist));
+
     /* never let the eye sink through the floor */
     {
         float g = bp_ground_h(w, c->pos.x, c->pos.z, 90.0f, NULL);
         if (g > -1e8f && c->pos.y < g + 0.12f) c->pos.y = g + 0.12f;
     }
+
+    /* Last line of defence. Everything above is a heuristic that can be
+     * beaten — the target is still easing, the floor clamp just moved the eye
+     * sideways of the ray, a mover swung a bar through where the eye was
+     * standing. So test the position we actually arrived at, and if it is
+     * inside something, walk it in along the ray until it is not. This is the
+     * check that makes "the camera is never inside a wall" true rather than
+     * usually true. */
+    if (avoid_walls && occluded(w, c->pos)) {
+        V3 ray = v3sub(c->pos, c->target);
+        float len = v3len(ray);
+        if (len > 1e-4f) {
+            float safe = pullback_dist(w, c->target, v3mul(ray, 1.0f / len), len);
+            c->eye_dist = safe;
+            c->pos = v3add(c->target, v3mul(ray, safe / len));
+        } else {
+            c->pos = c->target;
+        }
+    }
+}
+
+int bp_cam_eye_blocked(const BpCam *c, const BpWorld *w)
+{
+    return occluded(w, c->pos);
 }
 
 Camera3D bp_cam_raylib(const BpCam *c)

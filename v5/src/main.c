@@ -38,6 +38,7 @@ typedef struct {
     int   pause_from;          /* the play state PAUSE / the card overlay resumes to */
     int   card_overlay;        /* TAB scorecard over play, vs the between-holes card  */
     int   menu_sel, pause_sel, opt_sel, select_sel;
+    int   view;                /* CamView, cycled with UP, kept across holes */
     int   hole, from, to;
     int   strokes, restarts, total;
     int   scores[BP_NHOLES];
@@ -111,17 +112,69 @@ static V3 objective_pos(const BpWorld *w)
     return cup_pos(w);
 }
 
-/* Swing the camera behind the ball looking toward the objective and zoom out
- * far enough to see the whole line — the "show me the hole" key. */
-static void focus_camera_on_objective(void)
+/* ---- camera views (UP cycles these) --------------------------------
+ *
+ * UP used to do one thing: jump to a fixed high angle looking at the hole.
+ * That is one opinion about how to read a hole, and it is often the wrong
+ * one — a blind ledge wants a plan view, a long thread through a gap wants
+ * the eye on the felt behind the cue. So UP now steps through four framings
+ * and each one re-establishes itself after every shot, which is what makes it
+ * usable for correcting yourself rather than a one-off camera stunt. */
+typedef enum {
+    VIEW_SHOULDER = 0,   /* the default three-quarter working view      */
+    VIEW_HIGH,           /* high angle, pulled back: read the whole line */
+    VIEW_PLAN,           /* near-overhead: read the geometry             */
+    VIEW_CUE,            /* down the cue, eye on the felt                */
+    VIEW_COUNT
+} CamView;
+
+static const char *VIEW_NAME[VIEW_COUNT] = {
+    "VIEW  OVER THE SHOULDER",
+    "VIEW  HIGH ANGLE",
+    "VIEW  OVERHEAD PLAN",
+    "VIEW  DOWN THE CUE",
+};
+
+/* Put the camera into the current view. `face_objective` swings it round to
+ * look at the cup as well; without it the camera keeps the heading it has,
+ * which is what you want when re-applying a view between shots. */
+static void apply_view(int face_objective)
 {
     V3 ball = G.w.balls[0].p, obj = objective_pos(&G.w);
     V3 d = v3sub(obj, ball);
     float dist = sqrtf(d.x * d.x + d.z * d.z);
-    G.cam.yaw = atan2f(d.x, d.z) + BP_PI;    /* forward_yaw looks along d */
-    G.cam.pitch = 52.0f * BP_DEG;            /* high enough to clear rails */
-    /* zoom out with distance so the far cup stays in shot */
-    G.cam.zoom = (dist > 8.0f) ? 3 : (dist > 4.0f) ? 2 : 1;
+
+    if (face_objective && dist > 1e-3f)
+        G.cam.yaw = atan2f(d.x, d.z) + BP_PI;   /* forward_yaw looks along d */
+
+    G.cam.dist_mul = 1.0f;
+    switch (G.view) {
+    case VIEW_HIGH:
+        bp_cam_set_mode(&G.cam, CAM_SURVEY, &G.w, ball, cup_pos(&G.w));
+        G.cam.pitch = 52.0f * BP_DEG;           /* high enough to clear rails */
+        G.cam.dist_mul = 1.35f;
+        G.cam.zoom = (dist > 8.0f) ? 3 : (dist > 4.0f) ? 2 : 1;
+        break;
+    case VIEW_PLAN:
+        bp_cam_set_mode(&G.cam, CAM_SURVEY, &G.w, ball, cup_pos(&G.w));
+        G.cam.pitch = 79.0f * BP_DEG;
+        /* far enough up that a par-4 fits in the frame; the orbit radius is
+         * scaled rather than adding a fifth zoom step nothing else would use */
+        G.cam.dist_mul = 1.4f + bp_clampf(dist * 0.16f, 0.0f, 1.5f);
+        G.cam.zoom = 3;
+        break;
+    case VIEW_CUE:
+        /* the mode owns the framing; yaw is re-locked to the aim every frame */
+        G.cam.yaw = G.shot.aim + BP_PI;
+        bp_cam_set_mode(&G.cam, CAM_FIRST, &G.w, ball, cup_pos(&G.w));
+        break;
+    case VIEW_SHOULDER:
+    default:
+        bp_cam_set_mode(&G.cam, CAM_SURVEY, &G.w, ball, cup_pos(&G.w));
+        G.cam.pitch = 26.0f * BP_DEG;
+        G.cam.zoom = (dist > 8.0f) ? 2 : 1;
+        break;
+    }
 }
 
 /* Point the cue at the objective, and bring the camera round to match. */
@@ -130,7 +183,7 @@ static void aim_at_objective(void)
     V3 ball = G.w.balls[0].p, obj = objective_pos(&G.w);
     V3 d = v3sub(obj, ball);
     if (d.x * d.x + d.z * d.z > 1e-6f) G.shot.aim = atan2f(d.x, d.z);
-    focus_camera_on_objective();
+    apply_view(1);
 }
 
 /* The menu backdrop is a live hero shot of hole 1: wide, low and slowly
@@ -320,6 +373,7 @@ static void start_hole(int index, int fresh)
     } else {
         G.state = ST_AIM;
         bp_cam_set_mode(&G.cam, CAM_SURVEY, &G.w, G.w.balls[0].p, cup_pos(&G.w));
+        apply_view(1);
     }
 }
 
@@ -459,6 +513,9 @@ static void resolve_shot(void)
     G.last_aim = G.shot.aim + 1.0f;
     G.state = ST_AIM;
     bp_cam_set_mode(&G.cam, CAM_SURVEY, &G.w, G.w.balls[0].p, cup_pos(&G.w));
+    /* the ride left the camera chasing the ball; put the chosen view back so
+     * a player who picked the plan view gets it again for every single shot */
+    apply_view(0);
 }
 
 static void fire(float power)
@@ -580,9 +637,16 @@ static void aim_input(float dt)
     if (IsKeyPressed(KEY_LEFT))  aim_click(left * step, fine);
     if (IsKeyPressed(KEY_RIGHT)) aim_click(-left * step, fine);
 
-    /* UP  focuses the camera on the hole and zooms out for a clear line.
-     * DOWN also swings the cue round to point straight at it. */
-    if (IsKeyPressed(KEY_UP))   { focus_camera_on_objective(); bp_sfx(SFX_UI, 1.2f, 0.4f); }
+    /* UP  steps through the camera views: over the shoulder, high angle,
+     * overhead plan, down the cue. DOWN swings the cue round to point straight
+     * at the objective and re-frames whichever view you are in. */
+    if (IsKeyPressed(KEY_UP)) {
+        G.view = (G.view + 1) % VIEW_COUNT;
+        apply_view(G.view != VIEW_CUE);   /* the cue view keeps your own line */
+        bp_sfx(SFX_UI, 1.2f, 0.4f);
+        bp_sfx(SFX_WHOOSH, 1.5f, 0.22f);
+        bp_toast(VIEW_NAME[G.view], 1.4f);
+    }
     if (IsKeyPressed(KEY_DOWN)) { aim_at_objective();          bp_sfx(SFX_UI, 1.4f, 0.4f); }
 
     camera_input(dt);
@@ -690,11 +754,16 @@ static void update_play(float dt)
             IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
             G.state = ST_AIM;
             bp_cam_set_mode(&G.cam, CAM_SURVEY, &G.w, cb->p, cup_pos(&G.w));
+            apply_view(1);
         }
         break;
 
     case ST_AIM:
         aim_input(dt);
+        /* In the cue view the camera IS the aim line, so the aim wins over
+         * any orbit input that frame. Q/E and the mouse go back to doing what
+         * they normally do the moment you step to another view. */
+        if (G.view == VIEW_CUE) G.cam.yaw = G.shot.aim + BP_PI;
         bp_shot_update_guide(&G.shot, &G.w);
         update_preview(dt);
         bp_music_duck(0.0f);
@@ -866,7 +935,9 @@ static void draw_howto(int sw, int sh)
         "AIM      LEFT / RIGHT arrows.  Every click is one detent; count clicks to a line.",
         "         Tap for one click, hold to sweep.  SHIFT for fine detents.",
         "         OPTIONS can swap LEFT / RIGHT if you read it the other way.",
-        "         UP focuses the camera on the hole; DOWN also aims the cue straight at it.",
+        "VIEW     UP steps through four framings: over the shoulder, high angle,",
+        "         overhead plan, and down the cue with your eye on the felt.",
+        "         Whichever you pick comes back for every shot.  DOWN aims at the hole.",
         "POWER    hold SPACE.  The meter climbs, then falls, then climbs. Let go.",
         "ENGLISH  A / D move the strike point left and right on the cue-ball face,",
         "         W / S move it up (follow) and down (draw).  C centres it.",
@@ -919,7 +990,7 @@ static float tour_rnd(void)
     return ((float)(tour_rs & 0xffffu) / 32768.0f) - 1.0f;
 }
 
-static int tour_shot_wait = 0, tour_shots = 0, tour_grab = 0;
+static int tour_shot_wait = 0, tour_shots = 0, tour_grab = 0, tour_view_step = 0;
 
 static void tour_step(void)
 {
@@ -948,6 +1019,27 @@ static void tour_step(void)
             snprintf(name, sizeof name, "tour_%02d_aim.png", G.hole + 1);
             TakeScreenshot(name);
             tour_grab = 1;
+            return;
+        }
+        /* Hole 1 also grabs each camera view, so a renderer change that breaks
+         * one of the four framings shows up in the smoke test. Two frames per
+         * view: one to set and draw it, one to grab it — TakeScreenshot
+         * captures the frame that was already presented. */
+        if (G.hole == 0 && tour_view_step < VIEW_COUNT * 3) {
+            int phase = tour_view_step % 3;
+            if (phase == 0) {
+                G.view = tour_view_step / 3;
+                apply_view(G.view != VIEW_CUE);
+                G.cam.snap = 1;
+            } else if (phase == 2) {
+                snprintf(name, sizeof name, "tour_view_%d.png", tour_view_step / 3);
+                TakeScreenshot(name);
+                if (tour_view_step == VIEW_COUNT * 3 - 1) {
+                    G.view = VIEW_SHOULDER;     /* leave the tour as it found it */
+                    apply_view(1);
+                }
+            }
+            ++tour_view_step;
             return;
         }
         {

@@ -10,12 +10,14 @@ typedef enum {
     CAM_RIDE,         /* smoothed chase, widens with speed  */
     CAM_CUP,          /* the tension zoom                   */
     CAM_FLYOVER,      /* hole intro, cup back to tee        */
-    CAM_CINEMA        /* ace replay, fixed side angle       */
+    CAM_CINEMA,       /* ace replay, fixed side angle       */
+    CAM_FIRST         /* down the cue: eye behind the ball, looking at the line */
 } BpCamMode;
 
 typedef struct {
     float yaw, pitch;
     int   zoom;             /* 0..3 */
+    float dist_mul;         /* extra orbit-radius scale, 1 = normal (plan view) */
     V3    target;           /* smoothed look-at            */
     V3    pos;              /* derived eye                 */
     float eye_dist;         /* smoothed, wall-aware orbit radius */
@@ -34,6 +36,9 @@ void   bp_cam_orbit(BpCam *c, float dyaw, float dpitch);
 void   bp_cam_zoom(BpCam *c, int delta);
 void   bp_cam_update(BpCam *c, const BpWorld *w, V3 ball, V3 vel, float cupdist, float dt);
 Camera3D bp_cam_raylib(const BpCam *c);
+/* Is the eye currently inside solid geometry? Must never be true after
+ * bp_cam_update in a wall-avoiding mode — test_camera asserts it. */
+int    bp_cam_eye_blocked(const BpCam *c, const BpWorld *w);
 /* aim direction that "away from camera" means, for keyboard-only players */
 float  bp_cam_forward_yaw(const BpCam *c);
 
