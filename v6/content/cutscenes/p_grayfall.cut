@@ -4,36 +4,36 @@
 cut p_grayfall
   BG p_gate
   MUSIC MOOD_SILENT
-  FADE in 1.2
+  FADE in 0.7
   TITLE "Prismbrook" "the town they can see from the sea"
-  WAIT 3.0
+  WAIT 1.3
   MUSIC MOOD_SAD
   HUE 0 0.1
   ACTOR you 140 544
-  MOVE you 420 544 3.0
+  MOVE you 420 544 1.8
   SAY you "I have seen this town on a postcard."
   SAY you "Somebody has been at it with an eraser."
-  WAIT 0.6
+  WAIT 0.25
   DOODLE lantern 470 250 22
   DOODLE lantern 560 244 22
   DOODLE lantern 650 250 22
-  SAY you "Festival lanterns, still strung up. Three winters of rain in the paper."
-  WAIT 0.8
+  SAY you "Festival lanterns. Three winters of rain in the paper."
+  WAIT 0.25
   ACTOR mayor 900 544
   EMOTE mayor worried
-  MOVE mayor 640 544 2.2
-  WAIT 2.2
+  MOVE mayor 640 544 1.2
+  WAIT 1.0
   SAY mayor "You came. Oh, thank goodness. You came."
   EMOTE mayor sad
   SAY mayor "Yesterday this was the brightest thing on this coast."
   SHAKE 3 0.4
   SFX door
   SAY mayor "This morning we woke up the colour of a wet newspaper."
-  WAIT 0.5
+  WAIT 0.2
   EMOTE you worried
   SAY you "And the Prism?"
   EMOTE mayor worried
   SAY mayor "Gone. And the Tinter with it. And the door locked behind them both."
-  WAIT 0.8
+  WAIT 0.35
   MUSIC MOOD_TOWN
   EXIT

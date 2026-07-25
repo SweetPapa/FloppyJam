@@ -8,7 +8,9 @@ scene p_gate
   walk 120 449 1160 530
   spawn 180 524
   on_enter_cut p_grayfall
-  on_enter p_gate_open
+  # The Grayfall already establishes the view; begin the playable scene with
+  # the job offer instead of making the player click through a second preamble.
+  on_enter p_mayor_gate
   actor mayor 760 520 stand
   hot 700 356 130 180 talk p_mayor_gate "Mayor Aurelius Grand"
   hot 240 104 150 130 look "The town sign. PRISMBROOK, it says, and under it, in smaller and much prouder letters: THE TOWN THEY CAN SEE FROM THE SEA."

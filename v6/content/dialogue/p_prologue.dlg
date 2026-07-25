@@ -2,22 +2,13 @@
 # Tone rules (CANON 6): warm, wry, gentle. Humour from character, never
 # meanness. The Detective's choices are tone, never morals.
 
-@node p_gate_open
-  The road comes over the hill and Prismbrook is laid out below like a page
-  somebody forgot to colour in.
-  You have seen this town on a postcard. The postcard lied, or the town did.
-  A man in a very good coat is waiting at the arch, holding his hat with both
-  hands, which is not what hats are for.
-
 @node p_mayor_gate
   [if flag p.hired == 0]
-  MAYOR(worried): You came. Good. Yes. Good.
-  MAYOR(worried): You will want the facts and I will give you the facts and
-  then I would like very much to sit down.
-  MAYOR: Yesterday this town was the brightest thing on this coast. This
-  morning we woke up the colour of a wet newspaper.
+  MAYOR(worried): Detective. Before my nerve goes: the Prism is gone, Iris
+  Marlow is missing, and the tower door is locked from the inside.
+  MAYOR: Yesterday we were the brightest thing on this coast. This morning:
+  wet newspaper.
   grant clue.town_gray
-  MAYOR(sad): The Prism is gone out of the lantern room. Gone from its cradle.
   grant clue.prism_missing
   YOU:
     * (kind) That must have been a frightening thing to wake up to.  -> p_mayor_kind
@@ -44,12 +35,9 @@
   goto p_mayor_terms
 
 @node p_mayor_terms
-  MAYOR: The council pooled what we had. It is not much and it is all of it.
   set p.hired = 1
-  MAYOR: Go anywhere. Ask anyone. They will talk to you; they have been
-  talking to each other about nothing else for a day.
-  MAYOR(shifty): Only — start in the square. Not the tower. The tower can
-  wait.
+  MAYOR: The council pooled a fee. It is not much and it is all of it.
+  MAYOR(shifty): Ask anyone. Only — start in the square. Not the tower.
   YOU:
     * (curious) Why can the tower wait?  -> p_mayor_dodge
     * (kind) The square it is.  -> p_mayor_wave
@@ -63,14 +51,9 @@
   MAYOR(happy): Splendid. Splendid. I shall be here, holding my hat.
 
 @node p_square_open
-  The square is full of people not looking at each other, which in a town this
-  size takes real effort.
-  Something black and white comes off the fountain rim like a thrown stone,
-  and every head in the square snaps up to follow it.
-  It is a magpie. It goes over the roofs towards the tower, fast and low, and
-  it does not look back.
-  Somebody by the baker's says, quite clearly and to nobody, "There he goes.
-  There goes the thief."
+  The square is full of people not looking at each other. A magpie comes off
+  the fountain like a thrown stone; every head snaps up.
+  It flies for the tower. Somebody says, to nobody, "There goes the thief."
 
 @node p_bruno
   [if flag p.met_bruno == 0]
