@@ -137,9 +137,27 @@ Two credentials, two jobs, and it is worth being precise about which does what:
   values work locally and in CI. `sign-macos.sh` prefers it automatically and
   falls back to an Apple ID app-specific password if it cannot find one.
 - **Signing** needs the **Developer ID certificate and its private key**. An API
-  key cannot sign code. macOS also will not export a private key without a GUI
-  prompt, so `--apple` walks you through that one step by hand; everything else
-  is automatic.
+  key cannot sign code, and macOS will not export a private key without a GUI
+  prompt. Export it once somewhere permanent, then point a gitignored `.env` at
+  it and `--apple` becomes non-interactive:
+
+  ```
+  CERT_LOCATION=/path/to/your.p12
+  CERT_PASS=the-password
+  ```
+
+  `--cert <path>` does the same thing as a one-off. Failing both, the script
+  walks you through the export — and if the keychain holds more than one
+  Developer ID it **asks which one** rather than taking whichever sorts first.
+  `--identity <substring>` answers that up front. (It used to `head -1` the
+  list, which on a machine with a personal *and* a <redacted org> Developer ID
+  confidently handed you <redacted org>.)
+
+  It validates the `.p12` with `security import` into a throwaway keychain —
+  the same call CI makes — rather than with `openssl`. OpenSSL 3 refuses the
+  legacy cipher Keychain Access exports with unless you pass `-legacy`, so it
+  reports a perfectly good `.p12` as a bad password. The team id is then read
+  out of the certificate rather than guessed.
 
 Azure uses OIDC federation, so there is no client secret stored on GitHub at all.
 The CI identity is scoped to exactly one certificate profile rather than the
