@@ -21,6 +21,7 @@ typedef struct {
     float eye_dist;         /* smoothed, wall-aware orbit radius */
     int   mode;
     float t;                /* seconds in the current mode */
+    float lift;             /* smoothed auto-lift over blocking geometry   */
     float shake;
     float warp_blur;        /* 0..1, drives the tunnel wipe */
     int   snap;             /* jump instead of easing on the next update  */

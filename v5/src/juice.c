@@ -24,6 +24,20 @@ static Color ban_tint;
 static char  toast_s[96];
 static float toast_t = 0.0f;
 
+typedef struct {
+    V3    p;
+    float life, life0;
+    Color c;
+    char  s[16];
+    unsigned char big;
+} Popup;
+static Popup pop[BP_MAX_POPUPS];
+static int   pop_head = 0;
+
+static float edge_a = 0.0f;
+static Color edge_c;
+static float speed_a = 0.0f;
+
 /* cosmetic PRNG — never read by the sim (5.1) */
 static unsigned int rs = 0x1234567u;
 static float rnd(void)
@@ -36,8 +50,10 @@ static float rnds(void) { return rnd() * 2.0f - 1.0f; }
 void bp_juice_reset(void)
 {
     memset(par, 0, sizeof(par));
-    par_head = 0;
+    memset(pop, 0, sizeof(pop));
+    par_head = pop_head = 0;
     hitstop_t = slowmo_t = flash_a = 0.0f;
+    edge_a = speed_a = 0.0f;
     slowmo_k = 1.0f;
     ban_t = toast_t = 0.0f;
 }
@@ -85,6 +101,43 @@ void bp_confetti(V3 at, int count, float power)
         p->kind = 1;
     }
 }
+
+/* Sparkles are drawn as tiny cubes that flare and shrink rather than fall,
+ * so they read as light rather than debris. */
+void bp_sparkle(V3 at, int count, Color c, float spread, float life)
+{
+    int i;
+    for (i = 0; i < count; ++i) {
+        Particle *p = alloc_par();
+        p->p = v3add(at, v3(rnds() * spread, rnd() * spread * 0.8f, rnds() * spread));
+        p->v = v3mul(v3norm(v3(rnds(), rnd() * 0.6f + 0.2f, rnds())),
+                     0.25f + 0.55f * rnd());
+        p->life = p->life0 = life * (0.55f + 0.75f * rnd());
+        p->size = 0.010f + 0.016f * rnd();
+        p->col = c;
+        p->grav = 0.35f;
+        p->kind = 4;
+    }
+}
+
+void bp_popup(V3 at, const char *text, Color c, int big)
+{
+    Popup *p = &pop[pop_head];
+    pop_head = (pop_head + 1) % BP_MAX_POPUPS;
+    p->p = at;
+    p->life = p->life0 = big ? 1.5f : 1.1f;
+    p->c = c;
+    p->big = (unsigned char)(big != 0);
+    snprintf(p->s, sizeof p->s, "%s", text ? text : "");
+}
+
+void bp_edge_pulse(Color c, float amount)
+{
+    edge_c = c;
+    if (amount > edge_a) edge_a = bp_clampf(amount, 0.0f, 1.0f);
+}
+
+void bp_speedlines(float amount) { speed_a = bp_clampf(amount, 0.0f, 1.0f); }
 
 void bp_shockwave(V3 at, Color c, float r)
 {
@@ -167,8 +220,15 @@ void bp_juice_update(float dt)
     if (hitstop_t > 0.0f) hitstop_t -= dt;
     if (slowmo_t > 0.0f)  slowmo_t  -= dt;
     if (flash_a > 0.0f)   flash_a = bp_clampf(flash_a - dt * 3.2f, 0.0f, 1.0f);
+    if (edge_a > 0.0f)    edge_a  = bp_clampf(edge_a - dt * 2.1f, 0.0f, 1.0f);
     if (toast_t > 0.0f)   toast_t -= dt;
     if (ban_hold > 0.0f) { ban_t += dt; if (ban_t > ban_hold) ban_hold = 0.0f; }
+
+    for (i = 0; i < BP_MAX_POPUPS; ++i) {
+        if (pop[i].life <= 0.0f) continue;
+        pop[i].life -= dt;
+        pop[i].p.y += dt * 0.55f;      /* drifts up off the felt */
+    }
 
     for (i = 0; i < BP_MAX_PARTICLES; ++i) {
         Particle *p = &par[i];
@@ -204,6 +264,17 @@ void bp_juice_draw_world(void)
         } else if (p->kind == 1) {
             DrawCubeV((Vector3){ p->p.x, p->p.y, p->p.z },
                       (Vector3){ p->size, p->size * 0.35f, p->size }, c);
+        } else if (p->kind == 4) {
+            /* flare out then shrink to nothing, with a halo either side */
+            float f = (u > 0.7f) ? (1.0f - u) / 0.3f : u / 0.7f;
+            float s = p->size * (0.5f + 1.9f * f);
+            DrawCubeV((Vector3){ p->p.x, p->p.y, p->p.z },
+                      (Vector3){ s * 3.2f, s * 0.35f, s * 0.35f }, c);
+            DrawCubeV((Vector3){ p->p.x, p->p.y, p->p.z },
+                      (Vector3){ s * 0.35f, s * 3.2f, s * 0.35f }, c);
+            c.a = (unsigned char)(c.a / 4);
+            DrawCubeV((Vector3){ p->p.x, p->p.y, p->p.z },
+                      (Vector3){ s * 2.0f, s * 2.0f, s * 2.0f }, c);
         } else {
             DrawCubeV((Vector3){ p->p.x, p->p.y, p->p.z },
                       (Vector3){ p->size, p->size, p->size }, c);
@@ -211,31 +282,104 @@ void bp_juice_draw_world(void)
     }
 }
 
+/* Text pinned to a spot on the table. Behind the camera, GetWorldToScreenEx
+ * folds the point back into the frame, so anything that lands outside a
+ * generous margin is dropped rather than drawn in the wrong place. */
+void bp_juice_draw_popups(Camera3D cam, int sw, int sh)
+{
+    int i;
+    for (i = 0; i < BP_MAX_POPUPS; ++i) {
+        Popup *p = &pop[i];
+        Vector2 s;
+        float u, rise, a;
+        int fs, w;
+        if (p->life <= 0.0f || !p->s[0]) continue;
+        u = 1.0f - p->life / p->life0;
+        s = GetWorldToScreenEx((Vector3){ p->p.x, p->p.y, p->p.z }, cam, sw, sh);
+        if (s.x < -200.0f || s.x > (float)sw + 200.0f ||
+            s.y < -200.0f || s.y > (float)sh + 200.0f) continue;
+        /* overshoot on the way in, then ease out and fade */
+        rise = (u < 0.16f) ? (u / 0.16f) * 1.18f : 1.0f + 0.18f * (1.0f - (u - 0.16f) / 0.84f);
+        a = bp_clampf((1.0f - u) * 2.4f, 0.0f, 1.0f);
+        fs = (int)((p->big ? 34.0f : 22.0f) * (0.55f + 0.45f * rise));
+        w = MeasureText(p->s, fs);
+        DrawText(p->s, (int)s.x - w / 2 + 2, (int)s.y - fs / 2 + 2, fs,
+                 (Color){ 0, 0, 0, (unsigned char)(a * 150.0f) });
+        DrawText(p->s, (int)s.x - w / 2, (int)s.y - fs / 2, fs,
+                 (Color){ p->c.r, p->c.g, p->c.b, (unsigned char)(a * 255.0f) });
+    }
+}
+
 void bp_juice_draw_hud(int sw, int sh)
 {
+    /* Speed streaks: cheap radial motion blur while the ball is quick. */
+    if (speed_a > 0.02f) {
+        int i;
+        float cx = (float)sw * 0.5f, cy = (float)sh * 0.5f;
+        for (i = 0; i < 26; ++i) {
+            float a = BP_TAU * (float)i / 26.0f + (float)(i & 3) * 0.09f;
+            float r0 = (float)sw * (0.34f - 0.06f * speed_a);
+            float r1 = r0 + (float)sw * (0.10f + 0.22f * speed_a);
+            float ca = cosf(a), sa = sinf(a);
+            unsigned char al = (unsigned char)(speed_a * 46.0f);
+            DrawLineEx((Vector2){ cx + ca * r0, cy + sa * r0 * 0.62f },
+                       (Vector2){ cx + ca * r1, cy + sa * r1 * 0.62f },
+                       2.0f + 2.0f * speed_a,
+                       (Color){ 220, 236, 255, al });
+        }
+    }
+    if (edge_a > 0.004f) {
+        /* a wash that hugs the frame instead of flooding it */
+        int b = sh / 5, s = sw / 6;
+        Color c0 = edge_c, c1 = edge_c;
+        c0.a = (unsigned char)(edge_a * 170.0f);
+        c1.a = 0;
+        DrawRectangleGradientV(0, 0, sw, b, c0, c1);
+        DrawRectangleGradientV(0, sh - b, sw, b, c1, c0);
+        DrawRectangleGradientH(0, 0, s, sh, c0, c1);
+        DrawRectangleGradientH(sw - s, 0, s, sh, c1, c0);
+    }
     if (flash_a > 0.001f) {
         Color c = flash_c;
-        c.a = (unsigned char)(flash_a * 150.0f);
+        c.a = (unsigned char)(flash_a * 105.0f);
         DrawRectangle(0, 0, sw, sh, c);
     }
     if (ban_hold > 0.0f) {
-        /* slam in, hold, fall away */
+        /* slam in, hold, fall away — now with a light bar that wipes out from
+         * the centre behind the word and a tube glow around the letters */
         float u = ban_t / ban_hold;
         float slam = (ban_t < 0.14f) ? (ban_t / 0.14f) : 1.0f;
         float ease = 1.0f - (1.0f - slam) * (1.0f - slam);
-        int fs = 58, w, y;
+        float wipe = bp_clampf(ban_t / 0.30f, 0.0f, 1.0f);
+        int fs = 58, w, y, j;
         float scale = bp_lerpf(2.1f, 1.0f, ease);
         int alpha = (int)(bp_clampf((1.0f - u) * 3.0f, 0.0f, 1.0f) * 255.0f);
+        int bw;
         fs = (int)(fs * scale);
         w = MeasureText(ban_big, fs);
         y = sh / 2 - 90 - (int)((1.0f - ease) * 30.0f);
-        DrawRectangle(0, y - 10, sw, fs + 20, (Color){ 8, 12, 20, (unsigned char)(alpha * 0.55f) });
-        DrawText(ban_big, sw / 2 - w / 2 + 3, y + 3, fs, (Color){ 0, 0, 0, (unsigned char)(alpha * 0.6f) });
+        bw = (int)(wipe * (float)sw);
+        DrawRectangle(sw / 2 - bw / 2, y - 10, bw, fs + 20,
+                      (Color){ 8, 12, 20, (unsigned char)(alpha * 0.62f) });
+        DrawRectangle(sw / 2 - bw / 2, y - 12, bw, 2,
+                      (Color){ ban_tint.r, ban_tint.g, ban_tint.b,
+                               (unsigned char)(alpha * 0.85f) });
+        DrawRectangle(sw / 2 - bw / 2, y + fs + 10, bw, 2,
+                      (Color){ ban_tint.r, ban_tint.g, ban_tint.b,
+                               (unsigned char)(alpha * 0.85f) });
+        DrawText(ban_big, sw / 2 - w / 2 + 3, y + 4, fs,
+                 (Color){ 0, 0, 0, (unsigned char)(alpha * 0.6f) });
+        for (j = 0; j < 4; ++j) {
+            static const int O[4][2] = { { 3,0 },{ -3,0 },{ 0,3 },{ 0,-3 } };
+            DrawText(ban_big, sw / 2 - w / 2 + O[j][0], y + O[j][1], fs,
+                     (Color){ ban_tint.r, ban_tint.g, ban_tint.b,
+                              (unsigned char)(alpha * 0.22f) });
+        }
         DrawText(ban_big, sw / 2 - w / 2, y, fs,
-                 (Color){ ban_tint.r, ban_tint.g, ban_tint.b, (unsigned char)alpha });
+                 (Color){ 255, 250, 242, (unsigned char)alpha });
         if (ban_small[0]) {
             int w2 = MeasureText(ban_small, 22);
-            DrawText(ban_small, sw / 2 - w2 / 2, y + fs + 8, 22,
+            DrawText(ban_small, sw / 2 - w2 / 2, y + fs + 20, 22,
                      (Color){ 226, 232, 240, (unsigned char)alpha });
         }
     }

@@ -10,6 +10,7 @@
 #include "shot.h"
 #include "camera.h"
 #include "render.h"
+#include "scenery.h"
 #include "juice.h"
 #include "synth.h"
 #include "save.h"
@@ -46,6 +47,7 @@ typedef struct {
     float acc;                     /* physics accumulator                 */
     int   ride_ticks;
     int   rimming, rimmed;
+    int   banks_said;              /* highest rail count already called out */
     int   slowmo_armed;
     int   pending_ace;
     float result_t;
@@ -131,6 +133,27 @@ static void aim_at_objective(void)
     focus_camera_on_objective();
 }
 
+/* The menu backdrop is a live hero shot of hole 1: wide, low and slowly
+ * turning, framed so the skyline sits across the top half. It deliberately
+ * ignores bp_cam_update — the play camera hugs the ball and ducks behind
+ * rails, and neither is what you want a title screen doing. */
+static void menu_camera(float dt)
+{
+    V3 lo, hi, c, dir;
+    float p, y;
+    bp_course_bounds(&G.w, &lo, &hi);
+    c = v3(0.5f * (lo.x + hi.x), hi.y + 0.30f, 0.5f * (lo.z + hi.z));
+    G.cam.yaw += 0.075f * dt;
+    G.cam.pitch = 15.0f * BP_DEG;
+    G.cam.mode = CAM_SURVEY;
+    G.cam.t += dt;
+    G.cam.target = c;
+    G.cam.eye_dist = 0.55f * ((hi.x - lo.x) + (hi.z - lo.z)) + 5.0f;
+    p = G.cam.pitch; y = G.cam.yaw;
+    dir = v3(sinf(y) * cosf(p), sinf(p), cosf(y) * cosf(p));
+    G.cam.pos = v3add(c, v3mul(dir, G.cam.eye_dist));
+}
+
 /* ------------------------------------------------------------------ */
 /* events -> sound and particles (Section 10)                          */
 
@@ -145,6 +168,16 @@ static void consume_events(void)
             bp_sfx(SFX_THUMP, bp_clampf(0.72f + m * 0.14f, 0.5f, 2.0f),
                    bp_clampf(0.16f + m * 0.16f, 0.0f, 0.9f));
             bp_burst(e->at, 3, (Color){ 220, 230, 245, 255 }, m * 0.30f, 0.20f, 6.0f);
+            /* A bank is a decision that paid off, so say so from the third one
+             * on. The count is the sim's, not a guess. */
+            if (e->a == 0 && G.w.wall_hits >= 3 && G.w.wall_hits != G.banks_said) {
+                char b[16];
+                G.banks_said = G.w.wall_hits;
+                snprintf(b, sizeof b, "%d RAILS", G.w.wall_hits);
+                bp_popup(e->at, b, (Color){ 150, 220, 255, 255 }, 0);
+                bp_sfx(SFX_CHIME, 1.3f + 0.06f * (float)G.w.wall_hits, 0.22f);
+                bp_sparkle(e->at, 5, (Color){ 170, 226, 255, 255 }, 0.05f, 0.4f);
+            }
             break;
         case EV_BUMPER: {
             int n = (e->b < 0) ? 0 : (e->b % 5);
@@ -152,6 +185,9 @@ static void consume_events(void)
                    bp_clampf(0.30f + m * 0.10f, 0.0f, 0.95f));
             bp_shockwave(e->at, (Color){ 255, 170, 210, 220 }, 0.10f);
             bp_burst(e->at, 8, (Color){ 255, 150, 200, 255 }, m * 0.45f, 0.35f, 5.0f);
+            bp_sparkle(e->at, 6, (Color){ 255, 190, 226, 255 }, 0.06f, 0.45f);
+            bp_edge_pulse((Color){ 255, 110, 180, 255 },
+                          bp_clampf(0.18f + m * 0.07f, 0.0f, 0.55f));
             G.cam.shake = bp_clampf(G.cam.shake + 0.25f, 0.0f, 1.0f);
             break;
         }
@@ -159,6 +195,7 @@ static void consume_events(void)
             bp_sfx(SFX_CLACK, bp_clampf(0.85f + m * 0.10f, 0.6f, 2.0f),
                    bp_clampf(0.20f + m * 0.18f, 0.0f, 0.95f));
             bp_burst(e->at, 5, (Color){ 255, 255, 240, 255 }, m * 0.35f, 0.18f, 6.0f);
+            bp_sparkle(e->at, 3, (Color){ 255, 250, 220, 255 }, 0.04f, 0.30f);
             if (m > 2.0f) bp_hitstop(0.035f);
             break;
         case EV_LAND:
@@ -177,12 +214,17 @@ static void consume_events(void)
             break;
         case EV_TARGET:
             bp_sfx(SFX_UNCAP, 1.25f, 0.6f);
+            bp_sfx(SFX_CHIME, 1.0f, 0.55f);
             bp_burst(e->at, 20, (Color){ 140, 255, 200, 255 }, 1.8f, 0.6f, 3.0f);
+            bp_sparkle(e->at, 16, (Color){ 170, 255, 220, 255 }, 0.10f, 0.8f);
+            bp_edge_pulse((Color){ 120, 255, 190, 255 }, 0.5f);
+            bp_popup(e->at, "GATE OPEN", (Color){ 150, 255, 205, 255 }, 1);
             bp_toast("GATE OPEN", 1.8f);
             break;
         case EV_VOID:
             bp_sfx(SFX_SPLASH, 1.0f, 0.7f);
-            bp_flash((Color){ 120, 60, 200, 255 }, 0.5f);
+            bp_flash((Color){ 120, 60, 200, 255 }, 0.22f);
+            bp_edge_pulse((Color){ 140, 80, 230, 255 }, 0.9f);
             bp_burst(e->at, 18, (Color){ 130, 180, 255, 255 }, 1.4f, 0.7f, 6.0f);
             break;
         case EV_POCKET: {
@@ -191,17 +233,25 @@ static void consume_events(void)
             switch (G.w.pockets[pk].kind) {
             case PK_CUP:
                 bp_sfx(SFX_SWALLOW, 1.0f, 0.9f);
+                bp_sparkle(e->at, 22, (Color){ 255, 240, 190, 255 }, 0.10f, 0.9f);
+                bp_edge_pulse((Color){ 255, 226, 150, 255 }, 0.8f);
                 break;
             case PK_WARP:
                 bp_sfx(SFX_WARP, 1.0f, 0.7f);
                 G.cam.warp_blur = 1.0f;
                 bp_burst(e->at, 16, (Color){ 120, 240, 255, 255 }, 1.4f, 0.5f, 2.0f);
+                bp_sparkle(e->at, 14, (Color){ 150, 245, 255, 255 }, 0.09f, 0.7f);
+                bp_edge_pulse((Color){ 110, 235, 255, 255 }, 0.7f);
                 break;
             case PK_BONUS:
                 if (e->a == 0) { bp_sfx(SFX_SCRATCH, 1.0f, 0.85f); }
                 else {
-                    bp_sfx(SFX_UNCAP, 1.0f, 0.8f);
+                    bp_sfx(SFX_COIN, 1.0f, 0.85f);
+                    bp_sfx(SFX_UNCAP, 1.0f, 0.55f);
                     bp_confetti(e->at, 26, 0.7f);
+                    bp_sparkle(e->at, 18, (Color){ 255, 216, 110, 255 }, 0.10f, 0.9f);
+                    bp_popup(e->at, "-1 STROKE", (Color){ 255, 222, 120, 255 }, 1);
+                    bp_edge_pulse((Color){ 255, 208, 74, 255 }, 0.75f);
                     bp_toast("GOLD POCKET  -1 STROKE", 2.2f);
                 }
                 break;
@@ -212,8 +262,11 @@ static void consume_events(void)
             }
             if (G.w.eight_potted && G.w.cup_sealed == 0 && G.hud.sealed) {
                 bp_sfx(SFX_UNCAP, 1.0f, 0.9f);
+                bp_sfx(SFX_CHIME, 0.8f, 0.6f);
                 bp_toast("THE CUP IS OPEN", 2.4f);
                 bp_confetti(cup_pos(&G.w), 30, 0.8f);
+                bp_sparkle(cup_pos(&G.w), 24, (Color){ 180, 255, 220, 255 }, 0.14f, 1.1f);
+                bp_popup(cup_pos(&G.w), "OPEN", (Color){ 150, 255, 205, 255 }, 1);
                 G.hud.sealed = 0;
             }
             break;
@@ -232,10 +285,12 @@ static void start_hole(int index, int fresh)
     bp_course_build(&G.w, index);
     bp_replay_begin(&G.rep, index);
     bp_render_hole_begin();
+    bp_scenery_build(&G.w, index);
     bp_juice_reset();
     if (fresh) { G.strokes = 0; }
     G.ride_ticks = 0;
     G.rimming = G.rimmed = 0;
+    G.banks_said = 0;
     G.pending_ace = 0;
     G.acc = 0.0f;
     bp_shot_reset(&G.shot, 0);            /* english resets each hole (4.4) */
@@ -301,6 +356,21 @@ static void finish_hole(void)
     bp_banner(bp_score_name(s, H->par), bp_score_flair(s, H->par), 2.6f, tint);
     bp_sfx(SFX_BANNER, 1.0f, 0.8f);
     bp_confetti(cup_pos(&G.w), s <= H->par ? 70 : 22, s < H->par ? 1.25f : 0.7f);
+
+    /* The room reacts in proportion. Par gets a horn stab; under par gets the
+     * stab plus applause; an ace brings the house down. Over par gets the
+     * banner and nothing else, which is its own kind of feedback. */
+    {
+        int d = s - H->par;
+        if (d <= 0) {
+            bp_sfx(SFX_STAB, d <= -2 ? 1.18f : 1.0f, d < 0 ? 0.85f : 0.6f);
+            bp_popup(cup_pos(&G.w), bp_score_name(s, H->par), tint, 1);
+            bp_sparkle(cup_pos(&G.w), d < 0 ? 34 : 18, tint, 0.16f, 1.2f);
+            bp_edge_pulse(tint, d < 0 ? 0.9f : 0.5f);
+        }
+        if (d < 0 || s == 1)
+            bp_sfx(SFX_CROWD, s == 1 ? 1.0f : 1.12f, s == 1 ? 0.85f : 0.55f);
+    }
 
     /* first-bogey tip, at most once each and five in the whole round (15) */
     if (s > H->par && G.tips_left > 0 && H->tip &&
@@ -368,7 +438,11 @@ static void resolve_shot(void)
     if (G.w.scratched) {
         G.strokes++;
         bp_respawn_cue(&G.w);
-        bp_flash((Color){ 255, 60, 60, 255 }, 0.85f);
+        /* the punishment reads at the edge of the frame, not across the table:
+         * a full-screen red wash hid the very geometry you need to see to
+         * work out what you just did wrong */
+        bp_flash((Color){ 255, 60, 60, 255 }, 0.30f);
+        bp_edge_pulse((Color){ 255, 60, 60, 255 }, 1.0f);
         bp_toast("SCRATCH!  +1 STROKE", 2.2f);
     } else if (G.rimming && !G.w.holed) {
         bp_sfx(SFX_SAD, 1.0f, 0.55f);
@@ -395,6 +469,7 @@ static void fire(float power)
     G.strokes++;
     G.ride_ticks = 0;
     G.rimming = 0;
+    G.banks_said = 0;
     G.acc = 0.0f;
     G.shot.strike_anim = 1.0f;
     G.shot.cue_pull = 0.0f;
@@ -624,6 +699,7 @@ static void update_play(float dt)
         update_preview(dt);
         bp_music_duck(0.0f);
         bp_roll(0.0f, 0);
+        bp_speedlines(0.0f);
         break;
 
     case ST_RIDE: {
@@ -653,6 +729,9 @@ static void update_play(float dt)
 
         bp_roll(cb->state == BS_GONE ? 0.0f : sp, cb->surf);
         bp_render_trail(&G.w, G.shot.tx, G.shot.ty, dt);
+        /* streaks only once the ball is genuinely quick, so a lag putt does
+         * not get dressed up as a rocket */
+        bp_speedlines(bp_clampf((sp - 2.6f) * 0.18f, 0.0f, 1.0f));
 
         if (G.w.holed || bp_settled(&G.w) || G.ride_ticks >= RIDE_TICK_CAP) {
             bp_roll(0.0f, 0);
@@ -759,10 +838,9 @@ static void draw_final(int sw, int sh)
     char buf[160];
     int y = 96, par = 0, i;
     for (i = G.from; i <= G.to; ++i) par += BP_HOLES[i].par;
-    ClearBackground((Color){ 9, 14, 24, 255 });
+    DrawRectangle(0, 0, sw, sh, (Color){ 6, 7, 17, 160 });
     bp_render_scorecard(&G.hud, sw, sh, 1);
-    DrawRectangle(sw / 2 - 330, y + 424, 660, 122, (Color){ 10, 14, 24, 235 });
-    DrawRectangleLines(sw / 2 - 330, y + 424, 660, 122, (Color){ 78, 96, 122, 255 });
+    bp_render_panel(sw / 2 - 330, y + 424, 660, 122);
     DrawText("BEST MOMENTS", sw / 2 - 310, y + 436, 20, (Color){ 246, 240, 210, 255 });
     if (G.best_dist_hole >= 0) {
         snprintf(buf, sizeof buf, "longest holed shot: %.1f m on hole %d",
@@ -811,7 +889,7 @@ static void draw_howto(int sw, int sh)
         "still a scratch. Greed cuts both ways.",
     };
     int i;
-    ClearBackground((Color){ 9, 14, 24, 255 });
+    DrawRectangle(0, 0, sw, sh, (Color){ 6, 7, 17, 160 });
     DrawText("HOW TO PLAY", sw / 2 - 130, 54, 38, (Color){ 255, 206, 84, 255 });
     for (i = 0; i < (int)(sizeof(L) / sizeof(L[0])); ++i)
         DrawText(L[i], 90, 124 + i * 26, 18, (Color){ 196, 210, 230, 255 });
@@ -950,8 +1028,9 @@ int main(int argc, char **argv)
     G.state = ST_TITLE;
     G.from = 0; G.to = 17;
     bp_course_build(&G.w, 0);
+    bp_scenery_build(&G.w, 0);
     bp_cam_init(&G.cam, G.w.balls[0].p);
-    bp_music_mood(1);
+    bp_music_mood(3);
 
     while (!WindowShouldClose()) {
         float dt = GetFrameTime();
@@ -960,6 +1039,7 @@ int main(int argc, char **argv)
 
         bp_music_update();
         bp_juice_update(dt);
+        bp_scenery_update(dt);
         /* decay the transient readouts, and let the breeze blow while playing */
         if (G.pow_flash > 0.0f) G.pow_flash = bp_clampf(G.pow_flash - dt * 1.15f, 0.0f, 1.0f);
         if (G.shot.aim_tick > 0.0f)
@@ -985,13 +1065,12 @@ int main(int argc, char **argv)
                 else break;
             }
             if (G.menu_sel == 3 && (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE))) goto done;
-            /* idle orbit behind the tee of hole 1 */
-            bp_cam_orbit(&G.cam, 0.10f * dt, 0.0f);
-            bp_cam_update(&G.cam, &G.w, G.w.balls[0].p, v3zero(), 0.0f, dt);
+            menu_camera(dt);
             break;
 
         case ST_SELECT:
             menu_move(&G.select_sel, 3);
+            menu_camera(dt);
             if (IsKeyPressed(KEY_ESCAPE)) { G.state = ST_TITLE; }
             if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) {
                 bp_sfx(SFX_UI, 1.4f, 0.5f);
@@ -1004,15 +1083,18 @@ int main(int argc, char **argv)
         case ST_HOWTO:
             if (IsKeyPressed(KEY_ESCAPE) || IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE))
                 G.state = ST_TITLE;
+            menu_camera(dt);
             break;
 
         case ST_FINAL:
             if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_ESCAPE)) {
                 G.state = ST_TITLE;
                 bp_course_build(&G.w, 0);
+                bp_scenery_build(&G.w, 0);
                 bp_cam_init(&G.cam, G.w.balls[0].p);
-                bp_music_mood(1);
+                bp_music_mood(3);
             }
+            menu_camera(dt);
             break;
 
         case ST_PAUSE:
@@ -1036,6 +1118,7 @@ int main(int argc, char **argv)
                 } else {
                     G.state = ST_TITLE;
                     bp_course_build(&G.w, 0);
+                    bp_scenery_build(&G.w, 0);
                     bp_cam_init(&G.cam, G.w.balls[0].p);
                 }
             }
@@ -1119,19 +1202,31 @@ int main(int argc, char **argv)
         sh = GetScreenHeight();
         BeginDrawing();
         {
-            BpPalette pal = bp_palette(G.hole);
-            if (G.state == ST_TITLE) {
-                ClearBackground(pal.sky);
-            } else if (G.state == ST_HOWTO || G.state == ST_FINAL) {
-                ClearBackground((Color){ 9, 14, 24, 255 });
-            } else {
-                Color deep = { (unsigned char)(pal.sky.r * 0.45f),
-                               (unsigned char)(pal.sky.g * 0.45f),
-                               (unsigned char)(pal.sky.b * 0.55f), 255 };
-                ClearBackground(pal.sky);
-                DrawRectangleGradientV(0, 0, sw, sh / 2, deep, pal.sky);
-                DrawRectangleGradientV(0, sh / 2, sw, sh - sh / 2, pal.sky, pal.horizon);
-            }
+            /* Every screen in the game sits in front of the same live city —
+             * title, round select, how-to and the final card included. The
+             * alternative was one flat black page in the middle of a neon
+             * round, which read as a different game. The pages that are not
+             * mid-round show hole 1; the final card keeps the hole you just
+             * finished, since that is the table still standing there. */
+            int page = (G.state == ST_TITLE || G.state == ST_SELECT ||
+                        G.state == ST_HOWTO || G.state == ST_FINAL);
+            int hole = (page && G.state != ST_FINAL) ? 0 : G.hole;
+            BpPalette pal = bp_palette(hole);
+            const BpWorld *world = (G.state == ST_REPLAY) ? &G.rw : &G.w;
+            Camera3D cam = bp_cam_raylib(&G.cam);
+            int show_cue = (G.state == ST_AIM);
+            /* With the full preview on, the short geometry guide is just a
+             * second line saying less, so it steps aside. */
+            int show_guide = show_cue && !(G.save.preview && G.preview.valid);
+            ClearBackground(pal.sky);
+            BeginMode3D(cam);
+            bp_scenery_draw(&G.cam, &pal, G.t);
+            bp_render_world(world, hole, &G.shot, show_guide, show_cue, G.t);
+            if (G.state == ST_AIM && G.save.preview)
+                bp_render_preview(world, &G.preview, G.t);
+            EndMode3D();
+            bp_scenery_draw_overlay(sw, sh, &pal, G.t);
+            if (!page) bp_juice_draw_popups(cam, sw, sh);
         }
 
         if (G.state == ST_TITLE) {
@@ -1144,16 +1239,6 @@ int main(int argc, char **argv)
             draw_final(sw, sh);
         } else {
             const BpWorld *world = (G.state == ST_REPLAY) ? &G.rw : &G.w;
-            Camera3D cam = bp_cam_raylib(&G.cam);
-            int show_cue = (G.state == ST_AIM);
-            /* With the full preview on, the short geometry guide is just a
-             * second line saying less, so it steps aside. */
-            int show_guide = show_cue && !(G.save.preview && G.preview.valid);
-            BeginMode3D(cam);
-            bp_render_world(world, G.hole, &G.shot, show_guide, show_cue, G.t);
-            if (G.state == ST_AIM && G.save.preview)
-                bp_render_preview(world, &G.preview, G.t);
-            EndMode3D();
 
             if (G.cam.warp_blur > 0.01f) {
                 DrawRectangle(0, 0, sw, sh,

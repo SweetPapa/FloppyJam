@@ -14,7 +14,11 @@ void bp_cam_init(BpCam *c, V3 target)
 {
     memset(c, 0, sizeof(*c));
     c->yaw = BP_PI;              /* looking down +Z from behind the tee */
-    c->pitch = 40.0f * BP_DEG;
+    /* 26 deg, not the old 40. At 40 the top of a 58-degree frame sits a
+     * degree BELOW the horizon, so the player never once saw the sky the
+     * whole course is standing in. 26 puts the skyline in the top of the
+     * frame and still reads as a three-quarter view for aiming. */
+    c->pitch = 26.0f * BP_DEG;
     c->zoom = 1;
     c->target = target;
     c->eye_dist = ZOOM_DIST[1];
@@ -26,7 +30,9 @@ void bp_cam_init(BpCam *c, V3 target)
 void bp_cam_orbit(BpCam *c, float dyaw, float dpitch)
 {
     c->yaw += dyaw;
-    c->pitch = bp_clampf(c->pitch + dpitch, 12.0f * BP_DEG, 82.0f * BP_DEG);
+    /* the floor drops to 6 deg so a player can duck the eye right down and
+     * put the neon skyline behind the shot */
+    c->pitch = bp_clampf(c->pitch + dpitch, 6.0f * BP_DEG, 82.0f * BP_DEG);
 }
 
 void bp_cam_zoom(BpCam *c, int delta)
@@ -120,7 +126,7 @@ void bp_cam_update(BpCam *c, const BpWorld *w, V3 ball, V3 vel, float cupdist, f
         float head = (sp > 0.35f) ? atan2f(vel.x, vel.z) : (c->yaw + BP_PI);
         c->yaw += bp_angdiff(head + BP_PI, c->yaw) * smooth_k(2.4f, sdt);
         yaw = c->yaw;
-        pitch = 17.0f * BP_DEG + bp_clampf(sp * 0.035f, 0.0f, 0.22f);
+        pitch = 14.0f * BP_DEG + bp_clampf(sp * 0.035f, 0.0f, 0.22f);
         want_dist = want_dist + 0.45f + bp_clampf(sp * 0.26f, 0.0f, 2.2f);
         want_t = v3add(ball, v3(0.0f, 0.14f, 0.0f));
         t_rate = 9.0f;
@@ -157,6 +163,36 @@ void bp_cam_update(BpCam *c, const BpWorld *w, V3 ball, V3 vel, float cupdist, f
     }
 
     (void)cupdist;
+
+    /* Auto-lift. The eye now sits low enough by default (26 deg, so the city
+     * is in frame) that orbiting can walk it straight into a rail. The old
+     * answer was pullback_dist alone: yank the eye toward the ball until it
+     * is clear. That moves the eye radially, by a lot, in one frame, and it
+     * reads as a glitch — the survey-orbit judder check catches it.
+     *
+     * Raising the eye instead moves it tangentially and keeps the framing
+     * distance, which reads as a camera decision rather than a pop. Search
+     * upward in coarse steps for a pitch where the eye is out of the
+     * geometry, then ease onto it; pullback stays as the last resort for
+     * anything blocking the middle of the ray. */
+    if (avoid_walls) {
+        float want_lift = 0.0f;
+        int k;
+        for (k = 0; k < 8; ++k) {
+            float p = pitch + want_lift;
+            V3 d = v3(sinf(yaw) * cosf(p), sinf(p), cosf(yaw) * cosf(p));
+            /* the test is the same one pullback uses, so a lift that clears
+             * it means pullback will not fire at all this frame */
+            if (pullback_dist(w, c->target, d, want_dist) >= want_dist - 1e-4f) break;
+            want_lift += 4.0f * BP_DEG;
+        }
+        if (c->snap) c->lift = want_lift;
+        else         c->lift += (want_lift - c->lift) * smooth_k(9.0f, sdt);
+        pitch = bp_clampf(pitch + c->lift, 0.0f, 84.0f * BP_DEG);
+    } else {
+        c->lift = 0.0f;
+    }
+
     dir = v3(sinf(yaw) * cosf(pitch), sinf(pitch), cosf(yaw) * cosf(pitch));
 
     if (c->snap) {

@@ -37,6 +37,9 @@ void bp_render_trail(const BpWorld *w, float tx, float ty, float dt);
 void bp_render_preview(const BpWorld *w, const BpPreview *pv, float t);
 void bp_render_preview_readout(const BpPreview *pv, int sw, int sh, int live);
 
+/* the shared full-screen page panel: smoked glass with one lit edge */
+void bp_render_panel(int x, int y, int w, int h);
+
 void bp_render_world(const BpWorld *w, int hole, const BpShot *sh,
                      int show_guide, int show_cue, float t);
 void bp_render_hud(const BpWorld *w, const BpHud *h, int sw, int sh);
