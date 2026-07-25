@@ -273,11 +273,14 @@ static const BpPocket H14K[] = {
     SCR(-3.0f, 4.4f), SCR(3.0f, 4.4f), BON(-3.0f, 9.6f), BON(3.0f, 9.6f),
     CUP(0.0f, 10.9f),
 };
+/* A real rack: rows 0.866 of a ball-width apart, 4.5 mm of daylight between
+ * neighbours. Spaced off BP_R_OBJ, not BP_R — at the old cue-ball spacing the
+ * six balls now overlap and the rack detonates on the first tick. */
 static const BpBallDef H14B[] = {
     OBJ( 0.000f, 7.000f, 1, 1),
-    OBJ(-0.030f, 7.052f, 2, 2), OBJ( 0.030f, 7.052f, 3, 3),
-    OBJ(-0.060f, 7.104f, 4, 4), OBJ( 0.000f, 7.104f, 5, 5),
-    OBJ( 0.060f, 7.104f, 6, 6),
+    OBJ(-0.054f, 7.094f, 2, 2), OBJ( 0.054f, 7.094f, 3, 3),
+    OBJ(-0.108f, 7.187f, 4, 4), OBJ( 0.000f, 7.187f, 5, 5),
+    OBJ( 0.108f, 7.187f, 6, 6),
 };
 
 /* 15 — CLOCKWORK (par 4): tilt platforms, a gate target, a warp pair    */

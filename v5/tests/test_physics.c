@@ -311,6 +311,39 @@ static void test_systems(void)
     run_to_rest(&w, 20000);
     ok(w.bonus_hits == 1, "object ball potted in a bonus pocket counts", NULL);
 
+    /* Object balls are BP_R_OBJ, not BP_R, and the golf cup is the tightest
+     * hole in the game — 2.2 cue radii across. Two ways an oversized target
+     * ball silently stops working, both of them geometry:
+     *   1. it is wider than the cup mouth and simply cannot go in;
+     *   2. it fits, drops, and comes to rest on the cup floor still ABOVE the
+     *      capture line, so it sits in the hole forever and never scores.
+     * Assert the margins directly, then prove it with a ball. */
+    {
+        char buf[128];
+        float rest_depth = BP_CUP_DEPTH - BP_R_OBJ;   /* centre, below the rim */
+        snprintf(buf, sizeof buf, "object ball %.1f mm across, cup mouth %.1f mm",
+                 2000.0f * BP_R_OBJ, 2000.0f * BP_CUP_R);
+        ok(BP_R_OBJ < BP_CUP_R * 0.95f, "an object ball fits down the cup", buf);
+        snprintf(buf, sizeof buf, "rests %.1f mm under the rim, needs %.1f mm",
+                 1000.0f * rest_depth, 1000.0f * 0.9f * BP_R_OBJ);
+        ok(rest_depth > 0.9f * BP_R_OBJ,
+           "the cup is deep enough to capture the biggest ball", buf);
+    }
+
+    flat_table(&w, 2.0f, 6.0f, 1);
+    add_ball(&w, 0.0f, -5.5f + 1.2f, BALL_OBJ);
+    {
+        BpPocket *pk = &w.pockets[w.npockets++];
+        memset(pk, 0, sizeof(*pk));
+        pk->z = -5.5f + 2.4f; pk->kind = PK_CUP; pk->link = -1;
+    }
+    bp_world_finalize(&w);
+    bp_shot_begin(&w);
+    bp_strike(&w, 0.0f, 0.46f, 0.0f, 0.0f);
+    run_to_rest(&w, 20000);
+    ok(w.balls[1].state == BS_GONE,
+       "an object ball drops in the cup rather than parking in it", NULL);
+
     /* rack hole: potting the eight unseals the cup */
     flat_table(&w, 2.0f, 6.0f, 1);
     add_ball(&w, 0.0f, -5.5f + 1.2f, BALL_EIGHT);

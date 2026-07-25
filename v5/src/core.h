@@ -54,7 +54,16 @@ static inline float bp_angdiff(float a, float b) {
 /* ---- physical constants (Section 5) -------------------------------- */
 
 #define BP_DT        (1.0f/240.0f)   /* fixed physics timestep            */
-#define BP_R         0.0286f         /* ball radius, m                    */
+#define BP_R         0.0286f         /* cue ball radius, m                */
+/* Object balls are deliberately oversized. At cue-ball scale a target ball
+ * is 57 mm across on a 12 m hole — from the tee it is three pixels, and you
+ * cannot see the cut angle you are trying to play, let alone judge it. At
+ * 1.8x it reads as a ball from anywhere on the hole and the ghost-ball guide
+ * has something to land on. That is as far as this can go: the cup mouth is
+ * 2.2 R, and a target ball has to be able to fall into it. Everything else
+ * about the ball is unchanged, including its mass in the collision
+ * response, so a big ball still moves like a small one. */
+#define BP_R_OBJ     (1.8f*BP_R)     /* object / eight ball radius, m     */
 #define BP_MASS      0.17f           /* ball mass, kg (impulses use /m)   */
 #define BP_G         9.81f           /* gravity, m/s^2                    */
 
@@ -82,7 +91,11 @@ static inline float bp_angdiff(float a, float b) {
 #define BP_TIP_MAX   0.70f           /* max strike offset, fraction of R  */
 
 #define BP_CUP_R     (2.2f*BP_R)     /* cup mouth radius                  */
-#define BP_CUP_DEPTH (2.4f*BP_R)
+/* Deep enough that the BIGGEST ball still ends up clearly below the rim.
+ * Capture wants the centre 0.9 radii under the lip; an object ball resting
+ * on the floor sits at (depth - BP_R_OBJ) below it, so 2.4 R left a potted
+ * object ball parked in the cup, never registering as holed. */
+#define BP_CUP_DEPTH (4.0f*BP_R)
 #define BP_POCKET_R  (3.4f*BP_R)     /* scratch/bonus/warp pockets        */
 #define BP_E_RIM     0.55f
 
