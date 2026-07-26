@@ -1,0 +1,11 @@
+volleybar
+volleybar.exe
+volleybar.sav
+src/*.o
+vb_test_sim
+vb_test_rules
+vb_test_contrast
+build/
+*.dSYM/
+# frames grabbed with --shot while looking at a change
+*.png
