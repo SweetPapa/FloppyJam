@@ -177,10 +177,31 @@ subdivides the same notch for surgical banks.
 
 There is a **breeze** on every hole — deterministic from the hole index, so a hole
 always feels the same. It drifts motes across the green, leans and flutters the
-flag, and pushes confetti around. It is deliberately **cosmetic only** and is never
-read by `physics.c`: adding wind to the simulation would invalidate every tuning
-gate, and a wind gauge that did not move the ball would lie to the player. So
-there is no gauge — just weather.
+flag, walks the festoon strings (a span swings most at its middle, not at all at
+the poles, and each span carries its own phase so the run ripples rather than
+sliding sideways in one piece), and pushes confetti around. It is deliberately
+**cosmetic only** and is never read by `physics.c`: adding wind to the simulation
+would invalidate every tuning gate, and a wind gauge that did not move the ball
+would lie to the player. So there is no gauge — just weather.
+
+**The floor talks back.** Every surface has a debris colour — grit off sand, shaved
+chips off ice, torn grass out of the rough, warm sparks off a kicker — and it shows
+up in three places that all agree: a low wake thrown backwards off the contact
+patch while the ball works the ground, the dust a landing kicks up, and a scuff at
+the moment the ball *crosses* onto a new floor. That last one matters most: the sim
+had been raising a surface-change event all along and nothing listened, so the only
+way to know you were in the sand was to notice the colour under the ball a second
+later. Now the edge itself has a sound and a spray, pitched per surface — a dull
+thud into sand, a glassy tap onto ice, a grassy rip into rough. Clean felt gets
+almost nothing, because clean should look clean.
+
+The **cup breathes with the shot**. The beacon ring used to pulse at one fixed rate
+whatever was happening, which made the tensest moment on the table look exactly
+like the calmest. It now draws in, quickens and brightens as the cue ball closes,
+with a second ring chasing the first in on the approach — tension the table holds
+itself, with nothing added to the HUD to say so. And rattling the lip, which was
+audio-only, now throws a ring and a spark off the rim, so a rim-out you were not
+looking straight at still registers.
 
 Everything that pays off says so where it happened: bank three or more rails and
 the count pops off the cushion you just hit, a gold pocket floats `-1 STROKE`
