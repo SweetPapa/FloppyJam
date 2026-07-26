@@ -13,6 +13,9 @@ typedef struct {
 
 BpPalette bp_palette(int hole);
 
+/* Debris colour for a BpSurf — what that floor throws up when worked. */
+Color bp_surf_dust(int surf);
+
 typedef struct {
     int   hole;                 /* 0-based                                */
     int   par, strokes, restarts;

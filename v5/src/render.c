@@ -86,6 +86,21 @@ static Color surf_color(int surf, const BpPalette *pal, int alt)
     }
 }
 
+/* What a surface throws up when a ball works it. Deliberately NOT the floor
+ * colour: debris in the air catches the light, so every one of these is lifted
+ * and desaturated off its zone. Shared with main.c so a landing, a crossing
+ * and a wake all agree about what sand looks like. */
+Color bp_surf_dust(int surf)
+{
+    switch (surf) {
+    case SURF_ROUGH: return (Color){ 118, 176, 120, 255 };   /* torn grass    */
+    case SURF_ICE:   return (Color){ 226, 246, 255, 255 };   /* shaved chips  */
+    case SURF_SAND:  return (Color){ 238, 216, 158, 255 };   /* grit          */
+    case SURF_KICK:  return (Color){ 255, 202, 128, 255 };   /* warm sparks   */
+    default:         return (Color){ 198, 224, 196, 255 };   /* clipped felt  */
+    }
+}
+
 static const Color BALL_COL[8] = {
     { 246, 200,  52, 255 },   /* 1 yellow */
     { 72,  126, 232, 255 },   /* 2 blue   */
@@ -1204,6 +1219,20 @@ void bp_render_trail(const BpWorld *w, float tx, float ty, float dt)
     else if (fabsf(tx) > 0.20f)           c = (Color){ 140, 240, 180, 255 };  /* side   */
     else                                  c = (Color){ 225, 232, 244, 255 };  /* stun   */
     bp_burst(b->p, 1, c, 0.05f, 0.34f, 0.4f);
+
+    /* A wake off the floor itself, thrown low and backwards from the contact
+     * patch. The english trail says what you did to the ball; this says what
+     * the ball is doing to the ground, which is the half you can feel. Felt
+     * gets none — a clean green should look clean. */
+    if (b->grounded && b->surf != SURF_FELT && sp > 0.9f) {
+        V3 back = v3mul(v3norm(b->v), -1.0f);
+        V3 at = v3add(b->p, v3(back.x * b->r * 0.8f, -b->r * 0.65f, back.z * b->r * 0.8f));
+        Color d = bp_surf_dust(b->surf);
+        /* ice skitters flat and fast, sand and rough hang in the air */
+        float ice = (b->surf == SURF_ICE) ? 1.0f : 0.0f;
+        bp_burst(at, 2, d, bp_lerpf(0.28f, 0.55f, ice) * bp_clampf(sp * 0.30f, 0.3f, 1.4f),
+                 bp_lerpf(0.40f, 0.22f, ice), bp_lerpf(2.4f, 5.0f, ice));
+    }
 }
 
 /* ------------------------------------------------------------------ */

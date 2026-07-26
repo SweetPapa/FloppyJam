@@ -4,6 +4,7 @@ Games that fit on a 1.44 MB floppy disk. One directory per entry.
 
 | | | |
 | --- | --- | --- |
+| [`v7/`](v7) | **VOLLEYBAR** | Foosball crossed with Pong. Six rods of light, one ball that gets hotter every time you hit it. |
 | [`v5/`](v5) | **BREAK PAR** | Mini golf with a cue stick. 18 holes, real pool physics, a neon city, a jazz combo. |
 | `v1/`–`v4/`, `v6/` | earlier jams | |
 
@@ -25,6 +26,16 @@ cd v5
 make            # links against a system raylib, ~170 KB
 make run
 make test testcourse testcamera testmusic
+```
+
+For VOLLEYBAR:
+
+```sh
+cd v7
+make            # links against a system raylib, ~118 KB
+make run
+make check      # tests + contrast probe + build + size gate
+make web RAYLIB_WEB=/path/to/emscripten-raylib   # build/web/index.html
 ```
 
 That dev build links raylib dynamically. A **shippable** build is statically

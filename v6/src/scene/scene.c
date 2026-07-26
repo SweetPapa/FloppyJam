@@ -234,20 +234,69 @@ void scene_draw_backdrop(const char *kind, float t)
         doodle(D_TREE, 1140, 420, 66, 0, (Color){ 104, 148, 104, 255 });
     } else if (eq(kind, "tower")) {
         Vector2 wall[4] = { { 0, 0 }, { VW, 0 }, { VW, VH }, { 0, VH } };
-        ink_fill(wall, 4, HATCH_CROSS, 6, (Color){ 198, 188, 172, 255 });
-        /* the rotten stair, drawn as a spiral of planks */
-        for (int i = 0; i < 12; i++) {
-            float y = 640 - i * 46.0f;
-            float w = 300 - i * 6.0f;
-            float x = 640 + sinf(i * 0.9f) * 170.0f;
+        ink_fill(wall, 4, HATCH_NONE, 6, (Color){ 178, 168, 154, 255 });
+
+        /* Curved courses make the room read as the inside of a real tower,
+         * while the dark central shaft gives the stair depth. */
+        for (int i = 0; i < 13; i++) {
+            float y = 28 + i * 54.0f;
+            float bow = 18.0f + i * 0.7f;
+            ink_stroke((Vector2[]){ { 0, y + bow }, { 320, y + 5 },
+                       { 640, y }, { 960, y + 5 }, { VW, y + bow } },
+                       5, 1.3f, 0.8f, 560 + i, (Color){ 92, 86, 82, 115 });
+        }
+        for (int i = 0; i < 9; i++) {
+            float x = 70 + i * 150.0f;
+            ink_line(x, 0, x - 22, VH, 1.1f, 1.0f, 580 + i,
+                     (Color){ 100, 92, 86, 80 });
+        }
+        ink_blob(640, 350, 310, 0.92f, 590, (Color){ 72, 72, 76, 255 });
+        ink_circle(640, 350, 313, 5.0f, 1.2f, 591, col_ink());
+
+        /* High slit windows and their pale shafts of dusty morning light. */
+        for (int side = -1; side <= 1; side += 2) {
+            float x = 640 + side * 430.0f;
+            Vector2 beam[4] = { { x - 28, 92 }, { x + 28, 92 },
+                { 640 + side * 190.0f, 590 }, { 640 + side * 310.0f, 590 } };
+            ink_fill(beam, 4, HATCH_NONE, 596 + side,
+                     (Color){ 224, 218, 196, 72 });
+            Rectangle slit = { x - 28, 62, 56, 150 };
+            Vector2 q[4] = { { slit.x, slit.y }, { slit.x + slit.width, slit.y },
+                { slit.x + slit.width, slit.y + slit.height }, { slit.x, slit.y + slit.height } };
+            ink_fill(q, 4, HATCH_NONE, 598 + side, (Color){ 178, 192, 202, 255 });
+            ink_rect(slit, 4.0f, 0.8f, 600 + side, col_ink());
+            ink_line(x, 66, x, 208, 1.5f, 0.4f, 602 + side, col_ink_soft());
+        }
+
+        /* The stair coils around the void. Every second tread broadens into
+         * one of the chalk case tables, matching the six board hotspots. */
+        for (int i = 0; i < 14; i++) {
+            float y = 646 - i * 43.0f;
+            float w = (i & 1) ? 330.0f : 270.0f;
+            float x = 640 + sinf(i * 0.82f) * 205.0f;
             Vector2 p[4] = { { x - w * 0.5f, y }, { x + w * 0.5f, y },
-                             { x + w * 0.5f, y + 18 }, { x - w * 0.5f, y + 18 } };
+                             { x + w * 0.43f, y + 22 }, { x - w * 0.43f, y + 22 } };
             ink_fill(p, 4, HATCH_NONE, 600 + i,
-                     i == 8 ? (Color){ 150, 104, 88, 255 } : (Color){ 176, 148, 118, 255 });
+                     i == 9 ? (Color){ 148, 98, 82, 255 } : (Color){ 176, 142, 106, 255 });
             ink_stroke((Vector2[]){ p[0], p[1], p[2], p[3], p[0] }, 5, 2.0f, 1.0f,
                        620 + i, col_ink());
+            ink_line(p[3].x + 20, y + 11, p[2].x - 20, y + 11, 1.0f, 0.8f,
+                     650 + i, (Color){ 232, 226, 204, 160 });
         }
-        vignette(0.8f);
+        /* Rope, pulleys, old Tinter marks, and drifting dust sell occupation
+         * without adding a single external asset. */
+        ink_line(642, 0, 642, 178, 4.0f, 0.6f, 680, (Color){ 112, 88, 66, 255 });
+        doodle(D_GEAR, 642, 196, 38, t * 0.035f, (Color){ 150, 124, 82, 255 });
+        doodle(D_PRISM, 874, 300, 25, -0.12f, (Color){ 160, 142, 190, 255 });
+        doodle(D_LANTERN, 390, 346, 31, 0.08f, (Color){ 218, 180, 104, 255 });
+        for (int i = 0; i < 18; i++) {
+            float drift = settings()->reduce_motion ? 0 : t * (5.0f + i * 0.3f);
+            float x = fmodf(97.0f * i + drift, 720.0f) + 280.0f;
+            float y = 70.0f + fmodf(61.0f * i + drift * 0.35f, 520.0f);
+            DrawCircleV((Vector2){ x, y }, 1.2f + (i % 3) * 0.6f,
+                        (Color){ 238, 228, 202, 105 });
+        }
+        vignette(0.62f);
     } else if (eq(kind, "lantern")) {
         Vector2 wall[4] = { { 0, 0 }, { VW, 0 }, { VW, VH }, { 0, VH } };
         ink_fill(wall, 4, HATCH_NONE, 7, (Color){ 216, 208, 190, 255 });
