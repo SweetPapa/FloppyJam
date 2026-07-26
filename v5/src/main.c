@@ -1250,9 +1250,14 @@ int main(int argc, char **argv)
                 if (G.menu_sel == 0) { G.state = ST_SELECT; G.select_sel = 2; }
                 else if (G.menu_sel == 1) { G.ret_state = ST_TITLE; G.state = ST_OPTIONS; G.opt_sel = 0; }
                 else if (G.menu_sel == 2) { G.state = ST_HOWTO; }
-                else break;
+                /* QUIT. The jump has to happen HERE: the quit used to sit on a
+                 * line after this block, guarded by `else break`, and a break
+                 * inside a switch case leaves the switch — so the line that
+                 * actually quit was unreachable and the button only ever made
+                 * the menu noise. `done:` is past the loop and saves on the way
+                 * out, which is exactly what closing the window does. */
+                else goto done;
             }
-            if (G.menu_sel == 3 && (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE))) goto done;
             menu_camera(dt);
             break;
 
