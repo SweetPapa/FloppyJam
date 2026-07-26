@@ -13,7 +13,9 @@
 #include "core.h"
 
 #define VB_SAVE_MAGIC   0x37424C56u    /* "VLB7"                            */
-#define VB_SAVE_VERSION 1
+/* 2: player one moved to the arrow keys. Same layout as 1, so a version-1
+ *    file keeps every unlock and setting and only has its keys refreshed. */
+#define VB_SAVE_VERSION 2
 #define VB_NTRICKSHOTS  20
 #define VB_NRUNGS       11             /* ten personalities plus the finale */
 
