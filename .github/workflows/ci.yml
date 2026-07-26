@@ -81,6 +81,85 @@ jobs:
           path: v5/build/music-*.wav
           if-no-files-found: warn
 
+  volleybar:
+    name: volleybar (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Linux build deps
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential libasound2-dev libx11-dev libxrandr-dev libxi-dev \
+            libgl1-mesa-dev libglu1-mesa-dev libxcursor-dev libxinerama-dev libwayland-dev libxkbcommon-dev
+
+      - name: Cache raylib
+        id: raylib-cache
+        uses: actions/cache@v4
+        with:
+          path: raylib-install
+          key: raylib-${{ env.RAYLIB_TAG }}-${{ matrix.os }}-trimmed-v2
+
+      - name: Build raylib (static, trimmed)
+        if: steps.raylib-cache.outputs.cache-hit != 'true'
+        run: ./scripts/build-raylib.sh --out raylib-install
+
+      # make check is the whole gate: the sim and rules suites, the contrast
+      # probe, the build, and the floppy size ceiling. The suites are headless
+      # by construction — sim.c, rods.c, heat.c, rules.c, ai.c and replay.c
+      # never touch raylib, and the contrast probe is pure colour arithmetic,
+      # so none of this needs a GPU or an audio device on a runner.
+      - name: Check
+        working-directory: v7
+        run: |
+          make check RAYLIB_CFLAGS="-I$GITHUB_WORKSPACE/raylib-install/include" \
+                     RAYLIB_LIBS="$GITHUB_WORKSPACE/raylib-install/lib/libraylib.a"
+
+  volleybar-web:
+    name: volleybar (web)
+    runs-on: ubuntu-latest
+    # §0: the web build is first-class, so CI builds it alongside the desktop
+    # one. If a change breaks the emscripten path it fails here, not on the day
+    # somebody tries to put the game on itch.
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 3.1.64
+          actions-cache-folder: emsdk-cache
+
+      - name: Cache web raylib
+        id: raylib-web-cache
+        uses: actions/cache@v4
+        with:
+          path: raylib-web
+          key: raylib-web-${{ env.RAYLIB_TAG }}-v1
+
+      - name: Build raylib for web
+        if: steps.raylib-web-cache.outputs.cache-hit != 'true'
+        run: |
+          git clone --depth 1 --branch "$RAYLIB_TAG" https://github.com/raysan5/raylib.git raylib-src
+          make -C raylib-src/src PLATFORM=PLATFORM_WEB -B
+          mkdir -p raylib-web/lib raylib-web/include
+          cp raylib-src/src/libraylib.a raylib-web/lib/
+          cp raylib-src/src/raylib.h raylib-src/src/raymath.h raylib-src/src/rlgl.h raylib-web/include/
+
+      - name: Build web
+        working-directory: v7
+        run: make web RAYLIB_WEB="$GITHUB_WORKSPACE/raylib-web"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: volleybar-web
+          path: v7/build/web
+
   site:
     name: promo site
     runs-on: ubuntu-latest
