@@ -87,14 +87,31 @@ jobs:
 
           # Release notes from the commits since the previous tag, deduped and
           # with the noise (merges, foreman bookkeeping) dropped.
+          #
+          # The filtering happens BEFORE the heredoc, not inside it, because
+          # under `set -euo pipefail` a grep that matches nothing exits 1 and
+          # takes the surrounding block down with it. That is exactly what
+          # killed a release whose range was nothing but FOREMAN commits: the
+          # block died between `notes<<RELEASE_NOTES_EOF` and its closing
+          # delimiter, so GITHUB_OUTPUT was left half-written and Actions
+          # blamed the missing delimiter rather than the empty grep.
           PREV=$(git describe --abbrev=0 --tags HEAD^ 2>/dev/null || true)
           RANGE=${PREV:+$PREV..HEAD}
+          SUBJECTS=$(git log ${RANGE:-} --no-merges --pretty='- %s' | sort -u)
+          NOTES=$(printf '%s\n' "$SUBJECTS" \
+                  | { grep -viE '^- (FOREMAN|Merge|wip|fixup)' || true; })
+          # A range of pure bookkeeping is not a reason to fail the release,
+          # and a bare header reads worse than the raw subjects do.
+          [ -n "$NOTES" ] || NOTES="$SUBJECTS"
+          [ -n "$NOTES" ] || NOTES="- No changes recorded."
           {
             echo 'notes<<RELEASE_NOTES_EOF'
             if [ -n "$PREV" ]; then echo "Changes since \`$PREV\`:"; else echo 'Changes:'; fi
             echo
-            git log ${RANGE:-} --no-merges --pretty='- %s' \
-              | grep -viE '^- (FOREMAN|Merge|wip|fixup)' | sort -u | head -40
+            # awk, not `head -40`: head closes the pipe as soon as it has its
+            # forty lines, and the SIGPIPE that follows is one more exit code
+            # pipefail would read as a failed release.
+            printf '%s\n' "$NOTES" | awk 'NR<=40'
             echo 'RELEASE_NOTES_EOF'
           } >> "$GITHUB_OUTPUT"
 
