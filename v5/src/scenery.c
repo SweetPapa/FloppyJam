@@ -12,6 +12,7 @@
  */
 #include "scenery.h"
 #include "course.h"
+#include "juice.h"      /* the breeze: read for sway, never written here */
 #include <string.h>
 
 /* ------------------------------------------------------------------ */
@@ -803,6 +804,29 @@ static void draw_apron(const BpWorld *w, const BpPalette *pal, float t)
     }
 }
 
+/* A point on one swaying span of bulb string, u running 0..1 pole to pole.
+ *
+ * The flag has always leaned on the breeze while the bulb strings hung dead
+ * still, which quietly told the player the weather was a decal. Now the same
+ * wind walks the strings: a span swings most at its middle and not at all at
+ * the poles, rises a little as it swings out the way a real bob does, and each
+ * span carries its own phase so the whole run ripples rather than sliding
+ * sideways in one piece. Wire and bulbs come through here together, so they
+ * cannot disagree about where the string is. */
+static V3 festoon_pt(float px0, float pz0, float px1, float pz1,
+                     float y, float sag, float u, float phase, float t)
+{
+    float ws = bp_wind_strength(), wa = bp_wind_angle();
+    float droop = sinf(u * BP_PI);
+    float swing = droop * (0.022f + 0.085f * ws)
+                * sinf(t * (1.1f + 1.3f * ws) - phase);
+    V3 q;
+    q.x = bp_lerpf(px0, px1, u) + sinf(wa) * swing;
+    q.z = bp_lerpf(pz0, pz1, u) + cosf(wa) * swing;
+    q.y = y - droop * sag + fabsf(swing) * 0.22f;
+    return q;
+}
+
 /* One pole roughly every three metres, all the way round, so wherever the
  * camera is parked there is a string of bulbs in the frame. */
 static void draw_festoon(const BpWorld *w, float t)
@@ -830,6 +854,7 @@ static void draw_festoon(const BpWorld *w, float t)
                 float px0 = bp_lerpf(ax, bx, u0), pz0 = bp_lerpf(az, bz, u0);
                 float px1 = bp_lerpf(ax, bx, u1), pz1 = bp_lerpf(az, bz, u1);
                 float sag = 0.14f + 0.06f * (len / (float)poles);
+                float phase = (float)(side * 8 + seg) * 0.62f;
                 /* pole, with a lit collar just under the string */
                 DrawCylinderEx((Vector3){ px0, lo.y - 0.4f, pz0 },
                                (Vector3){ px0, y + 0.10f, pz0 },
@@ -839,23 +864,21 @@ static void draw_festoon(const BpWorld *w, float t)
                           calpha(NEON[(side + S.hole) % 6], 0.85f));
                 for (i = 0; i <= 5; ++i) {
                     float u = (float)i / 5.0f;
-                    float bxp = bp_lerpf(px0, px1, u), bzp = bp_lerpf(pz0, pz1, u);
-                    float byp = y - sinf(u * BP_PI) * sag;
+                    V3 b = festoon_pt(px0, pz0, px1, pz1, y, sag, u, phase, t);
                     float chase = 0.5f + 0.5f * sinf(t * 2.4f - (float)idx * 0.55f);
                     Color k = NEON[(idx + S.hole) % 6];
                     if (i < 5) {
-                        float u2 = (float)(i + 1) / 5.0f;
-                        DrawLine3D((Vector3){ bxp, byp, bzp },
-                                   (Vector3){ bp_lerpf(px0, px1, u2),
-                                              y - sinf(u2 * BP_PI) * sag,
-                                              bp_lerpf(pz0, pz1, u2) },
+                        V3 b2 = festoon_pt(px0, pz0, px1, pz1, y, sag,
+                                           (float)(i + 1) / 5.0f, phase, t);
+                        DrawLine3D((Vector3){ b.x, b.y, b.z },
+                                   (Vector3){ b2.x, b2.y, b2.z },
                                    (Color){ 28, 30, 44, 255 });
                     }
                     if (i == 5) break;            /* last bulb belongs to the next span */
-                    DrawCubeV((Vector3){ bxp, byp - 0.05f, bzp },
+                    DrawCubeV((Vector3){ b.x, b.y - 0.05f, b.z },
                               (Vector3){ 0.05f, 0.05f, 0.05f },
                               calpha(k, 0.5f + 0.5f * chase));
-                    DrawCubeV((Vector3){ bxp, byp - 0.05f, bzp },
+                    DrawCubeV((Vector3){ b.x, b.y - 0.05f, b.z },
                               (Vector3){ 0.15f, 0.15f, 0.15f },
                               calpha(k, 0.05f + 0.09f * chase));
                     ++idx;
@@ -940,25 +963,50 @@ static void draw_cup_beacon(const BpWorld *w, const BpPalette *pal, float t)
 {
     int c = bp_course_cup(w), i;
     V3 p;
+    float close;
     if (c < 0 || w->cup_sealed) return;
     p = v3(w->pockets[c].x, w->pockets[c].y, w->pockets[c].z);
+
+    /* How close the cue ball is, 0 (miles away) to 1 (on the lip). The beacon
+     * used to breathe at one fixed rate whatever was happening, which meant the
+     * tensest moment on the table looked exactly like the calmest. Now the ring
+     * draws in and quickens as the ball closes — the table itself holds its
+     * breath, with nothing added to the HUD to say so. */
+    {
+        const BpBall *b = &w->balls[0];
+        float dx = b->p.x - p.x, dz = b->p.z - p.z;
+        float d = sqrtf(dx * dx + dz * dz);
+        close = (b->state == BS_GONE) ? 0.0f
+              : 1.0f - bp_clampf(d / (BP_CUP_R * 11.0f), 0.0f, 1.0f);
+        close *= close;                  /* stays calm until it is genuinely near */
+    }
+
     /* a soft column so the cup is findable from anywhere on the table */
     for (i = 0; i < 5; ++i) {
         float u0 = (float)i / 5.0f, u1 = (float)(i + 1) / 5.0f;
         float h = 1.30f;
-        float pulse = 0.5f + 0.5f * sinf(t * 2.0f - u0 * 3.0f);
+        float pulse = 0.5f + 0.5f * sinf(t * bp_lerpf(2.0f, 5.0f, close) - u0 * 3.0f);
         float r0 = BP_CUP_R * bp_lerpf(1.05f, 0.35f, u0);
         float r1 = BP_CUP_R * bp_lerpf(1.05f, 0.35f, u1);
-        float a = (0.16f - u0 * 0.026f) * (0.6f + 0.4f * pulse);
+        float a = (0.16f - u0 * 0.026f) * (0.6f + 0.4f * pulse) * (1.0f + 0.55f * close);
         DrawCylinderEx((Vector3){ p.x, p.y + h * u0, p.z },
                        (Vector3){ p.x, p.y + h * u1, p.z },
                        r0, r1, 10, calpha(pal->accent, a));
     }
     /* and a breathing ring on the felt around the lip */
     {
-        float k = 1.0f + 0.10f * sinf(t * 2.6f);
-        DrawCircle3D((Vector3){ p.x, p.y + 0.006f, p.z }, BP_CUP_R * 1.7f * k,
-                     (Vector3){ 1, 0, 0 }, 90.0f, calpha(pal->accent, 0.55f));
+        float rate = bp_lerpf(2.6f, 9.0f, close);
+        float k = 1.0f + 0.10f * sinf(t * rate);
+        float rad = BP_CUP_R * bp_lerpf(1.70f, 1.28f, close) * k;
+        DrawCircle3D((Vector3){ p.x, p.y + 0.006f, p.z }, rad,
+                     (Vector3){ 1, 0, 0 }, 90.0f,
+                     calpha(pal->accent, 0.55f + 0.40f * close));
+        /* a second ring only shows up on the approach, chasing the first in */
+        if (close > 0.05f)
+            DrawCircle3D((Vector3){ p.x, p.y + 0.005f, p.z },
+                         rad * bp_lerpf(1.55f, 1.12f, close),
+                         (Vector3){ 1, 0, 0 }, 90.0f,
+                         calpha(pal->accent, 0.34f * close));
     }
 }
 

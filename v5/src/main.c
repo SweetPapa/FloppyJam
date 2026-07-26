@@ -254,11 +254,51 @@ static void consume_events(void)
         case EV_LAND:
             bp_sfx(SFX_LAND, bp_clampf(0.8f + m * 0.10f, 0.5f, 1.8f),
                    bp_clampf(0.10f + m * 0.14f, 0.0f, 0.8f));
-            bp_burst(e->at, 6, (Color){ 210, 226, 200, 255 }, m * 0.25f, 0.30f, 5.0f);
+            /* the event carries the floor it landed on, so the dust matches it
+             * — a ball coming down in a bunker should not spray felt */
+            bp_burst(e->at, 6, bp_surf_dust(e->b < 0 ? SURF_FELT : e->b),
+                     m * 0.25f, 0.30f, 5.0f);
             break;
+        case EV_SURFACE: {
+            /* The sim has been raising this all along and nothing listened.
+             * Crossing onto a different floor is a thing the player needs to
+             * notice NOW, not from the colour under the ball two seconds later,
+             * so the edge gets a scuff and a spray of whatever it ran into. */
+            int surf = (e->b < 0) ? SURF_FELT : e->b;
+            float bite = bp_clampf(m * 0.32f, 0.0f, 1.0f);
+            if (m < 0.35f) break;                  /* a crawl does not scuff */
+            if (surf == SURF_FELT) {
+                /* coming home onto clean green: quiet, just a breath of dust */
+                bp_sfx(SFX_LAND, 1.5f, 0.06f + 0.06f * bite);
+                bp_burst(e->at, 3, bp_surf_dust(surf), m * 0.16f, 0.26f, 4.0f);
+                break;
+            }
+            bp_burst(e->at, 5 + (int)(bite * 7.0f), bp_surf_dust(surf),
+                     m * 0.28f, 0.34f, 4.5f);
+            switch (surf) {
+            case SURF_SAND:
+                bp_sfx(SFX_LAND, 0.55f, 0.16f + 0.26f * bite);   /* dull thud  */
+                bp_shockwave(e->at, (Color){ 226, 200, 140, 150 }, 0.07f);
+                break;
+            case SURF_ICE:
+                bp_sfx(SFX_TICK, 1.9f, 0.10f + 0.16f * bite);    /* glassy tap */
+                bp_sparkle(e->at, 4, (Color){ 226, 246, 255, 255 }, 0.05f, 0.35f);
+                break;
+            case SURF_ROUGH:
+                bp_sfx(SFX_LAND, 0.85f, 0.12f + 0.20f * bite);   /* grassy rip */
+                break;
+            default: break;                        /* kickers have EV_KICK    */
+            }
+            break;
+        }
         case EV_RIM:
             bp_sfx(SFX_RIM, bp_clampf(1.0f + m * 0.25f, 0.7f, 2.4f),
                    bp_clampf(0.14f + m * 0.30f, 0.0f, 0.7f));
+            /* Rattling the lip is the tensest half-second in the game and it
+             * used to be audio-only. A ring off the rim and a spark or two, so
+             * a rim-out you were not looking straight at still registers. */
+            bp_shockwave(e->at, (Color){ 255, 236, 176, 200 }, 0.055f);
+            bp_sparkle(e->at, 2, (Color){ 255, 240, 190, 255 }, 0.035f, 0.28f);
             G.rimming = 1;
             break;
         case EV_KICK:
