@@ -173,8 +173,16 @@ static void setup_input(VbApp *a) {
         case SR_S1: if (d) a->save.scheme[1] = !a->save.scheme[1]; break;
         case SR_S2: if (d) a->save.scheme[2] = !a->save.scheme[2]; break;
         case SR_S3: if (d) a->save.scheme[3] = !a->save.scheme[3]; break;
-        case SR_POINTS: if (d) a->save.target = a->save.target == 5 ? 7
-                                              : a->save.target == 7 ? 10 : 5; break;
+        /* The one case here that does not fit on its line. Kept on three lines
+         * rather than crammed onto one: with the ternary wrapped, a trailing
+         * `break` lines up under the ternary's second arm instead of under the
+         * `if`, and Apple clang rejects that as -Wmisleading-indentation, which
+         * is -Werror here. The Linux GCC does not, so it only ever failed the
+         * macOS runner. */
+        case SR_POINTS:
+            if (d) a->save.target = a->save.target == 5 ? 7
+                                  : a->save.target == 7 ? 10 : 5;
+            break;
         case SR_MUT:
             if (nav_ok() && a->ruleset == VB_RULES_PARTY) { app_go(a, ST_TILT); a->sub = 1; }
             break;
