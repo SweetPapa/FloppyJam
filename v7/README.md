@@ -54,14 +54,20 @@ make windows RAYLIB_WIN=/path/to/mingw-raylib    # -> volleybar.exe
 ## Controls
 
 Gamepads are preferred, the keyboard is a peer rather than a fallback, and any
-mix works at the same table. Every key is remappable in OPTIONS → KEYS.
+mix works at the same table. Every key is remappable in OPTIONS → KEYS, which
+now prints key *names* rather than raw scancodes.
+
+**Player one is on the arrow keys.** Most sessions are one person against the
+AI, and that is where a hand goes without being told. Player two takes the
+WASD side. No key is shared between any two of the four slots, which matters in
+doubles where two people on the same side are typing at one keyboard.
 
 ### GLIDE — the leisure door, and a complete way to play
 
 | Action | Keyboard (P1 / P2) | Pad |
 | --- | --- | --- |
-| Slide **all three** of your bars | `W` `S` / `↑` `↓` | left stick / d-pad |
-| FLICK | `F` / `RSHIFT` | A |
+| Slide **all three** of your bars | `↑` `↓` / `W` `S` | left stick / d-pad |
+| FLICK | `RSHIFT` / `F` | A |
 
 That is the entire scheme. Angle assist bends your shot modestly toward the
 best open lane, soft touches bunt themselves, and with the assist on you cannot
@@ -71,14 +77,14 @@ flick into your own goal. A first-timer should score inside ninety seconds.
 
 | Action | Keyboard (P1 / P2) | Pad |
 | --- | --- | --- |
-| Steer the **active** bar | `W` `S` / `↑` `↓` | left stick |
-| Change bar | `Q` `E` / `,` `M` | shoulders |
-| FLICK (tap) | `F` / `RSHIFT` | A |
-| CHARGED FLICK | hold `F` after the jab, release | hold A |
-| PIN (hold as it arrives) | `G` / `/` | X |
+| Steer the **active** bar | `↑` `↓` / `W` `S` | left stick |
+| Change bar | `,` `M` / `Q` `E` | shoulders |
+| FLICK (tap) | `RSHIFT` / `F` | A |
+| CHARGED FLICK | hold FLICK after the jab, release | hold A |
+| PIN (hold as it arrives) | `/` / `G` | X |
 | SNAP | release PIN | release X |
 | BUNT | tap PIN | tap X |
-| CHIP | `R` + FLICK / `.` + FLICK | Y + A |
+| CHIP | `.` + FLICK / `R` + FLICK | Y + A |
 
 Auto-handoff puts the bar the ball is coming at under your stick; the shoulders
 override it. Inactive bars hold position and still block — where you left them

@@ -58,7 +58,11 @@ static float g_guard = 0.0f;
 
 static int nav_ok(void) {
     if (g_guard > 0.0f) return 0;
-    if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE) || IsKeyPressed(KEY_F)) return 1;
+    /* Both players' FLICK keys confirm, as well as the usual suspects: the
+     * button you strike with is the button you will reach for on a menu, and
+     * player one's is RSHIFT now that they are on the arrows. */
+    if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)
+        || IsKeyPressed(KEY_F) || IsKeyPressed(KEY_RIGHT_SHIFT)) return 1;
     if (IsGamepadAvailable(0) && IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_FACE_DOWN)) return 1;
     return 0;
 }
@@ -831,6 +835,35 @@ static void draw_options(VbApp *a) {
     text_c("ESC to go back", h - 48, 15, DIMTEXT);
 }
 
+/* A rebinding screen that prints "265" is not a rebinding screen. Letters and
+ * digits are their own ASCII codes in raylib, so only the odd ones need a
+ * table — and anything genuinely unknown still shows its number rather than
+ * a blank. */
+static const char *key_name(int k) {
+    static char buf[12];
+    static const struct { int k; const char *n; } NAMED[] = {
+        { KEY_UP, "UP" }, { KEY_DOWN, "DOWN" }, { KEY_LEFT, "LEFT" },
+        { KEY_RIGHT, "RIGHT" }, { KEY_SPACE, "SPACE" }, { KEY_ENTER, "ENTER" },
+        { KEY_TAB, "TAB" }, { KEY_LEFT_SHIFT, "LSHIFT" },
+        { KEY_RIGHT_SHIFT, "RSHIFT" }, { KEY_LEFT_CONTROL, "LCTRL" },
+        { KEY_RIGHT_CONTROL, "RCTRL" }, { KEY_LEFT_ALT, "LALT" },
+        { KEY_RIGHT_ALT, "RALT" }, { KEY_SLASH, "/" }, { KEY_PERIOD, "." },
+        { KEY_COMMA, "," }, { KEY_SEMICOLON, ";" }, { KEY_APOSTROPHE, "'" },
+        { KEY_MINUS, "-" }, { KEY_EQUAL, "=" }, { KEY_GRAVE, "`" },
+        { KEY_BACKSLASH, "\\" }, { KEY_LEFT_BRACKET, "[" },
+        { KEY_RIGHT_BRACKET, "]" }, { KEY_BACKSPACE, "BKSP" },
+    };
+    if (k == 0) return "--";
+    for (size_t i = 0; i < sizeof NAMED / sizeof NAMED[0]; i++)
+        if (NAMED[i].k == k) return NAMED[i].n;
+    if ((k >= KEY_A && k <= KEY_Z) || (k >= KEY_ZERO && k <= KEY_NINE)) {
+        buf[0] = (char)k; buf[1] = 0;
+        return buf;
+    }
+    snprintf(buf, sizeof buf, "#%d", k);
+    return buf;
+}
+
 static void draw_binds(VbApp *a) {
     int w = GetScreenWidth(), h = GetScreenHeight();
     text_c("KEYS", 54, 32, TEXT);
@@ -846,7 +879,7 @@ static void draw_binds(VbApp *a) {
             int on = (idx == a->sel);
             DrawText(VB_BIND_NAMES[k], x, y, 18, on ? ACCENT : TEXT);
             const char *v = (a->rebind == idx) ? "PRESS A KEY"
-                          : TextFormat("%d", a->save.binds[slot][k]);
+                          : key_name(a->save.binds[slot][k]);
             DrawText(v, x + 200, y, 18, on ? ACCENT : DIMTEXT);
         }
     }

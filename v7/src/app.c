@@ -81,11 +81,26 @@ const VbTrickshot VB_TRICKSHOTS[VB_NTRICK] = {
 
 /* ---- input ------------------------------------------------------------- */
 
+/* Slot order is P1, P1's doubles partner, P2, P2's doubles partner.
+ *
+ * Player one is on the arrow keys. Most sessions are one person against the
+ * AI, and the arrows are where a hand goes without being told — asking the
+ * first-time player of a one-stick game to find W and S first is a worse
+ * ninety seconds (§16.2). The second player takes the WASD side, which is
+ * still the split §3 describes, just handed out the other way round.
+ *
+ * No key appears twice across the four slots. That matters in doubles, where
+ * two people on the SAME side are typing at the same keyboard: a shared key
+ * would quietly drive both of their bars at once. */
 static const int DEFAULT_BINDS[VB_NPLAYERS][BIND_COUNT_] = {
-    { KEY_W, KEY_S, KEY_F, KEY_G, KEY_R, KEY_Q, KEY_E },
-    { KEY_T, KEY_G, KEY_V, KEY_B, KEY_C, KEY_Z, KEY_X },
+    /* P1  — arrows, with the strike cluster under the right hand           */
     { KEY_UP, KEY_DOWN, KEY_RIGHT_SHIFT, KEY_SLASH, KEY_PERIOD, KEY_COMMA, KEY_M },
+    /* P1B — doubles partner, right of the arrows                           */
     { KEY_I, KEY_K, KEY_L, KEY_SEMICOLON, KEY_APOSTROPHE, KEY_U, KEY_O },
+    /* P2  — the WASD side                                                  */
+    { KEY_W, KEY_S, KEY_F, KEY_G, KEY_R, KEY_Q, KEY_E },
+    /* P2B — doubles partner, left of WASD                                  */
+    { KEY_T, KEY_Y, KEY_V, KEY_B, KEY_C, KEY_Z, KEY_X },
 };
 
 static void binds_default(VbSave *s) {

@@ -34,8 +34,19 @@ void vb_save_load(VbSave *s) {
     size_t n = fread(&in, 1, sizeof in, f);
     fclose(f);
     if (n != sizeof in) return;
-    if (in.magic != VB_SAVE_MAGIC || in.version != VB_SAVE_VERSION) return;
+    if (in.magic != VB_SAVE_MAGIC) return;
+    if (in.version != VB_SAVE_VERSION && in.version != 1) return;
     *s = in;
+
+    /* A version-1 file has the same layout but the old key bindings, where
+     * player one was on W and S. Keep everything they earned and blank the
+     * keys only — app.c reads a zeroed first bind as "give me the defaults",
+     * so they come back on the arrows without losing a single medal. */
+    if (in.version == 1) {
+        for (int p = 0; p < VB_NPLAYERS; p++)
+            for (int k = 0; k < 8; k++) s->binds[p][k] = 0;
+        s->version = VB_SAVE_VERSION;
+    }
     /* a save file is not a licence to hand the game bad numbers */
     s->palette = vb_clampi(s->palette, 0, VB_NPALETTES_MAX - 1);
     s->target = (s->target == 7 || s->target == 10) ? s->target : 5;
