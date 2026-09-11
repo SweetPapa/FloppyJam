@@ -242,6 +242,11 @@ class MainActivity : Activity() {
         add(stack,label("Stars: finish the level, beat the target time, and finish without a death.",15))
     }
     private fun frame(s:FloatArray) {
+        if(applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE!=0 && intent.getBooleanExtra("media_tour",false) && playing && s[4]==0f) {
+            var color=-1;var y=s[1]
+            for(c in 0..3) {val i=s[30+c].toInt();if(i>=0 && s[40+i*6+1]<y) {y=s[40+i*6+1];color=c}}
+            if(color>=0)Native.input(core,color)
+        }
         if(s[9]-hudTick>0.1f || hudTick<0) {
             hudTick=s[9]; progressBar.progress=(s[26]*1000).toInt()
             subhud.text=if(s[4]==3f) { if(s[21]>0)"Rival wins. Try again." else "Respawning…" } else if(s[9]<7) Native.metadata(level,2) else "%.1fs / %.0fs   ·   %d pts   ·   %d retries".format(s[9],s[27],s[6].toInt(),s[8].toInt())

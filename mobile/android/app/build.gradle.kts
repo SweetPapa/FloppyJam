@@ -15,7 +15,21 @@ android {
     }
     externalNativeBuild { cmake { path = file("src/main/cpp/CMakeLists.txt"); version = "3.22.1" } }
     sourceSets["main"].assets.srcDirs("../../../v4/assets/fonts", "../../assets")
-    buildTypes { release { isMinifyEnabled = false } }
+    signingConfigs {
+        create("uat") {
+            val keystore = System.getenv("MAGLAVA_KEYSTORE")
+            if (keystore != null) {
+                storeFile = file(keystore)
+                storePassword = System.getenv("MAGLAVA_STORE_PASSWORD")
+                keyAlias = System.getenv("MAGLAVA_KEY_ALIAS") ?: "spt"
+                keyPassword = System.getenv("MAGLAVA_KEY_PASSWORD")
+            }
+        }
+    }
+    buildTypes { release {
+        isMinifyEnabled = false
+        if (System.getenv("MAGLAVA_KEYSTORE") != null) signingConfig = signingConfigs.getByName("uat")
+    } }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
     kotlinOptions { jvmTarget = "17" }
 }
