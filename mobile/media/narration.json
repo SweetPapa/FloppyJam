@@ -1,7 +1,6 @@
 {
-  "model": "orpheus",
-  "voice": "tara",
+  "model": "gemini-3.1-flash-tts-preview",
+  "voice": "Charon",
   "response_format": "wav",
-  "speed": 1.0,
-  "input": "Rise... or burn. Welcome to Mag Lava. Match your color. Catch a magnet. Carry your swing. Climb through forty handcrafted stages, dodge glowing ghosts, and stay one move ahead of the lava. Feel every impact. Find your rhythm. One more launch. One more chance. Mag Lava. Swing. Climb. Survive."
+  "input": "Perform the following script as a cinematic indie arcade game trailer. Speak in natural American English with a confident, textured, energetic voice. Start with quiet tension, then build momentum and excitement. Crisp consonants, clear words, short purposeful pauses; avoid an exaggerated announcer growl or a flat corporate read. Aim for 29 to 31 seconds. Pronounce Mag Lava as two clear words, \"mag lah-vuh\". Read only the script below, never these directions or the tags. Do not add music or sound effects.\n\n[tension] Rise... or burn. Welcome to Mag Lava. [enthusiasm] Match your color. Catch a magnet. Carry your swing. Climb through forty handcrafted stages, dodge glowing ghosts, and stay one move ahead of the lava. [determination] Feel every impact. Find your rhythm. One more launch. One more chance. [excitement] Mag Lava. Swing. Climb. Survive.\n"
 }
