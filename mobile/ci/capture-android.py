@@ -6,10 +6,18 @@ root=Path(__file__).resolve().parents[2];os.chdir(root)
 out=root/'mobile/.build/uat/captures/android';out.mkdir(parents=True,exist_ok=True)
 adb=shutil.which('adb') or str(Path.home()/'Library/Android/sdk/platform-tools/adb')
 def run(*args,**kw):return subprocess.run([adb,*args],check=True,**kw)
+# A fresh emulator shows Android's first-use full-screen tutorial over the app.
+# Acknowledge that system tutorial before testing actual app touch targets.
+run('shell','settings','put','secure','immersive_mode_confirmations','confirmed')
+run('shell','settings','put','system','screen_off_timeout','1800000')
+run('shell','wm','dismiss-keyguard')
 for path in ['apk/debug/app-debug.apk','apk/androidTest/debug/app-debug-androidTest.apk']:
  run('install','-r',str(root/'mobile/android/app/build/outputs'/path))
 result=run('shell','am','instrument','-w','dev.fofo.maglava.test/dev.fofo.maglava.SmokeRunner',capture_output=True,text=True)
 (out/'native-test.log').write_text(result.stdout+result.stderr)
+if 'FAIL:' in result.stdout:
+ with (out/'failure.png').open('wb') as f:run('exec-out','screencap','-p',stdout=f)
+ (out/'failure-windows.txt').write_text(run('shell','dumpsys','window',capture_output=True,text=True).stdout)
 assert 'PASS:' in result.stdout and 'FAIL:' not in result.stdout,result.stdout
 for name in ['maglava-home.png','maglava-game-1.png','maglava-game-2.png','maglava-complete.png']:
  with (out/name).open('wb') as f:run('exec-out','run-as','dev.fofo.maglava','cat','cache/'+name,stdout=f)
