@@ -10,6 +10,9 @@ assert re.search(r'versionName = "([^"]+)"',gradle)[1]==info['CFBundleShortVersi
 for row in json.loads((root/'mobile/assets/Audio/soundtrack.json').read_text()):
  data=(root/'mobile/assets/Audio'/row['file']).read_bytes();assert hashlib.sha256(data).hexdigest()==row['sha256']
  assert 90<row['duration_seconds']<180
+voice=json.loads((root/'mobile/media/assets/narration.json').read_text())
+assert hashlib.sha256((root/'mobile/media/narration.json').read_bytes()).hexdigest()==voice['request_sha256']
+assert hashlib.sha256((root/'mobile/media/assets/narration.flac').read_bytes()).hexdigest()==voice['audio_sha256']
 for path in (root/'mobile/ci').glob('*.py'):compile(path.read_text(),str(path),'exec')
 for path in (root/'mobile/ci').glob('*.mjs'):subprocess.run(['node','--check',str(path)],check=True)
 with tempfile.TemporaryDirectory() as tmp:
