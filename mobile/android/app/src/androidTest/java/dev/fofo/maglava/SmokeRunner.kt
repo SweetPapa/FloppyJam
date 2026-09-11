@@ -1,6 +1,7 @@
 package dev.fofo.maglava
 
 import android.app.Instrumentation
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.os.SystemClock
@@ -12,6 +13,9 @@ import kotlin.math.abs
 
 /** Real UI-thread/JNI/touch/lifecycle smoke test, using only platform test APIs. */
 class SmokeRunner : Instrumentation() {
+    @Volatile private var pausedActivity:Activity?=null
+    override fun callActivityOnPause(activity:Activity) { super.callActivityOnPause(activity);pausedActivity=activity }
+    override fun callActivityOnResume(activity:Activity) { pausedActivity=null;super.callActivityOnResume(activity) }
     override fun onCreate(arguments:Bundle?) { super.onCreate(arguments); start() }
     override fun onStart() {
         val result=Bundle()
@@ -116,10 +120,13 @@ class SmokeRunner : Instrumentation() {
                 SystemClock.sleep(300)
                 onActivity {check(activity.debugMusicPosition>0)}
             }
-            onActivity {musicBefore=activity.debugMusicPosition}
-            onActivity { activity.moveTaskToBack(true) }; SystemClock.sleep(300)
-            val before=state()[9]; SystemClock.sleep(250); check(state()[9]==before) { "Background simulation advanced" }
-            onActivity {check(abs(activity.debugMusicPosition-musicBefore)<150) {"Music continued in background"};activity.finish() }
+            onActivity { check(activity.moveTaskToBack(true)) }
+            val pauseDeadline=SystemClock.uptimeMillis()+6000
+            while(pausedActivity!==activity && SystemClock.uptimeMillis()<pauseDeadline)SystemClock.sleep(50)
+            check(pausedActivity===activity) { "Android did not deliver the background pause callback" }
+            onActivity {musicBefore=activity.debugMusicPosition;song=activity.debugMusicName}
+            val before=state()[9]; SystemClock.sleep(350); check(state()[9]==before) { "Background simulation advanced" }
+            onActivity {check(activity.debugMusicName==song && abs(activity.debugMusicPosition-musicBefore)<150) {"Music continued after the background pause callback"};activity.finish() }
             result.putString("stream","PASS: JNI rates, native GLES 3D, triangular controls, original soundtrack, touch completion, stable progress, next stage, retry, pause and background lifecycle.\n")
             finish(-1,result)
         } catch(error:Throwable) {
