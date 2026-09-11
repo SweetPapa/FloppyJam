@@ -10,6 +10,10 @@ Games that fit on a 1.44 MB floppy disk. One directory per entry.
 | [`v5/`](v5) | **BREAK PAR** | Mini golf with a cue stick. 18 holes, real pool physics, a neon city, a jazz combo. |
 | `v1/`–`v4/`, `v6/` | earlier jams | |
 
+MagLava releases build from merges into `uat`, with TestFlight, Google Play closed
+testing and desktop prereleases. Production promotion stays manual. See the
+[release procedure](mobile/ci/README.md) and [current status](mobile/store/RELEASE.md).
+
 Everything else in the root supports shipping them. AFTERGLOW lifts the floppy
 size cap and uses Three.js/Electron for desktop and browser builds; see
 [`v9/README.md`](v9/README.md) for its build and playtest commands.

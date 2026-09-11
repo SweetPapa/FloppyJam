@@ -20,8 +20,9 @@ The four large buttons select colors, not directions. Each node carries its
 matching R/B/Y/G letter. Outlines show available targets. Taps are buffered until
 an authoritative tick; unavailable colors preserve the tether. Rendering follows
 the display while physics stays at 60 Hz, with player, camera, lava and hazard
-interpolation. Menus and interruptions suspend gameplay and rendering. Reduced
-motion also follows the OS preference and removes camera roll and the trail.
+interpolation. Menus suspend gameplay while music continues; app inactivity
+suspends gameplay, rendering and audio. Reduced motion also follows the OS
+preference and removes camera roll and the trail.
 
 ## Open and run
 
@@ -54,8 +55,8 @@ The bundle identifier is `dev.fofo.maglava` and the configured team is
 `6Y5SZ2K5XY`. Signing keys and provisioning profiles are kept outside source
 control. The icon, launch color, font license, and privacy manifest are bundled.
 Choose **My Mac (Mac Catalyst)** to run the Mac version. Store archives require
-Xcode 26 or later; see [store release status](store/RELEASE.md) for the prepared
-workflow, credentials lookup and outstanding submissions.
+Xcode 26 or later. Merges into `uat` build current store SDK archives and desktop
+previews; see [CI operations](ci/README.md) and [store release status](store/RELEASE.md).
 
 ### Android
 

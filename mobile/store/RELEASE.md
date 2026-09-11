@@ -1,128 +1,105 @@
-# Build 2 preparation — September 9, 2026
+# MagLava UAT release — September 11, 2026
 
-Both native apps are version **1.0 (2)**. Build 1 has never been released, so the
-marketing version remains 1.0. Build 2 adds the continuous four-song playlist,
-stronger shared impact effects, molten surface currents and animated lava home
-screen with a 68% dark overlay for menu contrast. English release notes are updated.
+Bundle/package identifier: **dev.fofo.maglava**. Marketing version: **1.0**.
+Production promotion remains manual. This document supersedes the September 7–9
+preparation notes: source delivery to the existing repository is now authorized,
+the Apple review phone is saved, and Xcode 26 archives have been built and uploaded.
 
-- Signed Android bundle: `mobile/.build/store/MagLava-1.0-2.aab` (8.1 MiB).
-- Signed Android APK: `mobile/.build/store/MagLava-1.0-2.apk` (8.5 MiB).
-- SHA-256 receipt: `mobile/.build/store/android-signing-2.json`.
-- iOS device Release and simulator Debug builds succeeded. The installed SDK is
-  still iOS 18.5 / Xcode 16.4, so the local device build is **not upload eligible**.
-  Apple requires iOS 26 SDK or newer for uploads.
-- Refreshed minimal cloud-build sources: `mobile/.build/store/cloud-build-2`.
-  These remain local. The earlier approval requirement for creating a GitHub
-  repository and transferring source still applies; no cloud upload occurred.
-- Live store status checked again: Google alpha still contains build 1 **draft**;
-  Apple iOS/macOS versions remain **PREPARE_FOR_SUBMISSION**, with no builds.
-  **Build 2 has not been uploaded to either store.** Console setup and the Apple
-  SDK/review-contact blockers described below remain outstanding.
-- Current native home screenshots and test evidence: `mobile/.build/playlist-review/`.
-  Existing store screenshots have not been replaced and should be refreshed before submission.
+## Executed store delivery
 
-`sign-android.py` derives artifact names from the matching iOS/Android versions,
-checks parity and keeps per-build signing receipts. `sign-ios.py` derives its
-output name from the future archive. To prepare the Play closed-testing draft
-when proceeding with submission:
+| Destination | Verified state |
+| --- | --- |
+| [TestFlight](https://appstoreconnect.apple.com/apps/6809634261/testflight/ios) | Build **1010** uploaded with no warnings, processed **VALID**, and assigned to MagLava Playtest and MagLava Closed Beta. Build 1001 is already waiting for external beta review; Apple requires that review to finish before accepting the next build for review. |
+| [External beta link](https://testflight.apple.com/join/syeM6ybj) | Enabled with a 1,000-person limit; external installation depends on Apple's beta review. |
+| [Google Play closed testing](https://play.google.com/console/u/1/developers/5087831544540862809/app/4974240038269953473/app-dashboard) | Build **1010** accepted on `alpha` with status **completed**. Verified tester group `fofo-testers@googlegroups.com` and configured countries/rest-of-world availability. |
+| Store media | Final native iPhone/iPad/Android cards, Android feature graphic and an actual gameplay preview uploaded. The final artwork/video uses stages 1, 6 and 38. |
 
-```sh
-node mobile/tools/store/upload-play.mjs --build 2
-```
+Matching iOS and Android build **1010** came from UAT merge
+`24a66780ae6cfdd9622e848ecaace95b9a01d4b7`. Both were signed and uploaded locally
+from the passing hosted artifacts. Google rollout is complete; Apple processing
+is valid and external review remains queued behind build 1001.
 
-The uploader verifies the signed bundle hash, rejects duplicate/newer version
-codes and refuses to replace an active closed-testing release. It only saves a
-draft; final Console review submission is separate. No upload command was run in
-this refinement pass.
-
----
-
-# MagLava beta release — September 7, 2026
-
-Identifier on every platform: **dev.fofo.maglava**. Version **1.0 (1)**.
-These are beta submissions; no production release has been submitted.
-
-| Store | Saved | Outstanding |
-| --- | --- | --- |
-| [Google Play](https://play.google.com/console/u/1/developers/5087831544540862809/app/4974240038269953473/app-dashboard) | Signed AAB version code 1 committed to alpha, English listing, icon, feature graphic, three phone screenshots, contact email/website | Release remains **draft**. API validation returns “Only releases with status draft may be created on draft app.” Complete Console declarations, countries and tester configuration, then submit the existing release. |
-| [App Store Connect](https://appstoreconnect.apple.com/apps/6809634261) | iOS/macOS descriptions, subtitle, Games/Action/Casual categories, age declaration, privacy/support links, iPhone/iPad screenshots, internal/external TestFlight groups, beta description, distribution profiles | No uploaded binary. Xcode 26 archives, local signing, upload/processing, review contact phone and beta-review submission remain pending. Mac listing screenshots and store privacy questionnaire remain pending. |
-
-Apple content declaration records mild cartoon/fantasy violence for the orb's
-lava and mechanical-hazard deaths; other content categories are absent. There
-are no ads, purchases, chat, analytics SDKs or accounts. The store privacy
-questionnaires must match those implementation facts.
+English descriptions, categories, age declarations, beta and draft store review contacts, and
+support/privacy URLs are saved. There are no ads, purchases, chat, accounts or
+analytics SDKs in the native game. Console privacy declarations must match those
+facts. Mild fantasy/cartoon violence covers lava and hazard deaths.
 
 Support: https://sweetpapa-games.web.app/maglava/support
 
 Privacy: https://sweetpapa-games.web.app/maglava/privacy
 
-The two pages were added to the existing Firebase Hosting release while
-preserving every other live file and its hosting configuration.
+## UAT automation
 
-## Required input/access
+The new pipeline is merged into the existing public `SweetPapa/FloppyJam`
+repository's `uat` branch. PRs require **Shared game and release checks**.
+[Workflow](../../.github/workflows/maglava-uat.yml) builds iOS, Android, universal
+Mac Catalyst, Windows x64 and Linux x64. It generates native captures, Remotion
+media, beta uploads and versioned desktop prereleases; it never promotes PROD.
 
-1. Automatic approval review rejected creation of the private GitHub repository
-   `SweetPapa/maglava-release-builds`, source/assets upload and workflow dispatch
-   because store authorization did not explicitly authorize source-code egress
-   or repository creation. User approval was requested and remains pending.
-   No repository was created and no source was transferred.
-2. Apple's beta-review contact phone is missing. Name/email prepared:
-   Forrester Terry / fterry@sweetpapatechnologies.com. No phone number was guessed.
-3. Chrome's “Allow JavaScript from Apple Events” is disabled; native AppleScript
-   accessibility is also unavailable. User was asked to enable the Chrome
-   setting or finish Google Play's Console-only setup. No security setting was
-   silently changed.
+- Build **1010**, [run 34588961624](https://github.com/SweetPapa/FloppyJam/actions/runs/34588961624),
+  uses UAT commit `24a66780ae6cfdd9622e848ecaace95b9a01d4b7`. All five platform builds
+  and native Android/iPhone/iPad checks and captures passed. Hosted media rendering
+  and automatic desktop publication passed. The workflow ends with the explicit
+  missing-mobile-secrets error; local delivery completed both mobile uploads.
+- Native capture waits for focused gameplay and successful rendered frames before
+  recording. Android test helpers observe real lifecycle callbacks and report
+  stale activity failures safely. One complete retry is permitted only for a
+  diagnosed emulator resource recreation, launcher ANR or input-injection error;
+  unrelated failures still fail the job. A controlled theme recreation verified
+  that the resource-retry condition does not accept other configuration changes.
+- Windows uses a static C runtime, verified from the actual executable imports.
+  macOS packages are universal, signed, notarized and stapled. Hosted rendering
+  uses genuine native iPhone/iPad/Android footage.
+- PRs **5–10, 12, 13, 15 and 16** are merged into `uat`; **11 and 14** install
+  the workflow definitions on the default branch. Desktop publication was proven
+  in builds 1006 and 1010. Original diagnostics and earlier artifacts remain in ignored
+  `.build/uat/` directories.
 
-This Mac has Xcode 16.4 / iOS 18.5 SDK. Apple currently requires Xcode 26 / iOS 26
-SDK for uploads: [Apple requirements](https://developer.apple.com/news/upcoming-requirements/).
-`apple-build.yml` is a prepared GitHub Actions workflow for unsigned iOS and Mac
-Catalyst archives and iOS 26 integration tests. The minimal source snapshot is
-in `mobile/.build/store/cloud`; it contains no store credentials or signing keys.
-It must be refreshed from the current source before any approved upload.
+The `maglava-uat` environment permits only the `uat` deployment branch. Existing
+macOS signing secrets and Windows Azure OIDC credentials are reused. Automatic
+approval review rejected exporting local mobile signing/publisher credentials
+to GitHub because that specific sensitive transfer needs explicit user approval.
+**No new mobile credentials have been transferred.** The user approval question
+is pending. Local store uploads keep keys on this Mac.
 
-## Local artifacts and receipts
+See [CI operations](../ci/README.md) for exact commands, secret names, local
+signing fallback and rerun behavior. The existing Google tester group and country settings were found and preserved.
+The previous draft-only blocker no longer applies. TestFlight groups currently
+have no individual testers; the public link becomes usable after external review.
+Chrome scripting is disabled and the available UI tool lacks Accessibility
+permission; direct store API verification was used instead.
 
-Everything below lives in ignored `mobile/.build/store/`:
+## Evidence and media
 
-- `MagLava-1.0-1.aab`, SHA-256
-  `2f0319ae7daae7d90624f74ca3b002b7bb5ec64ce81815ead951f611eb9acb5a`
-- `MagLava-1.0-1.apk`, SHA-256
-  `04f46f8d8f578e67ac0fb6f5d5c6b24960614e5844837b6bd5e90e7c4b347133`
-- `android-signing.json`, `play-upload.json`, `play-artwork.json`
-- `apple-setup.json`, `apple-screenshots.json`, `support-release.json`
-- `verified-status.json`: all four Apple screenshots processed **COMPLETE**;
-  no Apple builds; Google alpha version 1 **draft**, artwork present, testers empty.
-- `MagLava-iOS.mobileprovision`, `MagLava-macOS.mobileprovision`
-- `screenshots/` contains captured gameplay and generated store artwork.
+Ignored `mobile/.build/uat/` contains signed files, per-store receipts, native test
+logs, recordings and upload logs. `mobile/.build/uat/local-1010/media/` contains
+the final narrated 36-second trailer, 28-second App Preview, smaller web copy,
+poster and store cards.
+Narration uses the user's WARLOCK Orpheus 3B/Tara service, committed losslessly
+with request/audio hashes. Original game music is AAC: the complete four-song
+playlist is **7,792,904 bytes**, identical in both native apps.
 
-Do not re-upload Android version code 1. Continue with its committed alpha draft.
-`play-upload.json` describes the initial commit; `play-artwork.json` records the
-subsequent artwork correction and Android-specific release notes.
+Temporary local capture emulators/simulators are closed. Physical-device frame
+time, thermal behavior, haptics and touch comfort remain beta playtest work.
+Windows/Linux use the v4 desktop presentation and procedural music; iOS, Android
+and Mac Catalyst share the mobile 3D presentation and original playlist.
 
-## Release tooling
+## Published downloads and website
 
-Run scripts from the repository root. Authentication modules read local keys;
-they never log tokens or secret key contents.
+[Desktop release 1010](https://github.com/SweetPapa/FloppyJam/releases/tag/maglava-uat-1010)
+contains the signed macOS and Windows packages, Linux, trailer and App Preview.
+All six public asset SHA-256 digests match the retained hosted artifacts.
 
-- `tools/store/apple-api.mjs`: existing personal ASC key in `~/Downloads`,
-  overridable by `ASC_KEY_ID`, `ASC_ISSUER_ID`, `ASC_KEY_PATH`.
-- `tools/store/play-api.mjs`: `~/secrets/fofo-play-publisher.json`, overridable by
-  `GOOGLE_APPLICATION_CREDENTIALS`.
-- `tools/store/sign-android.py`: `~/code/SPT`, alias `spt`; passwords are read
-  from existing macOS Keychain entries into process environment variables.
-- `tools/store/apple-profile.mjs`: existing Apple Distribution certificate;
-  IOS_APP_STORE and MAC_CATALYST_APP_STORE profiles for this bundle.
-- `tools/store/setup-apple.mjs`: rerunnable metadata setup. Set
-  `MAGLAVA_REVIEW_PHONE` to the supplied contact number to complete beta contact.
-- `tools/store/sign-ios.py`: prepared local signer for a future unsigned iOS 26
-  archive. Validates bundle/team/SDK/profile before signing; not yet exercised
-  against a cloud archive. Mac installer signing/packaging remains to be done.
-- `tools/store/upload-play.mjs`: initial bundle upload only; refuses duplicate
-  version 1. `upload-play-artwork.mjs` refuses replacing existing listing images.
-- `tools/store/upload-apple-screenshots.mjs`: native iPhone/iPad screenshots.
-- `tools/store/generate-artwork.swift`: icon/feature graphic from the native icon.
-- `tools/store/publish-support.mjs`: inspect by default; `--publish` adds the two
-  prepared support pages while preserving the live site's other content.
+[maglava.io](https://maglava.io) now links to those downloads, both beta programs
+and the actual gameplay trailer. SweetPapa/magLava PR **1** is merged and the
+existing Firebase `maglava` site was deployed. The Node 22 production build and
+desktop/phone browser checks cover layout, links, actual video playback, Escape,
+audio shutdown and focus restoration. Original local website/game edits were
+preserved by using an isolated checkout.
 
-Gameplay integration passed on Android, iPhone, iPad and Mac Catalyst. Physical
-device performance, thermal behavior and haptic feel still need beta playtesting.
+The requested narration replacement remains pending. Google documents
+[Gemini 3.1 Flash TTS](https://cloud.google.com/blog/products/ai-machine-learning/gemini-3-1-flash-tts-on-google-cloud/)
+as a newer expressive model, but AssetForge's configured project returns HTTP
+403 `BILLING_DISABLED`. No replacement was generated. The current WARLOCK voice
+is retained until billing is restored or another configured project is supplied.
+The App Preview contains music and gameplay captions, with no TTS.
