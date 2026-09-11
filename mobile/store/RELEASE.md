@@ -75,8 +75,8 @@ Ignored `mobile/.build/uat/` contains signed files, per-store receipts, native t
 logs, recordings and upload logs. `mobile/.build/uat/local-1010/media/` contains
 the final narrated 36-second trailer, 28-second App Preview, smaller web copy,
 poster and store cards.
-Narration uses the user's WARLOCK Orpheus 3B/Tara service, committed losslessly
-with request/audio hashes. Original game music is AAC: the complete four-song
+Narration now uses the user-approved AssetForge Gemini 3.1 Flash TTS / Charon
+take, committed losslessly with request/audio hashes. Original game music is AAC: the complete four-song
 playlist is **7,792,904 bytes**, identical in both native apps.
 
 Temporary local capture emulators/simulators are closed. Physical-device frame
@@ -97,9 +97,7 @@ desktop/phone browser checks cover layout, links, actual video playback, Escape,
 audio shutdown and focus restoration. Original local website/game edits were
 preserved by using an isolated checkout.
 
-The requested narration replacement remains pending. Google documents
-[Gemini 3.1 Flash TTS](https://cloud.google.com/blog/products/ai-machine-learning/gemini-3-1-flash-tts-on-google-cloud/)
-as a newer expressive model, but AssetForge's configured project returns HTTP
-403 `BILLING_DISABLED`. No replacement was generated. The current WARLOCK voice
-is retained until billing is restored or another configured project is supplied.
+AssetForge billing was restored to the user-selected Side Projects account.
+The user approved the complete 31.44-second Gemini 3.1 Flash TTS / Charon take;
+it now replaces the earlier WARLOCK narration in release media sources.
 The App Preview contains music and gameplay captions, with no TTS.

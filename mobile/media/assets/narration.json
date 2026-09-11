@@ -1,9 +1,10 @@
 {
-  "model": "Orpheus 3B Q4_K_M",
-  "voice": "tara",
+  "model": "gemini-3.1-flash-tts-preview",
+  "voice": "Charon",
   "sample_rate": 24000,
-  "request_sha256": "705305da8c6f91d4c2a9918d1847f70ebe79d5fa442ef3bfba9858856304d7d3",
-  "audio_sha256": "c11d1aec7c8f10b1ebc686bdc6ea5edd2eca7ae0150aad7ac9f0ed0edcfe3fc6",
-  "origin": "User-owned WARLOCK TTS service",
+  "duration_seconds": 31.44,
+  "request_sha256": "cb5824bed02d0981e1cd10040dea0d08899b516b407f38e5b75f040639f639df",
+  "audio_sha256": "9b6cb1b84630b20223ddaff26282eca296ca9499b0a334274898c116a1aed003",
+  "origin": "User-authorized AssetForge generation via Google Vertex AI",
   "generated": "2026-09-11"
 }
