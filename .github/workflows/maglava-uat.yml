@@ -101,7 +101,7 @@ jobs:
           xcodebuild -project mobile/ios/Maglava.xcodeproj -scheme Maglava -configuration Release -destination 'generic/platform=iOS' -archivePath mobile/.build/uat/apple/Maglava-iOS.xcarchive CODE_SIGNING_ALLOWED=NO archive
           xcodebuild -project mobile/ios/Maglava.xcodeproj -scheme Maglava -configuration Release -destination 'generic/platform=macOS,variant=Mac Catalyst' -archivePath mobile/.build/uat/apple/Maglava-macOS.xcarchive ARCHS='arm64 x86_64' ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=NO archive
           ditto -c -k --sequesterRsrc --keepParent mobile/.build/uat/apple/Maglava-iOS.xcarchive mobile/.build/uat/apple/Maglava-iOS-unsigned.zip
-          lipo -verify_arch arm64 x86_64 mobile/.build/uat/apple/Maglava-macOS.xcarchive/Products/Applications/Maglava.app/Contents/MacOS/Maglava
+          lipo mobile/.build/uat/apple/Maglava-macOS.xcarchive/Products/Applications/Maglava.app/Contents/MacOS/Maglava -verify_arch arm64 x86_64
       - name: Capture current iPhone and iPad gameplay
         run: python3 mobile/ci/capture-apple.py
       - name: Import existing macOS signing identity

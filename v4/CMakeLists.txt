@@ -55,6 +55,8 @@ endif()
 if(APPLE)
   target_link_libraries(maglava PRIVATE
     "-framework IOKit" "-framework Cocoa" "-framework OpenGL")
+elseif(WIN32)
+  target_link_libraries(maglava PRIVATE winmm gdi32 opengl32)
 elseif(UNIX)
   target_link_libraries(maglava PRIVATE dl pthread)
 endif()
