@@ -2,7 +2,7 @@ name: MagLava UAT
 on:
   push:
     branches: [uat]
-    paths: ['mobile/**', 'v4/**', '.github/workflows/maglava-*.yml', 'scripts/sign-*.sh']
+    paths: ['mobile/**', '!mobile/**/*.md', 'v4/**', '.github/workflows/maglava-*.yml', 'scripts/sign-*.sh']
   workflow_dispatch:
 concurrency:
   group: maglava-uat
@@ -49,6 +49,12 @@ jobs:
       - name: Build release and test APKs
         working-directory: mobile/android
         run: ./gradlew :app:assembleRelease :app:bundleRelease :app:assembleDebug :app:assembleDebugAndroidTest :app:lintDebug
+      - name: Collect unsigned release for local signing or publisher job
+        run: |
+          mkdir -p mobile/.build/uat/android
+          cp mobile/android/app/build/outputs/bundle/release/app-release.aab mobile/.build/uat/android/MagLava-Android-unsigned.aab
+          cp mobile/android/app/build/outputs/apk/release/app-release-unsigned.apk mobile/.build/uat/android/MagLava-Android-unsigned.apk
+          cp mobile/android/app/build/reports/lint-results-debug.html mobile/.build/uat/android/
       - name: Enable hardware acceleration
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -62,12 +68,6 @@ jobs:
           profile: pixel_7_pro
           disable-animations: false
           script: python3 mobile/ci/capture-android.py
-      - name: Collect unsigned release for local signing or publisher job
-        run: |
-          mkdir -p mobile/.build/uat/android
-          cp mobile/android/app/build/outputs/bundle/release/app-release.aab mobile/.build/uat/android/MagLava-Android-unsigned.aab
-          cp mobile/android/app/build/outputs/apk/release/app-release-unsigned.apk mobile/.build/uat/android/MagLava-Android-unsigned.apk
-          cp mobile/android/app/build/reports/lint-results-debug.html mobile/.build/uat/android/
       - uses: actions/upload-artifact@v4
         if: always()
         with:

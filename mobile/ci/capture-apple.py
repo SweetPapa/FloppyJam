@@ -18,7 +18,8 @@ for kind,device in [('iphone',phone),('ipad',pad)]:
  try:
   print('Preparing',kind,device['name'],udid,flush=True)
   if owned:sim('boot',udid)
-  sim('bootstatus',udid,'-b',timeout=240)
+  # Fresh hosted iOS 26 devices spend several minutes in first-boot migration.
+  sim('bootstatus',udid,'-b',timeout=900)
   if not a.reuse_tested_build:
    logpath=out/f'{kind}-test.log'
    try:
