@@ -72,6 +72,7 @@ jobs:
         if: always()
         with:
           name: maglava-android
+          overwrite: true
           path: |
             mobile/.build/uat/android/
             mobile/.build/uat/version.json
@@ -128,6 +129,7 @@ jobs:
         if: always()
         with:
           name: maglava-apple
+          overwrite: true
           path: |
             mobile/.build/uat/apple/Maglava-iOS-unsigned.zip
             mobile/.build/uat/desktop/
@@ -189,6 +191,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: maglava-desktop-${{ runner.os }}
+          overwrite: true
           path: mobile/.build/uat/desktop/
           if-no-files-found: error
 
@@ -216,6 +219,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: maglava-media
+          overwrite: true
           path: mobile/media/out/
           if-no-files-found: error
           retention-days: 30
@@ -269,6 +273,7 @@ jobs:
         if: always()
         with:
           name: maglava-mobile-delivery
+          overwrite: true
           path: mobile/.build/uat/receipts/
 
   downloads:
