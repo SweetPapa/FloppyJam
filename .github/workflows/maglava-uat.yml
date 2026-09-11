@@ -263,7 +263,6 @@ jobs:
           MAGLAVA_ASC_KEY_P8: ${{ secrets.MAGLAVA_ASC_KEY_P8 }}
           ASC_KEY_ID: ${{ secrets.MAGLAVA_ASC_KEY_ID }}
           ASC_ISSUER_ID: ${{ secrets.MAGLAVA_ASC_ISSUER_ID }}
-          MAGLAVA_REVIEW_PHONE: ${{ secrets.MAGLAVA_REVIEW_PHONE }}
         run: python3 mobile/ci/deliver.py --incoming mobile/.build/uat/incoming --build "$BUILD" --ci
       - name: Remove temporary signing keychain
         if: always()
