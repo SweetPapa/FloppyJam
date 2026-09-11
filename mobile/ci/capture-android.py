@@ -13,6 +13,11 @@ def run(*args,**kw):return subprocess.run([adb,*args],check=True,**kw)
 run('shell','settings','put','secure','immersive_mode_confirmations','confirmed')
 run('shell','settings','put','system','screen_off_timeout','1800000')
 run('shell','wm','dismiss-keyguard')
+if os.environ.get('CI'):
+ # A standard phone display avoids spending hosted software-GPU time rendering
+ # an oversized Pro screen only to downscale it to the 1080px store card later.
+ run('shell','wm','size','1080x2400')
+ run('shell','wm','density','420')
 for path in ['apk/debug/app-debug.apk','apk/androidTest/debug/app-debug-androidTest.apk']:
  run('install','-r',str(root/'mobile/android/app/build/outputs'/path))
 if not a.reuse_tested_build:
@@ -20,6 +25,10 @@ if not a.reuse_tested_build:
   result=run('shell','am','instrument','-w','dev.fofo.maglava.test/dev.fofo.maglava.SmokeRunner',capture_output=True,text=True,timeout=180)
   (out/'native-test.log').write_text(result.stdout+result.stderr)
   if 'PASS:' in result.stdout and 'FAIL:' not in result.stdout:break
+  (out/f'failure-{attempt}-logcat.txt').write_text(run('logcat','-d',capture_output=True,text=True).stdout)
+  for name in ['maglava-game-1.png','maglava-game-2.png','maglava-failure.png']:
+   cached=subprocess.run([adb,'exec-out','run-as','dev.fofo.maglava','cat','cache/'+name],capture_output=True)
+   if cached.returncode==0:(out/f'failure-{attempt}-{name}').write_bytes(cached.stdout)
   with (out/f'failure-{attempt}.png').open('wb') as f:run('exec-out','screencap','-p',stdout=f)
   windows=run('shell','dumpsys','window',capture_output=True,text=True).stdout
   (out/f'failure-{attempt}-windows.txt').write_text(windows)
@@ -36,7 +45,19 @@ if not a.reuse_tested_build:
   with (out/name).open('wb') as f:run('exec-out','run-as','dev.fofo.maglava','cat','cache/'+name,stdout=f)
 for level in a.stages:
  run('shell','am','force-stop','dev.fofo.maglava')
- run('shell','am','start','-n','dev.fofo.maglava/.MainActivity','--ei','level',str(level),'--ez','media_tour','true')
+ run('logcat','-c')
+ run('shell','am','start','-W','-n','dev.fofo.maglava/.MainActivity','--ei','level',str(level),'--ez','media_tour','true',timeout=90)
+ # Launch time varies on hosted emulators. Require focused native gameplay and
+ # three successful GLES frames before starting either the recording or its clock.
+ deadline=time.monotonic()+60
+ while time.monotonic()<deadline:
+  log=run('logcat','-d','-s','MagLavaCapture:I','*:S',capture_output=True,text=True).stdout
+  if f'READY stage={level}' in log:break
+  time.sleep(.5)
+ else:
+  (out/f'stage-{level}-startup.log').write_text(run('logcat','-d',capture_output=True,text=True).stdout)
+  raise RuntimeError(f'Stage {level} never rendered focused gameplay; refusing startup-screen media.')
+ (out/f'stage-{level}-ready.log').write_text(log)
  remote=f'/sdcard/maglava-stage-{level}.mp4'
  record=subprocess.Popen([adb,'shell','screenrecord','--bit-rate','12000000','--time-limit','12',remote],stdout=subprocess.DEVNULL)
  time.sleep(4)

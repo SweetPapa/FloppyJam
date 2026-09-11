@@ -28,6 +28,7 @@ class MainActivity : Activity() {
     private var completed=false
     private var level=1
     private var hudTick=-1f
+    private var mediaReady=false
     private var music: Soundtrack?=null
     private var audioActive=false
     private val musicMuted get()=prefs.getBoolean("musicMuted",muted)
@@ -242,6 +243,10 @@ class MainActivity : Activity() {
         add(stack,label("Stars: finish the level, beat the target time, and finish without a death.",15))
     }
     private fun frame(s:FloatArray) {
+        if(!mediaReady && applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE!=0 && intent.getBooleanExtra("media_tour",false) && hasWindowFocus() && game.renderedFrames>=3) {
+            mediaReady=true
+            android.util.Log.i("MagLavaCapture","READY stage=$level")
+        }
         if(applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE!=0 && intent.getBooleanExtra("media_tour",false) && playing && s[4]==0f) {
             var color=-1;var y=s[1]
             for(c in 0..3) {val i=s[30+c].toInt();if(i>=0 && s[40+i*6+1]<y) {y=s[40+i*6+1];color=c}}

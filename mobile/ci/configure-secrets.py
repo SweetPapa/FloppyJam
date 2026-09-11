@@ -7,11 +7,10 @@ import argparse,base64,os,secrets,subprocess,tempfile
 from pathlib import Path
 p=argparse.ArgumentParser();p.add_argument('--apply',action='store_true');a=p.parse_args()
 repo='SweetPapa/FloppyJam';environment='maglava-uat'
-names=['MAGLAVA_IOS_CERT_P12','MAGLAVA_IOS_CERT_PASSWORD','MAGLAVA_ASC_KEY_P8','MAGLAVA_ASC_KEY_ID','MAGLAVA_ASC_ISSUER_ID','MAGLAVA_IOS_PROFILE','MAGLAVA_PLAY_CREDENTIALS','MAGLAVA_ANDROID_KEYSTORE','MAGLAVA_STORE_PASSWORD','MAGLAVA_KEY_PASSWORD','MAGLAVA_REVIEW_PHONE']
+names=['MAGLAVA_IOS_CERT_P12','MAGLAVA_IOS_CERT_PASSWORD','MAGLAVA_ASC_KEY_P8','MAGLAVA_ASC_KEY_ID','MAGLAVA_ASC_ISSUER_ID','MAGLAVA_IOS_PROFILE','MAGLAVA_PLAY_CREDENTIALS','MAGLAVA_ANDROID_KEYSTORE','MAGLAVA_STORE_PASSWORD','MAGLAVA_KEY_PASSWORD']
 if not a.apply:
  print('Destination:',repo,'environment:',environment);print('\n'.join(names));raise SystemExit(0)
 root=Path(__file__).resolve().parents[2];os.chdir(root)
-phone=os.environ['MAGLAVA_REVIEW_PHONE']
 def put(name,data):
  subprocess.run(['gh','secret','set',name,'-R',repo,'--env',environment],input=data if isinstance(data,bytes) else data.encode(),check=True,stdout=subprocess.DEVNULL)
  print('Configured',name)
@@ -28,4 +27,3 @@ put('MAGLAVA_PLAY_CREDENTIALS',(Path.home()/'secrets/fofo-play-publisher.json').
 store=Path.home()/'code/SPT';put('MAGLAVA_ANDROID_KEYSTORE',base64.b64encode(store.read_bytes()))
 for name,account in [('MAGLAVA_STORE_PASSWORD',f'KEY_STORE_PASSWORD__{store}'),('MAGLAVA_KEY_PASSWORD',f'KEY_PASSWORD__{store}__spt')]:
  put(name,subprocess.check_output(['security','find-generic-password','-a',account,'-w']).strip())
-put('MAGLAVA_REVIEW_PHONE',phone)
