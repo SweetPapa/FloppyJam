@@ -36,7 +36,19 @@ if not a.reuse_tested_build:
   with (out/name).open('wb') as f:run('exec-out','run-as','dev.fofo.maglava','cat','cache/'+name,stdout=f)
 for level in a.stages:
  run('shell','am','force-stop','dev.fofo.maglava')
- run('shell','am','start','-n','dev.fofo.maglava/.MainActivity','--ei','level',str(level),'--ez','media_tour','true')
+ run('logcat','-c')
+ run('shell','am','start','-W','-n','dev.fofo.maglava/.MainActivity','--ei','level',str(level),'--ez','media_tour','true',timeout=90)
+ # Launch time varies on hosted emulators. Require focused native gameplay and
+ # three successful GLES frames before starting either the recording or its clock.
+ deadline=time.monotonic()+60
+ while time.monotonic()<deadline:
+  log=run('logcat','-d','-s','MagLavaCapture:I','*:S',capture_output=True,text=True).stdout
+  if f'READY stage={level}' in log:break
+  time.sleep(.5)
+ else:
+  (out/f'stage-{level}-startup.log').write_text(run('logcat','-d',capture_output=True,text=True).stdout)
+  raise RuntimeError(f'Stage {level} never rendered focused gameplay; refusing startup-screen media.')
+ (out/f'stage-{level}-ready.log').write_text(log)
  remote=f'/sdcard/maglava-stage-{level}.mp4'
  record=subprocess.Popen([adb,'shell','screenrecord','--bit-rate','12000000','--time-limit','12',remote],stdout=subprocess.DEVNULL)
  time.sleep(4)
