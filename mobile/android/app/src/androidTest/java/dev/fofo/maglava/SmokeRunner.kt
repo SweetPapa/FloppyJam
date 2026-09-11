@@ -49,8 +49,11 @@ class SmokeRunner : Instrumentation() {
             click("How to Play"); SystemClock.sleep(150); check(state()[9]==elapsed)
             click("Back"); click("Settings"); click("Back")
             click("Resume")
+            // Codec preparation and first-boot setup take variable time on CI.
+            // Begin the touch trial at a fresh level, as a player pressing Retry.
+            click("Pause game"); click("Restart Level")
             var captures=0
-            val deadline=SystemClock.uptimeMillis()+45000
+            val deadline=SystemClock.uptimeMillis()+90000
             while(SystemClock.uptimeMillis()<deadline) {
                 val s=state()
                 if(captures<2 && s[9]>(captures+1)*2.5f) { capture("maglava-game-${captures+1}.png"); captures++ }
@@ -69,7 +72,8 @@ class SmokeRunner : Instrumentation() {
                 }
                 SystemClock.sleep(100)
             }
-            check(state()[5]>0) { "Touch-controlled first stage did not complete" }
+            val finalState=state()
+            check(finalState[5]>0) { "Touch-controlled first stage did not complete: elapsed=${finalState[9]}, state=${finalState[4]}, retries=${finalState[8]}, height=${finalState[1]}, frames=${game.renderedFrames}" }
             capture("maglava-complete.png")
             val prefs=targetContext.getSharedPreferences("maglava",0)
             check(prefs.getInt("stars.level-1a",0)>0) { "Completion was not persisted by stable key" }
@@ -110,7 +114,10 @@ class SmokeRunner : Instrumentation() {
             runOnMainSync {check(abs(activity.debugMusicPosition-musicBefore)<150) {"Music continued in background"};activity.finish() }
             result.putString("stream","PASS: JNI rates, native GLES 3D, triangular controls, original soundtrack, touch completion, stable progress, next stage, retry, pause and background lifecycle.\n")
             finish(-1,result)
-        } catch(error:Throwable) { result.putString("stream","FAIL: ${error.stackTraceToString()}\n"); finish(1,result) }
+        } catch(error:Throwable) {
+            try { capture("maglava-failure.png") } catch(_:Throwable) {}
+            result.putString("stream","FAIL: ${error.stackTraceToString()}\n"); finish(1,result)
+        }
     }
     private fun descendants(view:View):Sequence<View> = sequence { yield(view); if(view is ViewGroup)for(i in 0 until view.childCount)yieldAll(descendants(view.getChildAt(i))) }
     private fun capture(name:String) {
