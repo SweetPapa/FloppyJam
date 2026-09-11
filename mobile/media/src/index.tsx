@@ -69,11 +69,20 @@ function Card(p:CardProps) {
  </AbsoluteFill>;
 }
 const defaults:CardProps={platform:'iphone',image:'captures/apple/iphone-stage-1.png',title:'Catch a color.\nCarry your swing.',subtitle:'A magnetic climb above rising lava.',index:'01'};
+function FeatureGraphic() {return <AbsoluteFill style={{background:ink,color:white,fontFamily:font}}><Font/>
+ <AbsoluteFill style={{background:'radial-gradient(ellipse at 60% 100%,#84311988,transparent 70%)'}}/>
+ <div style={{position:'absolute',left:65,top:110,fontSize:18,letterSpacing:4,color:'#73e7bc'}}>A MAGNETIC CLIMB</div>
+ <div style={{position:'absolute',left:60,top:146,fontSize:105,letterSpacing:-4,color:orange}}>MAGLAVA</div>
+ <div style={{position:'absolute',left:65,top:274,fontSize:30}}>Swing. Climb. Survive.</div>
+ <div style={{position:'absolute',left:65,top:333,fontSize:19,color:muted}}>40 stages above rising lava.</div>
+ <Img src={staticFile('captures/android/stage-6.png')} style={{position:'absolute',right:78,top:24,height:452,borderRadius:18,border:'1px solid #536476'}}/>
+</AbsoluteFill>}
 function Root(){return <>
  <Composition id="MagLavaTrailer" component={Trailer} durationInFrames={36*30} fps={30} width={1920} height={1080}/>
  <Composition id="AppPreview" component={Preview} durationInFrames={28*30} fps={30} width={886} height={1920}/>
  <Composition id="iPhoneCard" component={Card} defaultProps={defaults} durationInFrames={1} fps={30} width={1290} height={2796}/>
  <Composition id="iPadCard" component={Card} defaultProps={{...defaults,platform:'ipad'}} durationInFrames={1} fps={30} width={2064} height={2752}/>
  <Composition id="AndroidCard" component={Card} defaultProps={{...defaults,platform:'android'}} durationInFrames={1} fps={30} width={1080} height={2400}/>
+ <Composition id="FeatureGraphic" component={FeatureGraphic} durationInFrames={1} fps={30} width={1024} height={500}/>
 </>};
 registerRoot(Root);

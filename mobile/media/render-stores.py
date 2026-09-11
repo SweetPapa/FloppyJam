@@ -10,3 +10,5 @@ for platform in (['iphone','ipad','android'] if a.platform=='all' else [a.platfo
   image=f'captures/android/stage-{stage}.png' if platform=='android' else f'captures/apple/{platform}-stage-{stage}.png'
   props=out/f'{platform}-{i}.json';props.write_text(json.dumps({'platform':platform,'image':image,'title':title,'subtitle':subtitle,'index':f'{i:02d}'}))
   subprocess.run(['npx','remotion','still','src/index.tsx',composition,str(out/f'{platform}-{i}.png'),'--props',str(props),'--image-format','png'],cwd=media,check=True)
+if a.platform in ['all','android']:
+ subprocess.run(['npx','remotion','still','src/index.tsx','FeatureGraphic',str(out/'feature-graphic.png'),'--image-format','png'],cwd=media,check=True)

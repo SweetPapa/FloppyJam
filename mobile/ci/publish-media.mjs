@@ -75,7 +75,17 @@ if(values.platform!=='ios') {
    keep.push(asset.id);receipt.push({platform:'android',id:asset.id,sha256:sha});
   }
   for(const old of previous.filter(x=>!keep.includes(x.id)))await api(path+'/'+old.id,'DELETE');
+  const feature=await readFile(join(dir,'store','feature-graphic.png'));
+  const featurePath=`edits/${edit.id}/listings/en-US/featureGraphic`;
+  const featureSha=createHash('sha256').update(feature).digest('hex');
+  const oldFeature=(await api(featurePath)).images??[];
+  if(!oldFeature.some(x=>x.sha256===featureSha)) {
+   // Play allows a single feature graphic. This is atomic within the edit.
+   await api(featurePath,'DELETE');
+   const asset=(await api(featurePath+'?uploadType=media','POST',feature,true,'image/png')).image;
+   receipt.push({platform:'android-feature',id:asset.id,sha256:featureSha});
+  }
   await api(`edits/${edit.id}:validate`,'POST');await api(`edits/${edit.id}:commit`,'POST');committed=true;
  }finally{if(!committed)await api(`edits/${edit.id}`,'DELETE').catch(()=>{});}
 }
-await writeFile('mobile/.build/uat/receipts/store-media.json',JSON.stringify(receipt,null,2)+'\n');console.log(JSON.stringify(receipt,null,2));
+await writeFile(`mobile/.build/uat/receipts/store-media-${values.platform}.json`,JSON.stringify(receipt,null,2)+'\n');console.log(JSON.stringify(receipt,null,2));
