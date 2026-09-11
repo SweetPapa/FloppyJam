@@ -212,6 +212,7 @@ jobs:
           npm run render --prefix mobile/media
           cd mobile/media
           npx remotion render src/index.tsx AppPreview out/MagLava-AppPreview.mp4 --codec h264 --crf 18
+          python3 finish.py
       - uses: actions/upload-artifact@v4
         with:
           name: maglava-media

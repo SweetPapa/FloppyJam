@@ -6,7 +6,7 @@ windows=platform.system()=='Windows';exe=root/'mobile/.build/desktop'/('Release/
 assert exe.is_file()
 license=root/'v4/assets/fonts/OFL.txt'
 if windows:
- subprocess.run(['powershell','-NoProfile','-Command',f"if ((Get-AuthenticodeSignature '{exe}').Status -ne 'Valid') {{ throw 'Invalid MagLava signature' }}"],check=True)
+ subprocess.run(['pwsh','-NoProfile','-Command',f"$ErrorActionPreference='Stop'; if ((Get-AuthenticodeSignature -LiteralPath '{exe}').Status -ne 'Valid') {{ throw 'Invalid MagLava signature' }}"],check=True)
  with zipfile.ZipFile(out/'MagLava-Windows-x64.zip','w',zipfile.ZIP_DEFLATED) as z:
   z.write(exe,'MagLava/maglava.exe');z.write(license,'MagLava/licenses/OFL.txt')
 else:

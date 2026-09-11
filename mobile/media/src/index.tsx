@@ -8,10 +8,10 @@ const clamp={extrapolateLeft:'clamp' as const,extrapolateRight:'clamp' as const}
 const scenes=[
  {from:0,to:3,title:['RISE','OR BURN.'],tag:'MAGLAVA',detail:'A magnetic climb above rising lava.',stage:1,start:0},
  {from:3,to:10,title:['MATCH','YOUR COLOR.'],tag:'01 / CATCH',detail:'Four colors. One way up.',stage:1,start:1},
- {from:10,to:17,title:['CARRY','YOUR SWING.'],tag:'02 / CLIMB',detail:'Find your rhythm. Launch again.',stage:1,start:3},
+ {from:10,to:17,title:['CARRY','YOUR SWING.'],tag:'02 / CLIMB',detail:'Find your rhythm. Launch again.',stage:1,start:1},
  {from:17,to:24,title:['DODGE','THE DANGER.'],tag:'03 / SURVIVE',detail:'Ghosts. Lasers. Rising lava.',stage:6,start:1},
- {from:24,to:30,title:['FORTY','WAYS UP.'],tag:'40 HANDCRAFTED STAGES',detail:'Checkpoints. Personal bests. One more try.',stage:9,start:1},
- {from:30,to:36,title:['ONE MORE','LAUNCH.'],tag:'MAGLAVA',detail:'Swing. Climb. Survive.  •  maglava.io',stage:9,start:4},
+ {from:24,to:30,title:['FORTY','WAYS UP.'],tag:'40 HANDCRAFTED STAGES',detail:'Checkpoints. Personal bests. One more try.',stage:38,start:1},
+ {from:30,to:36,title:['ONE MORE','LAUNCH.'],tag:'MAGLAVA',detail:'Swing. Climb. Survive.  •  maglava.io',stage:38,start:5},
 ];
 function Scene({scene}:{scene:typeof scenes[number]}) {
  const frame=useCurrentFrame(),{fps}=useVideoConfig();
@@ -44,7 +44,7 @@ function Trailer() {
 }
 function Preview() {
  const frame=useCurrentFrame(),{fps}=useVideoConfig();
- const clips=[{stage:1,from:0,length:9,start:0,label:'MATCH A COLOR. CATCH A MAGNET.'},{stage:6,from:9,length:9,start:1,label:'CARRY YOUR SWING.'},{stage:9,from:18,length:10,start:1,label:'CLIMB. DODGE. SURVIVE.'}];
+ const clips=[{stage:1,from:0,length:9,start:0,label:'MATCH A COLOR. CATCH A MAGNET.'},{stage:6,from:9,length:9,start:1,label:'CARRY YOUR SWING.'},{stage:38,from:18,length:10,start:1,label:'CLIMB. DODGE. SURVIVE.'}];
  return <AbsoluteFill style={{background:ink,fontFamily:font}}><Font/>
   {clips.map(c=><Sequence key={c.stage} from={c.from*fps} durationInFrames={c.length*fps}>
    <AbsoluteFill><Video muted src={staticFile(`captures/apple/iphone-stage-${c.stage}.mp4`)} trimBefore={c.start*fps} style={{width:'100%',height:'100%',objectFit:'contain'}}/>
@@ -69,11 +69,20 @@ function Card(p:CardProps) {
  </AbsoluteFill>;
 }
 const defaults:CardProps={platform:'iphone',image:'captures/apple/iphone-stage-1.png',title:'Catch a color.\nCarry your swing.',subtitle:'A magnetic climb above rising lava.',index:'01'};
+function FeatureGraphic() {return <AbsoluteFill style={{background:ink,color:white,fontFamily:font}}><Font/>
+ <AbsoluteFill style={{background:'radial-gradient(ellipse at 60% 100%,#84311988,transparent 70%)'}}/>
+ <div style={{position:'absolute',left:65,top:110,fontSize:18,letterSpacing:4,color:'#73e7bc'}}>A MAGNETIC CLIMB</div>
+ <div style={{position:'absolute',left:60,top:146,fontSize:105,letterSpacing:-4,color:orange}}>MAGLAVA</div>
+ <div style={{position:'absolute',left:65,top:274,fontSize:30}}>Swing. Climb. Survive.</div>
+ <div style={{position:'absolute',left:65,top:333,fontSize:19,color:muted}}>40 stages above rising lava.</div>
+ <Img src={staticFile('captures/android/stage-6.png')} style={{position:'absolute',right:78,top:24,height:452,borderRadius:18,border:'1px solid #536476'}}/>
+</AbsoluteFill>}
 function Root(){return <>
  <Composition id="MagLavaTrailer" component={Trailer} durationInFrames={36*30} fps={30} width={1920} height={1080}/>
  <Composition id="AppPreview" component={Preview} durationInFrames={28*30} fps={30} width={886} height={1920}/>
  <Composition id="iPhoneCard" component={Card} defaultProps={defaults} durationInFrames={1} fps={30} width={1290} height={2796}/>
  <Composition id="iPadCard" component={Card} defaultProps={{...defaults,platform:'ipad'}} durationInFrames={1} fps={30} width={2064} height={2752}/>
  <Composition id="AndroidCard" component={Card} defaultProps={{...defaults,platform:'android'}} durationInFrames={1} fps={30} width={1080} height={2400}/>
+ <Composition id="FeatureGraphic" component={FeatureGraphic} durationInFrames={1} fps={30} width={1024} height={500}/>
 </>};
 registerRoot(Root);

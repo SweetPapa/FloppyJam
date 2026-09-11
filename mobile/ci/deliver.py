@@ -7,7 +7,10 @@ root=Path(__file__).resolve().parents[2];os.chdir(root);incoming=a.incoming.reso
 receipts=root/'mobile/.build/uat/receipts';receipts.mkdir(parents=True,exist_ok=True);(root/'mobile/.build/store').mkdir(parents=True,exist_ok=True)
 def unique(name):
  files=list(incoming.rglob(name));assert len(files)==1,(name,files);return files[0]
-version=json.loads(unique('version.json').read_text());assert version['build']==a.build
+versions=[json.loads(f.read_text()) for f in incoming.rglob('version.json')]
+assert versions and all(v==versions[0] for v in versions),'Artifacts must come from one UAT build.'
+version=versions[0];assert version['build']==a.build
+media=unique('MagLava-AppPreview.mp4').parent
 if os.environ.get('GITHUB_SHA'):assert version['sha']==os.environ['GITHUB_SHA']
 def run(*cmd,**kw):return subprocess.run(list(map(str,cmd)),check=True,**kw)
 with tempfile.TemporaryDirectory(prefix='maglava-delivery-') as tmp:
@@ -54,13 +57,13 @@ with tempfile.TemporaryDirectory(prefix='maglava-delivery-') as tmp:
   try:
    if platform=='android':
     run('node','mobile/ci/publish-play.mjs','--build',a.build,'--bundle',bundle,env=env)
-    run('node','mobile/ci/publish-media.mjs','--directory',incoming,'--platform','android',env=env)
+    run('node','mobile/ci/publish-media.mjs','--directory',media,'--platform','android',env=env)
    else:
     keys=work/'private_keys';keys.mkdir();shutil.copy2(key,keys/f"AuthKey_{env['ASC_KEY_ID']}.p8");env['API_PRIVATE_KEYS_DIR']=str(keys)
     present=json.loads(subprocess.check_output(['node','mobile/ci/testflight.mjs','--build',str(a.build),'--inspect'],env=env))
     if not present:run('xcrun','altool','--upload-app','--type','ios','--file',ipa,'--apiKey',env['ASC_KEY_ID'],'--apiIssuer',env['ASC_ISSUER_ID'],'--output-format','json',env=env)
     run('node','mobile/tools/store/setup-apple.mjs',env=env)
-    run('node','mobile/ci/publish-media.mjs','--directory',incoming,'--platform','ios',env=env)
+    run('node','mobile/ci/publish-media.mjs','--directory',media,'--platform','ios',env=env)
     run('node','mobile/ci/testflight.mjs','--build',a.build,env=env)
   except subprocess.CalledProcessError as error:failures.append(f'{platform}: command failed with status {error.returncode}')
  if failures:raise SystemExit('\n'.join(failures))
