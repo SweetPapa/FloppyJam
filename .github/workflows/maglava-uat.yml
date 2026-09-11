@@ -66,6 +66,7 @@ jobs:
           api-level: 35
           arch: x86_64
           profile: pixel_7_pro
+          emulator-options: -no-window -gpu software -no-snapshot -noaudio -no-boot-anim
           disable-animations: false
           script: python3 mobile/ci/capture-android.py
       - uses: actions/upload-artifact@v4
