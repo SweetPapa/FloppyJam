@@ -242,10 +242,11 @@ final class GameController: UIViewController {
     override var canBecomeFirstResponder: Bool { true }
     override func pressesBegan(_ presses: Set<UIPress>, with event: UIPressesEvent?) {
         let mapping: [String: Int32] = ["r":0,"b":1,"y":2,"g":3,"w":0,"s":1,"a":2,"d":3]
+        let arrows: [UIKeyboardHIDUsage: Int32] = [.keyboardUpArrow:0,.keyboardDownArrow:1,.keyboardLeftArrow:2,.keyboardRightArrow:3]
         for press in presses {
             guard let key=press.key else { continue }
             if key.keyCode == .keyboardEscape { if playing { pauseGame() } else { menuBack?() }; return }
-            if playing, let color=mapping[key.charactersIgnoringModifiers.lowercased()] { ml_input(core,color); return }
+            if playing, let color=arrows[key.keyCode] ?? mapping[key.charactersIgnoringModifiers.lowercased()] { ml_input(core,color); return }
         }
         super.pressesBegan(presses, with:event)
     }
@@ -290,7 +291,7 @@ final class GameController: UIViewController {
             stack.addArrangedSubview(label(title,size:19,color:.white)); stack.addArrangedSubview(label(detail,size:16))
         }
         #if targetEnvironment(macCatalyst)
-        stack.addArrangedSubview(label("Keyboard: R/B/Y/G or W/S/A/D. Escape pauses.",size:15))
+        stack.addArrangedSubview(label("Keyboard: ↑ / W / R = red, ↓ / S / B = blue, ← / A / Y = yellow, → / D / G = green. Escape pauses.",size:15))
         #endif
         stack.addArrangedSubview(label("Stars: finish the level, beat the target time, and finish without a death.",size:15))
     }
