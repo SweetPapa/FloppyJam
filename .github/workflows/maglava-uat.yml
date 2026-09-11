@@ -161,13 +161,13 @@ jobs:
         shell: bash
         run: |
           git clone --depth 1 --branch 5.5 https://github.com/raysan5/raylib.git mobile/.build/raylib-src
-          cmake -S mobile/.build/raylib-src -B mobile/.build/raylib-build -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/mobile/.build/raylib"
+          cmake -S mobile/.build/raylib-src -B mobile/.build/raylib-build -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DBUILD_EXAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/mobile/.build/raylib"
           cmake --build mobile/.build/raylib-build --config Release --parallel 4
           cmake --install mobile/.build/raylib-build --config Release
       - name: Build and test MagLava desktop
         shell: bash
         run: |
-          cmake -S v4 -B mobile/.build/desktop -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$GITHUB_WORKSPACE/mobile/.build/raylib"
+          cmake -S v4 -B mobile/.build/desktop -DCMAKE_BUILD_TYPE=Release -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreaded -DCMAKE_PREFIX_PATH="$GITHUB_WORKSPACE/mobile/.build/raylib"
           cmake --build mobile/.build/desktop --config Release --parallel 4
           ctest --test-dir mobile/.build/desktop -C Release --output-on-failure
       - name: Azure login for existing Windows signer
