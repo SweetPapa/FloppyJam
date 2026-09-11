@@ -1,0 +1,9 @@
+{
+  "model": "Orpheus 3B Q4_K_M",
+  "voice": "tara",
+  "sample_rate": 24000,
+  "request_sha256": "705305da8c6f91d4c2a9918d1847f70ebe79d5fa442ef3bfba9858856304d7d3",
+  "audio_sha256": "c11d1aec7c8f10b1ebc686bdc6ea5edd2eca7ae0150aad7ac9f0ed0edcfe3fc6",
+  "origin": "User-owned WARLOCK TTS service",
+  "generated": "2026-09-11"
+}

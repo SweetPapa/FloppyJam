@@ -295,6 +295,13 @@ final class GameController: UIViewController {
         stack.addArrangedSubview(label("Stars: finish the level, beat the target time, and finish without a death.",size:15))
     }
     private func frame(_ s:[Float]) {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--media-tour") && playing && s[4]==0 {
+            var color:Int32 = -1, y=s[1]
+            for c in 0..<4 { let i=Int(s[30+c]); if i>=0 && s[40+i*6+1]<y {y=s[40+i*6+1];color=Int32(c)} }
+            if color>=0 {ml_input(core,color)}
+        }
+        #endif
         if s[9]-hudTick>0.1 || hudTick<0 {
             hudTick=s[9]; bar.progress=s[26]
             subhud.text=s[4]==3 ? (s[21]>0 ? "Rival wins. Try again." : "Respawning…") : s[9]<7 ? String(cString:ml_level_hint(Int32(level))) : String(format:"%.1fs / %.0fs   ·   %d pts   ·   %d retries",s[9],s[27],Int(s[6]),Int(s[8]))
