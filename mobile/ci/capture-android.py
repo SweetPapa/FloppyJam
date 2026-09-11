@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Capture real native gameplay after instrumentation, with reproducible stage selection."""
-import argparse,json,os,shutil,signal,subprocess,time
+import argparse,json,os,re,shutil,signal,subprocess,time
 from pathlib import Path
 root=Path(__file__).resolve().parents[2];os.chdir(root)
 p=argparse.ArgumentParser();p.add_argument('--stages',type=int,nargs='+',default=[1,6,38]);p.add_argument('--reuse-tested-build',action='store_true');a=p.parse_args()
@@ -16,11 +16,21 @@ run('shell','wm','dismiss-keyguard')
 for path in ['apk/debug/app-debug.apk','apk/androidTest/debug/app-debug-androidTest.apk']:
  run('install','-r',str(root/'mobile/android/app/build/outputs'/path))
 if not a.reuse_tested_build:
- result=run('shell','am','instrument','-w','dev.fofo.maglava.test/dev.fofo.maglava.SmokeRunner',capture_output=True,text=True)
- (out/'native-test.log').write_text(result.stdout+result.stderr)
- if 'FAIL:' in result.stdout:
-  with (out/'failure.png').open('wb') as f:run('exec-out','screencap','-p',stdout=f)
-  (out/'failure-windows.txt').write_text(run('shell','dumpsys','window',capture_output=True,text=True).stdout)
+ for attempt in range(2):
+  result=run('shell','am','instrument','-w','dev.fofo.maglava.test/dev.fofo.maglava.SmokeRunner',capture_output=True,text=True,timeout=180)
+  (out/'native-test.log').write_text(result.stdout+result.stderr)
+  if 'PASS:' in result.stdout and 'FAIL:' not in result.stdout:break
+  with (out/f'failure-{attempt}.png').open('wb') as f:run('exec-out','screencap','-p',stdout=f)
+  windows=run('shell','dumpsys','window',capture_output=True,text=True).stdout
+  (out/f'failure-{attempt}-windows.txt').write_text(windows)
+  (out/f'failure-{attempt}-test.log').write_text(result.stdout+result.stderr)
+  launcher_anr=re.search(r'mCurrentFocus=.*Application Not Responding: com\.android\.launcher3',windows)
+  emulator=run('shell','getprop','ro.kernel.qemu',capture_output=True,text=True).stdout.strip()=='1'
+  if attempt or not emulator or not launcher_anr or 'Targeted input event injection' not in result.stdout:break
+  print('::warning::Emulator Quickstep launcher ANR intercepted input; restarting that launcher and rerunning native tests once. Diagnostics retained.',flush=True)
+  run('shell','am','force-stop','com.android.launcher3')
+  run('shell','am','force-stop','dev.fofo.maglava')
+  time.sleep(3)
  assert 'PASS:' in result.stdout and 'FAIL:' not in result.stdout,result.stdout
  for name in ['maglava-home.png','maglava-game-1.png','maglava-game-2.png','maglava-complete.png']:
   with (out/name).open('wb') as f:run('exec-out','run-as','dev.fofo.maglava','cat','cache/'+name,stdout=f)
