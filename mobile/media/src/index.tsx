@@ -8,10 +8,10 @@ const clamp={extrapolateLeft:'clamp' as const,extrapolateRight:'clamp' as const}
 const scenes=[
  {from:0,to:3,title:['RISE','OR BURN.'],tag:'MAGLAVA',detail:'A magnetic climb above rising lava.',stage:1,start:0},
  {from:3,to:10,title:['MATCH','YOUR COLOR.'],tag:'01 / CATCH',detail:'Four colors. One way up.',stage:1,start:1},
- {from:10,to:17,title:['CARRY','YOUR SWING.'],tag:'02 / CLIMB',detail:'Find your rhythm. Launch again.',stage:1,start:3},
+ {from:10,to:17,title:['CARRY','YOUR SWING.'],tag:'02 / CLIMB',detail:'Find your rhythm. Launch again.',stage:1,start:1},
  {from:17,to:24,title:['DODGE','THE DANGER.'],tag:'03 / SURVIVE',detail:'Ghosts. Lasers. Rising lava.',stage:6,start:1},
- {from:24,to:30,title:['FORTY','WAYS UP.'],tag:'40 HANDCRAFTED STAGES',detail:'Checkpoints. Personal bests. One more try.',stage:9,start:1},
- {from:30,to:36,title:['ONE MORE','LAUNCH.'],tag:'MAGLAVA',detail:'Swing. Climb. Survive.  •  maglava.io',stage:9,start:4},
+ {from:24,to:30,title:['FORTY','WAYS UP.'],tag:'40 HANDCRAFTED STAGES',detail:'Checkpoints. Personal bests. One more try.',stage:38,start:1},
+ {from:30,to:36,title:['ONE MORE','LAUNCH.'],tag:'MAGLAVA',detail:'Swing. Climb. Survive.  •  maglava.io',stage:38,start:5},
 ];
 function Scene({scene}:{scene:typeof scenes[number]}) {
  const frame=useCurrentFrame(),{fps}=useVideoConfig();
@@ -44,7 +44,7 @@ function Trailer() {
 }
 function Preview() {
  const frame=useCurrentFrame(),{fps}=useVideoConfig();
- const clips=[{stage:1,from:0,length:9,start:0,label:'MATCH A COLOR. CATCH A MAGNET.'},{stage:6,from:9,length:9,start:1,label:'CARRY YOUR SWING.'},{stage:9,from:18,length:10,start:1,label:'CLIMB. DODGE. SURVIVE.'}];
+ const clips=[{stage:1,from:0,length:9,start:0,label:'MATCH A COLOR. CATCH A MAGNET.'},{stage:6,from:9,length:9,start:1,label:'CARRY YOUR SWING.'},{stage:38,from:18,length:10,start:1,label:'CLIMB. DODGE. SURVIVE.'}];
  return <AbsoluteFill style={{background:ink,fontFamily:font}}><Font/>
   {clips.map(c=><Sequence key={c.stage} from={c.from*fps} durationInFrames={c.length*fps}>
    <AbsoluteFill><Video muted src={staticFile(`captures/apple/iphone-stage-${c.stage}.mp4`)} trimBefore={c.start*fps} style={{width:'100%',height:'100%',objectFit:'contain'}}/>

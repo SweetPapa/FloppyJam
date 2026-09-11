@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 """Capture current iPhone/iPad UI and real gameplay. Shut down owned simulators."""
-import json,os,signal,subprocess,time
+import argparse,json,os,signal,subprocess,time
 from pathlib import Path
 root=Path(__file__).resolve().parents[2];os.chdir(root)
+p=argparse.ArgumentParser();p.add_argument('--stages',type=int,nargs='+',default=[1,6,38]);p.add_argument('--reuse-tested-build',action='store_true');a=p.parse_args()
+assert not (a.reuse_tested_build and os.environ.get('CI')), 'CI must run native integration tests.'
 out=root/'mobile/.build/uat/captures/apple';out.mkdir(parents=True,exist_ok=True)
 def run(*args,**kw):return subprocess.run(list(args),check=True,**kw)
 def sim(*args,**kw):return run('xcrun','simctl',*args,**kw)
@@ -14,8 +16,9 @@ derived=root/'mobile/.build/capture-ios'
 for kind,device in [('iphone',phone),('ipad',pad)]:
  udid=device['udid'];owned=device['state']!='Booted'
  try:
-  with (out/f'{kind}-test.log').open('w') as log:
-   run('xcodebuild','-project','mobile/ios/Maglava.xcodeproj','-scheme','Maglava','-destination',f'platform=iOS Simulator,id={udid}','-derivedDataPath',str(derived),'CODE_SIGNING_ALLOWED=NO','test',stdout=log,stderr=subprocess.STDOUT)
+  if not a.reuse_tested_build:
+   with (out/f'{kind}-test.log').open('w') as log:
+    run('xcodebuild','-project','mobile/ios/Maglava.xcodeproj','-scheme','Maglava','-destination',f'platform=iOS Simulator,id={udid}','-derivedDataPath',str(derived),'CODE_SIGNING_ALLOWED=NO','test',stdout=log,stderr=subprocess.STDOUT)
   if owned:
    # XCTest may use a clone; explicitly boot the selected capture device.
    status=json.loads(sim('list','devices','-j',capture_output=True,text=True).stdout)
@@ -26,7 +29,7 @@ for kind,device in [('iphone',phone),('ipad',pad)]:
   sim('install',udid,str(derived/'Build/Products/Debug-iphonesimulator/Maglava.app'))
   sim('launch','--terminate-running-process',udid,'dev.fofo.maglava');time.sleep(2)
   sim('io',udid,'screenshot',str(out/f'{kind}-home.png'))
-  for level in [1,6,9]:
+  for level in a.stages:
    sim('launch','--terminate-running-process',udid,'dev.fofo.maglava','--level',str(level),'--media-tour')
    record=subprocess.Popen(['xcrun','simctl','io',udid,'recordVideo','--codec=h264','--force',str(out/f'{kind}-stage-{level}.mp4')],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
    time.sleep(4);sim('io',udid,'screenshot',str(out/f'{kind}-stage-{level}.png'));time.sleep(8)
