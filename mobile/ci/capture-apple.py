@@ -16,9 +16,15 @@ derived=root/'mobile/.build/capture-ios'
 for kind,device in [('iphone',phone),('ipad',pad)]:
  udid=device['udid'];owned=device['state']!='Booted'
  try:
+  print('Preparing',kind,device['name'],udid,flush=True)
+  if owned:sim('boot',udid)
+  sim('bootstatus',udid,'-b',timeout=240)
   if not a.reuse_tested_build:
-   with (out/f'{kind}-test.log').open('w') as log:
-    run('xcodebuild','-project','mobile/ios/Maglava.xcodeproj','-scheme','Maglava','-destination',f'platform=iOS Simulator,id={udid}','-derivedDataPath',str(derived),'CODE_SIGNING_ALLOWED=NO','test',stdout=log,stderr=subprocess.STDOUT)
+   logpath=out/f'{kind}-test.log'
+   try:
+    with logpath.open('w') as log:
+     run('xcodebuild','-project','mobile/ios/Maglava.xcodeproj','-scheme','Maglava','-destination',f'platform=iOS Simulator,id={udid}','-destination-timeout','120','-parallel-testing-enabled','NO','-derivedDataPath',str(derived),'CODE_SIGNING_ALLOWED=NO','test',stdout=log,stderr=subprocess.STDOUT,timeout=600)
+   finally:print(logpath.read_text()[-18000:],flush=True)
   if owned:
    # XCTest may use a clone; explicitly boot the selected capture device.
    status=json.loads(sim('list','devices','-j',capture_output=True,text=True).stdout)
