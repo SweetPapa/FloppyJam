@@ -32,7 +32,7 @@ if(values.platform!=='android') {
  if(!version)throw Error('No editable iOS listing; refusing to modify an in-review or live version.');
  const locale=(await apple(`appStoreVersions/${version.id}/appStoreVersionLocalizations`)).data.find(x=>x.attributes.locale==='en-US');
  const sets=(await apple(`appStoreVersionLocalizations/${locale.id}/appScreenshotSets`)).data;
- for(const [platform,display] of [['iphone','APP_IPHONE_69'],['ipad','APP_IPAD_PRO_3GEN_129']]) {
+ for(const [platform,display] of [['iphone','APP_IPHONE_67'],['ipad','APP_IPAD_PRO_3GEN_129']]) {
   let set=sets.find(x=>x.attributes.screenshotDisplayType===display);
   if(!set)set=(await apple('appScreenshotSets','POST',{data:{type:'appScreenshotSets',attributes:{screenshotDisplayType:display},relationships:{appStoreVersionLocalization:{data:{type:'appStoreVersionLocalizations',id:locale.id}}}}})).data;
   const previous=(await apple(`appScreenshotSets/${set.id}/appScreenshots`)).data;
@@ -48,9 +48,6 @@ if(values.platform!=='android') {
   for(const old of previous.filter(x=>!keep.includes(x.id)))await apple(`appScreenshots/${old.id}`,'DELETE');
   await apple(`appScreenshotSets/${set.id}/relationships/appScreenshots`,'PATCH',{data:keep.map(id=>({type:'appScreenshots',id}))});
  }
- // Remove obsolete 6.7-inch captures only after the current 6.9-inch set is complete;
- // App Store Connect scales the largest available screenshots for smaller devices.
- for(const set of sets.filter(x=>x.attributes.screenshotDisplayType==='APP_IPHONE_67'))await apple(`appScreenshotSets/${set.id}`,'DELETE');
  const previewFile=join(dir,'MagLava-AppPreview.mp4');
  try {
   await readFile(previewFile);

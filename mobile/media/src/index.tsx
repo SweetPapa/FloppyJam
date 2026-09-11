@@ -72,7 +72,7 @@ const defaults:CardProps={platform:'iphone',image:'captures/apple/iphone-stage-1
 function Root(){return <>
  <Composition id="MagLavaTrailer" component={Trailer} durationInFrames={36*30} fps={30} width={1920} height={1080}/>
  <Composition id="AppPreview" component={Preview} durationInFrames={28*30} fps={30} width={886} height={1920}/>
- <Composition id="iPhoneCard" component={Card} defaultProps={defaults} durationInFrames={1} fps={30} width={1320} height={2868}/>
+ <Composition id="iPhoneCard" component={Card} defaultProps={defaults} durationInFrames={1} fps={30} width={1290} height={2796}/>
  <Composition id="iPadCard" component={Card} defaultProps={{...defaults,platform:'ipad'}} durationInFrames={1} fps={30} width={2064} height={2752}/>
  <Composition id="AndroidCard" component={Card} defaultProps={{...defaults,platform:'android'}} durationInFrames={1} fps={30} width={1080} height={2400}/>
 </>};
