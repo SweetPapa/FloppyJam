@@ -1,5 +1,28 @@
 # Native mobile presentation validation
 
+## September 11 — UAT, native captures and store media
+
+The sections below are historical validation records. Current delivery status is
+in [store/RELEASE.md](store/RELEASE.md), and the release procedure is in
+[ci/README.md](ci/README.md). Local Android, iPhone and iPad integration passed
+before recording stages 1, 6 and 38. Hosted Android, iPhone 17 Pro Max and
+iPad Pro 13-inch (M5) integration passed in runs 1005, 1006 and 1010. All six C checks
+passed on Windows and Linux; Mac Catalyst archives are universal, signed,
+notarized and stapled. Windows signatures are verified and the package is checked
+for accidental dependencies on separately installed Visual C++ runtimes.
+Visual inspection caught an Android startup screen in one run 1006 capture;
+the recorder now requires focused gameplay and successful GLES frames before
+starting its recording clock.
+The fresh-emulator diagnostics also caught Android replacing the activity during
+resource setup. Test UI helpers guard against destroyed activity instances and
+report assertions through instrumentation. Only the precise first-boot resource
+change or launcher ANR permits one full rerun per cause. A controlled theme change
+reported its different recreation flag safely, and ordinary integration/capture
+passed afterward with the original 45-second touch deadline.
+The initial Xcode 26 iOS archive has passed Apple processing and is assigned to
+TestFlight groups. Temporary local capture emulators and simulators are closed.
+
+
 ## Menu refresh — September 10, 2026
 
 - Reviewed the original Vue/TypeScript MainMenu and HowToPlay components and
