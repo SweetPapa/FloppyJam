@@ -8,6 +8,18 @@ assert not (a.reuse_tested_build and os.environ.get('CI')), 'CI must run native 
 out=root/'mobile/.build/uat/captures/apple';out.mkdir(parents=True,exist_ok=True)
 def run(*args,**kw):return subprocess.run(list(args),check=True,**kw)
 def sim(*args,**kw):return run('xcrun','simctl',*args,**kw)
+validator=out/'check-apple-capture'
+run('xcrun','swiftc',str(root/'mobile/ci/check-apple-capture.swift'),'-o',str(validator))
+def screenshot(udid,path):
+ sim('io',udid,'screenshot',str(path))
+ return subprocess.run([str(validator),str(path)]).returncode==0
+def wait_visible(udid,path):
+ # simctl launch returning a PID does not mean UIKit/Metal has presented.
+ deadline=time.monotonic()+60
+ while time.monotonic()<deadline:
+  if screenshot(udid,path):return
+  time.sleep(2)
+ raise RuntimeError(f'App did not render a visible scene; inspect {path}')
 available=json.loads(sim('list','devices','available','-j',capture_output=True,text=True).stdout)['devices']
 devices=[d for runtime,items in available.items() if 'iOS' in runtime for d in items]
 phone=next((d for d in devices if 'Pro Max' in d['name']),next(d for d in devices if 'iPhone' in d['name']))
@@ -34,13 +46,19 @@ for kind,device in [('iphone',phone),('ipad',pad)]:
   sim('bootstatus',udid,'-b')
   sim('status_bar',udid,'override','--time','9:41','--dataNetwork','wifi','--wifiMode','active','--wifiBars','3','--batteryState','charged','--batteryLevel','100')
   sim('install',udid,str(derived/'Build/Products/Debug-iphonesimulator/Maglava.app'))
-  sim('launch','--terminate-running-process',udid,'dev.fofo.maglava');time.sleep(2)
-  sim('io',udid,'screenshot',str(out/f'{kind}-home.png'))
+  sim('launch','--terminate-running-process',udid,'dev.fofo.maglava')
+  wait_visible(udid,out/f'{kind}-home.png')
   for level in a.stages:
    sim('launch','--terminate-running-process',udid,'dev.fofo.maglava','--level',str(level),'--media-tour')
+   wait_visible(udid,out/f'{kind}-stage-{level}-ready.png')
    record=subprocess.Popen(['xcrun','simctl','io',udid,'recordVideo','--codec=h264','--force',str(out/f'{kind}-stage-{level}.mp4')],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
-   time.sleep(4);sim('io',udid,'screenshot',str(out/f'{kind}-stage-{level}.png'));time.sleep(8)
-   record.send_signal(signal.SIGINT);record.wait(timeout=20)
+   try:
+    time.sleep(4)
+    if not screenshot(udid,out/f'{kind}-stage-{level}.png'):
+     raise RuntimeError(f'Blank {kind} stage {level} capture; refusing publication')
+    time.sleep(8)
+   finally:
+    record.send_signal(signal.SIGINT);record.wait(timeout=20)
   (out/f'{kind}-device.json').write_text(json.dumps({'device':device['name'],'source':os.environ.get('GITHUB_SHA','local'),'method':'Native Metal screen recording; debug bot selects actual color inputs.'},indent=2)+'\n')
  finally:
   if owned:subprocess.run(['xcrun','simctl','shutdown',udid],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
