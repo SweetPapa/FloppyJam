@@ -21,11 +21,14 @@ if os.environ.get('CI'):
 for path in ['apk/debug/app-debug.apk','apk/androidTest/debug/app-debug-androidTest.apk']:
  run('install','-r',str(root/'mobile/android/app/build/outputs'/path))
 if not a.reuse_tested_build:
- for attempt in range(2):
+ recovered=set()
+ for attempt in range(3):
+  run('logcat','-c')
   result=run('shell','am','instrument','-w','dev.fofo.maglava.test/dev.fofo.maglava.SmokeRunner',capture_output=True,text=True,timeout=180)
   (out/'native-test.log').write_text(result.stdout+result.stderr)
   if 'PASS:' in result.stdout and 'FAIL:' not in result.stdout:break
-  (out/f'failure-{attempt}-logcat.txt').write_text(run('logcat','-d',capture_output=True,text=True).stdout)
+  logcat=run('logcat','-d',capture_output=True,text=True).stdout
+  (out/f'failure-{attempt}-logcat.txt').write_text(logcat)
   for name in ['maglava-game-1.png','maglava-game-2.png','maglava-failure.png']:
    cached=subprocess.run([adb,'exec-out','run-as','dev.fofo.maglava','cat','cache/'+name],capture_output=True)
    if cached.returncode==0:(out/f'failure-{attempt}-{name}').write_bytes(cached.stdout)
@@ -35,11 +38,16 @@ if not a.reuse_tested_build:
   (out/f'failure-{attempt}-test.log').write_text(result.stdout+result.stderr)
   launcher_anr=re.search(r'mCurrentFocus=.*Application Not Responding: com\.android\.launcher3',windows)
   emulator=run('shell','getprop','ro.kernel.qemu',capture_output=True,text=True).stdout.strip()=='1'
-  if attempt or not emulator or not launcher_anr or 'Targeted input event injection' not in result.stdout:break
-  print('::warning::Emulator Quickstep launcher ANR intercepted input; restarting that launcher and rerunning native tests once. Diagnostics retained.',flush=True)
-  run('shell','am','force-stop','com.android.launcher3')
+  reason=None
+  if launcher_anr and 'Targeted input event injection' in result.stdout:reason='launcher ANR'
+  recreation=re.search(r'TEST_ACTIVITY_RECREATED changes=([0-9a-f]+)',result.stdout)
+  if recreation and int(recreation[1],16)&0x80000000 and 'ApplicationInfo updating for dev.fofo.maglava' in logcat:reason='first-boot resource update recreated the activity'
+  if not emulator or not reason or reason in recovered or attempt==2:break
+  recovered.add(reason)
+  print(f'::warning::Emulator {reason}; rerunning the full native test once after setup settles. Diagnostics retained.',flush=True)
+  if launcher_anr:run('shell','am','force-stop','com.android.launcher3')
   run('shell','am','force-stop','dev.fofo.maglava')
-  time.sleep(3)
+  time.sleep(15)
  assert 'PASS:' in result.stdout and 'FAIL:' not in result.stdout,result.stdout
  for name in ['maglava-home.png','maglava-game-1.png','maglava-game-2.png','maglava-complete.png']:
   with (out/name).open('wb') as f:run('exec-out','run-as','dev.fofo.maglava','cat','cache/'+name,stdout=f)
