@@ -302,13 +302,14 @@ static void exec(void)
         if (eq(kw, "grant")) {
             char id[64];
             while (word(&p, id, sizeof id) && id[0]) {
+                bool fresh=!clue_has(id);
                 clue_grant(id);
-                if (g_speaker >= 0) {
+                if (fresh && g_speaker >= 0) {
                     char src[FLAG_MAX_KEY];
                     snprintf(src, sizeof src, "src.%s", id);
                     flag_set(src, g_speaker + 1);
                 }
-                sfx_play(SFX_CHIME);
+                if(fresh)sfx_play(SFX_CHIME);
             }
             continue;
         }
@@ -369,6 +370,15 @@ static void exec(void)
     music_duck(false);
 }
 
+int dlg_choice_count(void){return g_state==S_CHOOSING?g_nchoice:0;}
+bool dlg_choose(int index) {
+    if(g_state!=S_CHOOSING||index<0||index>=g_nchoice)return false;
+    char target[48];snprintf(target,sizeof target,"%s",g_choice[index].target);
+    if(target[0])return dlg_start(target);
+    g_state=S_EXEC;return true;
+}
+void dlg_advance_beat(void){if(g_state==S_TYPING)g_state=S_EXEC;}
+
 /* --------------------------------------------------------------- update */
 static bool clicked(void) { return IsMouseButtonPressed(MOUSE_BUTTON_LEFT); }
 static bool advanced(void)
@@ -397,7 +407,7 @@ dlg_status dlg_update(float dt)
                 g_blip_acc = 0;
                 sfx_play(SFX_PAGE);
             } else {
-                g_state = S_EXEC;
+                dlg_advance_beat();
                 return dlg_update(0);
             }
         }
@@ -422,7 +432,8 @@ void dlg_draw(void)
 {
     if (g_state == S_IDLE || g_state == S_END) return;
 
-    Rectangle panel = { 40, VH - PANEL_H - 12, VW - 80, PANEL_H };
+    float panel_h=g_state==S_CHOOSING?fminf(420,72+g_nchoice*66*text_scale()):PANEL_H;
+    Rectangle panel = { 40, VH - panel_h - 12, VW - 80, panel_h };
     paper_panel(panel, 3.5f, 4242);
 
     float px = panel.x + 24, py = panel.y + 18;
@@ -468,12 +479,10 @@ void dlg_draw(void)
                           -1, true, NULL);
             y += h + 4;
         }
-        if (g_hover >= 0 && clicked()) {
+        for(int i=0;i<g_nchoice;i++)if(IsKeyPressed(KEY_ONE+i))g_hover=i;
+        if (g_hover >= 0 && (clicked() || IsKeyPressed(KEY_ONE+g_hover))) {
             sfx_play(SFX_CLICK);
-            char tgt[48];
-            snprintf(tgt, sizeof tgt, "%s", g_choice[g_hover].target);
-            if (tgt[0]) { dlg_start(tgt); }
-            else        { g_state = S_EXEC; }
+            dlg_choose(g_hover);
         }
         return;
     }

@@ -1,7 +1,7 @@
 {
   "id": 10,
   "name": "Vertical Insanity",
-  "parTime": 180,
+  "parTime": 16,
   "lavaSpeed": 25,
   "lavaAcceleration": 0,
   "checkpoints": [

@@ -6,6 +6,7 @@
 #include "board/board.h"
 #include "puzzle/puzzle.h"
 #include "save/save.h"
+#include "investigation/investigation.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -61,7 +62,22 @@ bool journal_update(float dt)
     if (IsKeyPressed(KEY_DOWN)) g_scroll++;
     if (IsKeyPressed(KEY_UP) && g_scroll > 0) g_scroll--;
 
-    /* Town tab: puzzle replays, purely for fun (§5.1) */
+    int count=0,visible=10;
+    if(g_tab==TAB_TOWN) {
+        for(int i=0;i<puzzle_count();i++){char key[48];snprintf(key,sizeof key,"pzdone.%s",puzzle_at(i)->id);count+=flag_get(key)!=0;}
+    }else if(g_tab==TAB_PEOPLE){visible=5;for(int i=0;i<npc_count();i++){char key[48];snprintf(key,sizeof key,"met.%s",npc_key(i));count+=flag_get(key)!=0;}}
+    else if(g_tab==TAB_CLUES)count=clue_count();
+    int max=count>visible?count-visible:0;if(g_scroll>max)g_scroll=max;
+    if(g_tab==TAB_BOARDS && click) {
+        for(int i=0;i<content_block_count("board");i++) {
+            char id[48];Block b;content_block_at("board",i,id,sizeof id,&b);
+            if(board_is_solved(id) && CheckCollisionPointRec(m,(Rectangle){118,130+i*48.0f,1010,44})) {
+                snprintf(g_replay,sizeof g_replay,"board:%.40s",id);journal_close();return true;
+            }
+        }
+    }
+
+    /* Town tab: every completed puzzle has a visible, scrollable replay row. */
     if (g_tab == TAB_TOWN && click) {
         int n = puzzle_count();
         int shown = 0;
@@ -70,8 +86,9 @@ bool journal_update(float dt)
             char key[FLAG_MAX_KEY];
             snprintf(key, sizeof key, "pzdone.%s", d->id);
             if (!flag_get(key)) continue;
-            Rectangle r = { 660, 250 + shown * 34.0f, 480, 30 };
-            shown++;
+            if(shown++<g_scroll)continue;
+            int row=shown-g_scroll-1;if(row>=10)break;
+            Rectangle r = { 660, 250 + row * 34.0f, 480, 30 };
             if (CheckCollisionPointRec(m, r)) {
                 snprintf(g_replay, sizeof g_replay, "%s", d->id);
                 journal_close();
@@ -126,7 +143,7 @@ static void draw_clues(Rectangle page)
     float y = page.y + 42;
     for (int i = g_scroll; i < clue_count(); i++) {
         if (y > page.y + page.height - 40) break;
-        const char *id = clue_at(i);
+        const char *id = clue_at(clue_count()-1-i);
         doodle(D_STAR, page.x + 24, y + 12, 10, 0, col_accent_a());
         art_text(ui_str(id), page.x + 44, y,
                  art_text_size_for(ui_str(id), page.width - 70, 17), col_ink());
@@ -163,7 +180,7 @@ static void draw_boards(Rectangle page)
         art_text(ui_str(tkey), page.x + 50, y,
                  art_text_size_for(ui_str(tkey), page.width - 80, 18),
                  solved ? col_ink() : col_ink_soft());
-        art_text(solved ? "solved" : "not yet", page.x + 52, y + 24, 13,
+        art_text(solved ? "solved - click to read" : "not yet", page.x + 52, y + 24, 13,
                  col_ink_soft());
         y += 48;
     }
@@ -183,7 +200,8 @@ static void draw_town(Rectangle page)
     art_text("Prismbrook", page.x + 14, page.y + 8, 20, col_ink());
     float y = page.y + 44;
     for (int i = 0; i < 7; i++) {
-        bool open = i <= stage;
+        static const char *entry[]={"p_gate","ch1_dock","ch2_row","ch3_lane","ch4_garden","ch5_green","f_lantern"};
+        bool open = town_unlocked(entry[i]);
         doodle(i == 6 ? D_PRISM : D_HOUSE, page.x + 30, y + 10, 13, 0,
                open ? col_accent_b() : col_paper_dark());
         art_text(district[i], page.x + 56, y, 17, open ? col_ink() : col_ink_soft());
@@ -219,13 +237,15 @@ static void draw_town(Rectangle page)
         char key[FLAG_MAX_KEY];
         snprintf(key, sizeof key, "pzdone.%s", d->id);
         if (!flag_get(key)) continue;
-        Rectangle r = { 660, 250 + shown * 34.0f, 480, 30 };
+        if(shown++<g_scroll)continue;
+        int row=shown-g_scroll-1;if(row>=10)break;
+        Rectangle r = { 660, 250 + row * 34.0f, 480, 30 };
         bool hot = art_hover(r);
         art_text(d->title ? d->title : d->id, r.x + 8, r.y + 4, 16,
                  hot ? col_accent_b() : col_ink_soft());
-        shown++;
-        if (shown > 9) break;
+
     }
+    art_text("Mouse wheel / arrows: more replays",660,612,14,col_ink_soft());
     if (shown == 0)
         art_text("Solve one and it lives here forever.", 660, 250, 15, col_ink_soft());
 }

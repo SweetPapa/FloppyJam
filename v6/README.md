@@ -1,183 +1,98 @@
-# HUEDUNIT (v6)
+# HUEDUNIT — v6
 
-**A cozy detective puzzle-adventure. The town of Prismbrook has lost its
-colour, its Tinter, and its nerve. You're here to find all three.**
+A cozy detective adventure about a seaside town that has lost its colors, a missing Tinter, and a magpie everyone has blamed too quickly. Help the people of Prismbrook, gather evidence, and work out what happened inside the locked Prismworks.
 
-One morning Prismbrook wakes the colour of a wet newspaper. The Prism is gone
-from the lantern room, the Tinter is gone with it, the tower is locked from the
-inside, and the only creature anyone has seen near it is a magpie the whole
-town has decided is a thief.
+The game has fourteen locations, fifteen mini-games, six main deductions, a finale, and six optional neighborhood mysteries. There is no combat or time pressure.
 
-Nobody done it. Everybody fixes it.
-
-Single native executable, **264 KB**, no asset files of any kind. Every stroke
-of the world is drawn from a vector vocabulary at runtime, every sound is
-synthesised at startup, and the entire script — dialogue, scenes, boards,
-cutscenes — is compiled into the binary at build time by our own tool.
-
-## Build
+## Play
 
 ```sh
-make            # release: -Os -flto, stripped
-make run        # build and play
-make debug      # -O1 -g, warnings, no LTO
-make check      # bake + tests + build + size gate
-make size       # prints the shipped bytes and fails over 1,474,560
-make clean
+cd v6                 # from the repository root
+make run
 ```
 
-Needs a C11 compiler and raylib 5.x/6.x (`brew install raylib`, or your distro
-package). The Makefile finds raylib through `pkg-config` and falls back to
-`-lraylib`. macOS and Linux build out of the box.
-
-Windows x64 is the primary ship target. Cross-compile with MinGW-w64 against a
-MinGW raylib:
-
-```sh
-make windows RAYLIB_WIN=/path/to/mingw-raylib     # -> huedunit.exe
-```
-
-That link line is `-static -static-libgcc -mwindows`, so the result runs on a
-stock Windows 10/11 machine with no DLLs beside it. The current macOS release
-build is **264 KB** against a 1,474,560-byte ceiling.
-
-## Playing
-
-Mouse only, all the way through. Click to walk, click a person to talk, click
-the sparkles because they are always something.
+Build dependencies: a C11 compiler, Python 3, raylib and pkg-config. On macOS, the existing Homebrew raylib installation is used. Art, dialogue, music and the licensed Barlow font are embedded in the executable; runtime does not need an assets folder. The macOS binary links to raylib dynamically.
 
 | Action | Input |
 | --- | --- |
-| Walk / talk / inspect | left click |
-| Advance dialogue | click, `SPACE` or `ENTER` |
-| Case Journal | `J` or `TAB` |
-| Settings / menu | `ESC` |
-| Skip a cutscene | `ESC` |
-| Turn a puzzle piece | `R` (tart tray only) |
-| Screenshot | `F12` |
+| Walk, talk, inspect an object | Left click |
+| Hurry to an interaction | Double-click |
+| Reveal interaction labels | Hold Space while exploring |
+| Advance a conversation or inspection | Click, Space or Enter |
+| Choose a dialogue response | Click or 1–3 |
+| Casebook: leads, town map, little mysteries | M or the Casebook button |
+| Journal: people, collected evidence, solved boards, replays | J or Tab |
+| Settings / leave a puzzle or board / dismiss a hint | Escape |
+| Skip a cutscene | Escape |
+| Screenshot | F12 |
 
-Nothing in the game is timed, nothing has a fail state, and no wrong answer
-ever takes anything away from you.
+Map travel opens with the story, using the same district gates as walking. The first puzzle hint is free, further tiers cost one feather, and previously purchased hints can be read again. **Work together** offers an optional way to finish a puzzle and receive its evidence; a confirmation note gives you a chance to return to the puzzle instead.
 
-Nothing is ever cut off, either. A line too long for its panel pages — a
-chevron appears and a click turns it — and anything that has to be read all
-at once, like a deduction scroll or a hint, steps its type down until it
-fits. That holds at all three text sizes, and `make check` fails the build if
-a writer ever exceeds what the engine can hold.
+## The investigation expansion
 
-## The colour is the progress bar
+- **A casebook with useful leads.** The current question and evidence count follow solved deductions, independently of color animations. Leads point to people and places with missing evidence. Once ready, open the deduction directly from your notes.
+- **A town map.** Travel between unlocked locations, see where you are, and keep the walking routes for exploring.
+- **Six little mysteries.** Find two physical observations in each neighborhood, connect them, and choose an explanation. These are optional and have no wrong-answer penalty. Rewards include two feathers, friendship, and a keepsake displayed in the square. Repeated clicks cannot award the same reward again.
+- **Clearer deduction boards.** Select a blank to see its answer category and supporting observations. Draft answers and hint tiers persist. Solved cases can be read from the journal without replaying their rewards or color changes.
+- **More readable presentation.** Embedded scalable type, warm paper controls, quieter interaction glints, distinct props in secondary locations, labeled exits, and characters who approach people and observations from the side.
+- **Fairer puzzles and fewer interruptions.** Petra's teaching lock now gives a complete ordering with exactly one solution. Hints have dismissible notes that stop input from reaching puzzle pieces underneath. Every completed puzzle is reachable in the journal's scrolling replay list.
 
-The world is ink on gray paper. Every chapter you close restores one hue band
-to the *entire* game — blue, then yellow, then red, then green, then violet,
-then the full spectrum and gold — and the restoration is a flood that spreads
-outward from the tower, shape by shape.
+The main story and its warm resolution remain intact. This expansion adds things to investigate between conversations rather than adding combat, grinding, or time gates.
 
-That is one mechanism, not six. Content authors pick honest colours; the
-palette classifies each one into a hue band and drains it to luminance until
-the player has earned that band back. So the harbour goes blue, Otto's coat
-goes blue, and a scene written next month goes blue too, with no edits.
+## Saves
 
-The music does the same thing. The three-voice pattern engine gains a voice
-and a brightness step per restored hue, so the soundtrack recolours with the
-town.
+The game stores `huedunit0.sav` and `huedunit.cfg` in its working directory. Run it from the same directory to continue an existing case. Version 1 saves are supported. New saves use atomic replacement, preserve evidence discovery order and unknown flags, and validate the file before replacing the live case. Version 2 detects missing save footers. The format is not intended to recover every possible form of file corruption.
 
-## The mystery is fair, and that is enforced
+Board drafts, purchased hint tiers, observations and mystery rewards persist. Mini-game piece positions restart when you re-enter a puzzle. Puzzle replays do not award story evidence or change completion flags, although requesting a new hint still spends feathers.
 
-Every Case Board answer is deducible from evidence the player already has —
-not as an aspiration, as a build failure.
+Screenshot and native test modes disable all save and settings writes. Test binaries run in disposable directories.
 
-`tools/bakery` compiles the content and proves, for every board, that every
-clue it requires is grantable, that it is grantable in a chapter at or before
-that board's, and that **every blank cites at least two independent evidence
-sources**. It also proves no dialogue node is unreachable, no jump dangles, and
-no clue is granted that nothing ever uses. `make check` runs it and 2,125 more
-content assertions through the interpreters' own reader, plus 270 headless
-puzzle solves.
-
-A mystery game that can dead-end an honest player is broken. This one can't be.
-
-## Layout
-
-```
-v6/
-  Makefile
-  docs/CANON.md          the world, the truth, the cast — frozen at Wave 0
-  docs/API.md            module contracts and the four grammars — frozen
-  tools/bakery/          content compiler, linters, clue-closure gate
-  src/
-    core/     main.c app.c        state machine, title, HUD, capture harness
-    scene/    scene.c/.h          point-and-click screens, backdrops, walking
-    dlg/      dlg.c/.h            dialogue interpreter
-    board/    board.c/.h          Case Board interpreter
-    cut/      cut.c/.h            cutscene interpreter
-    puzzle/   puzzle.c/.h         plugin host: frame, hints, skip, attempts
-    puzzles/  p_*.c               fifteen mini-games, one file each
-    art/      artkit.c npc.c      ink vocabulary, palette, paper puppets
-    audio/    synth.c/.h          every sound in the game, made at startup
-    journal/  journal.c/.h        the book: People, Clues, Boards, Town
-    flags/    flags.c/.h          the only cross-system state
-    save/     save.c/.h           saves by name, forward-compatible forever
-    content/  content.c/.h        the baked blob and its readers
-  content/
-    dialogue/*.dlg  scenes/*.scn  boards/*.case  cutscenes/*.cut  strings/*.txt
-  tests/
-```
-
-Engine agents build interpreters; content agents write files; the two never
-edit each other's territory. There is no registry file anywhere — the build
-globs `src/*/*.c`, `src/puzzles/p_*.c` and `content/*/*`, so adding a mini-game
-is exactly the act of adding one file.
-
-## Tests
+## Build and verify
 
 ```sh
-make check
+make                 # optimized release build
+make debug           # clean rebuild with debug information
+make check           # content lint, headless tests, release build, size report
+make size            # informational only; no floppy-size ceiling
+make native-smoke    # build the test that opens a real raylib window
+make clean
 ```
 
-- `test_flags` — the flag store: namespacing, clue idempotence and discovery
-  order, trust, complete iteration (a save is "every non-zero flag by name", so
-  incomplete iteration would silently eat a chapter), and refusing to wrap when
-  full.
-- `test_content` — 2,125 assertions over the real baked town: clue closure and
-  the two-sources rule for all six boards, every blank present in its scroll
-  and its answer present in its pool, every scene exit/talk/board target
-  resolving, no dead-end screens, the closed cutscene verb set, every dialogue
-  jump landing, every clue having English to show the player, the condition
-  evaluator, a save round-trip including a flag from a build that does not
-  exist yet, and that no line, hotspot or joined dialogue beat is longer than
-  the engine can show.
-- `test_puzzles` — all 15 mini-games driven to solved with no window and no
-  mouse, at three difficulties across six seeds (270 runs), plus every hint
-  tier non-empty and every seeded puzzle proven deterministic.
+For the native input and layout checks:
+
+```sh
+mkdir -p artifacts/review
+cd artifacts/review
+../../huedunit_smoke
+```
+
+The native harness replaces input polling in its own test executable; it runs the production app and renderer without sending mouse or keyboard events to other applications. It writes screenshots in its working directory and never writes player saves.
+
+Verification includes:
+
+- Flag-store and content tests, including clue sources and valid scene/dialogue targets.
+- All fifteen puzzle solve fixtures at three difficulties and six seeds: 270 runs. Fixtures demonstrate solvability, not human difficulty or enjoyment.
+- Campaign traversal through the real dialogue, condition and board interpreters using three dialogue-choice patterns; all six deductions and the finale must complete. This catches runtime truncation that source-only linting missed.
+- Optional mystery gating, wrong answers, idempotent rewards, old-save loading, interrupted saves, settings bounds and read-only captures.
+- Native mouse/keyboard interaction checks for observations, casebook travel, mystery answers, hints, cooperation, the final journal replay, and board layouts at all three text sizes.
+
+The verified platform for this update is macOS with raylib 6.0. Windows cross-compilation remains available with `make windows RAYLIB_WIN=/path/to/mingw-raylib`, but this update has not been played on Windows or Linux.
 
 ## Captures
 
-The integration cards want before/after pictures, so the game can photograph
-itself:
-
 ```sh
-./huedunit --shot title                 shot.png
-./huedunit --shot scene:ch1_dock        dock.png
-./huedunit --shot board:ch1_midnight    board.png
-./huedunit --shot puzzle:mirror_light   nona.png
+./huedunit --shot title title.png
+./huedunit --shot scene:ch1_dock dock.png
+./huedunit --shot map map.png
+./huedunit --shot mysteries mysteries.png
+./huedunit --shot board:ch5_where board.png
 ./huedunit --shot puzzle:water_flow+hint hint.png
-./huedunit --shot settings              settings.png
-./huedunit --shot journal               journal.png
-./huedunit --shot cut:ch2_hue_yellow    scene.png 230   # frames to wait
+./huedunit --shot dialogue:p_mayor_gate conversation.png
+./huedunit --shot journal journal.png
 ```
 
-Every screen in the game is reachable this way, which is how the "nothing
-clips at any text size" claim above was checked rather than argued: set
-`text 2` in `huedunit.cfg` and photograph the lot.
+Screenshots use fabricated review state. They are not saved-game screenshots. The final optional argument is a positive number of frames to wait before capture.
 
-It jumps straight to that screen, fabricates exactly enough world state to make
-it honest, waits for the animation to settle, writes the PNG and exits.
+The original story and design reference is `docs/CANON.md`; engine contracts are in `docs/API.md`. The new casework model, map, observation content and UI live in `src/investigation/`. Optional cases can be expanded there without modifying the main mystery's clue economy. See `docs/EXPANSION_REVIEW.md` for the rationale and testing limits.
 
-## Scope note
-
-`HUEDUNIT_req_design_gameplan.md` §0 says there is no size constraint on this
-project. This build ships under the 1.44 MB floppy rule shared with v1–v5
-anyway; the ceiling and the game's own "zero asset files" rule want the same
-things, and there is 1.17 MB of headroom.
-
-All names, text, characters, art and music are original.
+Barlow Medium is distributed under the SIL Open Font License in `assets/fonts/OFL.txt`.

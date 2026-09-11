@@ -1,7 +1,7 @@
 {
   "id": 19,
   "name": "Magnet Storm",
-  "parTime": 169,
+  "parTime": 22,
   "lavaSpeed": 44,
   "lavaAcceleration": 0.2,
   "checkpoints": [

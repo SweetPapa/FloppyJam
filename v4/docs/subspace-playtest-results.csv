@@ -1,0 +1,5 @@
+level,key,profile,won,seconds,deaths,score
+22,level-6b,1000ms,1,17.000,0,2780
+22,level-6b,1500ms,1,22.633,0,2723
+22,level-6b,2000ms,1,28.033,0,2669
+22,level-6b,1500ms-nearest,1,52.599,0,4250

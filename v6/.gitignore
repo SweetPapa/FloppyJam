@@ -11,3 +11,9 @@ hd_test_puzzles
 *.dSYM/
 shot_*.png
 huedunit_shot.png
+
+artifacts/
+src/*/*.d
+hd_test_campaign
+
+huedunit_smoke

@@ -1,7 +1,7 @@
 {
   "id": 22,
   "name": "Gauntlet Run",
-  "parTime": 147,
+  "parTime": 26,
   "lavaSpeed": 51,
   "lavaAcceleration": 0.2,
   "checkpoints": [

@@ -1,0 +1,106 @@
+name: AFTERGLOW
+on:
+  push:
+    paths: ['v9/**', '.github/workflows/afterglow.yml']
+    tags: ['afterglow-v*']
+  pull_request:
+    paths: ['v9/**', '.github/workflows/afterglow.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: afterglow-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: v9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: v9/package-lock.json
+      - run: npm ci
+      - run: npm run check
+      - run: npx playwright install --with-deps chromium
+      - name: Full keyboard campaign, offline failures and save-resume
+        run: npm run playtest
+      - run: npm run size
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: afterglow-playtest
+          path: v9/test-results
+      - uses: actions/upload-artifact@v4
+        with:
+          name: afterglow-web
+          path: v9/dist
+  desktop:
+    needs: verify
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: v9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: v9/package-lock.json
+      - run: npm ci
+      - name: Build self-contained desktop package
+        run: npm run package -- --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      - name: Report shipped size (no floppy ceiling)
+        run: npm run size
+      - uses: actions/upload-artifact@v4
+        with:
+          name: afterglow-${{ runner.os }}
+          path: |
+            v9/release/*.zip
+            v9/release/*.dmg
+            v9/release/*.exe
+            v9/release/*.AppImage
+            v9/release/*.tar.gz
+          if-no-files-found: error
+  release:
+    if: startsWith(github.ref, 'refs/tags/afterglow-v')
+    needs: desktop
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: afterglow-*
+          path: artifacts
+      - name: Package browser build and collect desktop artifacts
+        run: |
+          mkdir ship
+          cd artifacts/afterglow-web
+          zip -r ../../ship/AFTERGLOW-web.zip .
+          cd ../..
+          find artifacts -maxdepth 2 -type f \( -name '*.dmg' -o -name '*.exe' -o -name '*.AppImage' -o -name '*.tar.gz' -o -name '*.zip' \) -exec cp {} ship/ \;
+          cd ship
+          sha256sum * > SHA256SUMS.txt
+      - name: Publish the explicitly tagged release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" ship/* --clobber
+          else
+            gh release create "$RELEASE_TAG" ship/* --title "AFTERGLOW $RELEASE_TAG" --notes 'Five nights in a chalk-drawn harbor. Offline story, five puzzles, synthesized music, and optional model voices. Desktop packages are unsigned. Browser build: unzip and serve with a local HTTP server. Checksums included.'
+          fi

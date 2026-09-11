@@ -4,6 +4,7 @@
 #include "../src/maglava.h"
 #include <stdio.h>
 #include <math.h>
+#include <string.h>
 
 #define DT (1.0f / 60.0f)
 
@@ -110,6 +111,87 @@ static int test_orbit(void) {
     return 1;
 }
 
+static int test_targeting(void) {
+    GameSim g; sim_init(&g,1);
+    LevelDef lv=*g.lv;
+    const MagnetDef mag[]={{270,1000,COL_RED},{270,1040,COL_BLUE},{270,800,COL_BLUE}};
+    lv.mag=mag;lv.n_mag=3;g.lv=&lv;g.n_mag=3;
+    g.px=270;g.py=1028;
+    if(sim_find_magnet(&g,g.px,g.py,COL_BLUE,0)!=2)return 0;
+    for(int i=1;i<g.n_mag;i++)g.mag_alive[i]=0;
+    sim_update(&g,DT,COL_GREEN);
+    if(g.state!=PS_ATTACHED)return 0;
+    puts("  ok: forward color targeting; unavailable colors preserve the tether");
+    return 1;
+}
+static int test_checkpoint_recovery(void) {
+    int tested=0;
+    for(int id=1;id<=LEVEL_COUNT;id++) {
+        GameSim initial;sim_init(&initial,id);
+        for(int cp=0;cp<initial.lv->n_cp;cp++) {
+            GameSim g=initial;g.cur_cp=cp;
+            int idx=g.lv->cp[cp].respawn;
+            g.cp_lava_y=g.lv->mag[idx].y-100;
+            g.state=PS_DEAD;g.respawn_timer=0;
+            sim_update(&g,DT,-1);
+            if(g.state!=PS_ATTACHED || g.attached_idx!=idx ||
+               g.lava_y-g.py<LAVA_START_OFFSET-ORBIT_REST_R-1)return 0;
+            sim_update(&g,DT,-1);
+            if(g.state==PS_DEAD)return 0;
+            tested++;
+        }
+    }
+    printf("  ok: %d checkpoint respawns have a safe lava margin\n",tested);
+    return 1;
+}
+static int test_goal_and_anomalies(void) {
+    GameSim g;sim_init(&g,1);
+    int final=g.n_mag-1;
+    g.state=PS_SWINGING;g.target_idx=final;g.attached_idx=-1;
+    g.px=g.lv->mag[final].x;g.py=g.lv->mag[final].y;
+    g.lava_y=g.py-1; /* collision on this same tick must not undo a win */
+    sim_update(&g,DT,-1);
+    if(!g.won||g.deaths||!g.ev_complete)return 0;
+    for(int id=1;id<=LEVEL_COUNT;id++) {
+        sim_init(&g,id);
+        if(g.ai.active!=(g.lv->anomaly==ANOM_RACE))return 0;
+        sim_update(&g,DT,-1);
+        if((g.rot_cam!=0)!=(g.lv->anomaly==ANOM_ROLL))return 0;
+    }
+    puts("  ok: goal landing is final; anomalies survive campaign reordering");
+    return 1;
+}
+
+/* Subspace must offer safe landings through a complete pulse cycle, even
+ * with arrival spin. This catches ring/anchor overlap that a fast bot or
+ * post-death immunity can otherwise conceal. */
+static int test_subspace_rest_points(void) {
+    int id=0;
+    for(int i=0;i<LEVEL_COUNT;i++)if(!strcmp(LEVELS[i].key,"level-6b"))id=i+1;
+    if(!id)return 0;
+    const LevelDef *lv=&LEVELS[id-1];
+    for(int i=0;i<lv->n_mag;i++) {
+        const MagnetDef *m=&lv->mag[i];
+        for(int j=0;j<lv->n_ob;j++) {
+            float dx=m->x-lv->ob[j].x,dy=m->y-lv->ob[j].y;
+            float safe=PULSE_MAX_R+PULSE_THICK*.5f+PLAYER_SIZE+ORBIT_MAX_R;
+            if(lv->ob[j].type==OB_PULSE && dx*dx+dy*dy<=safe*safe) {
+                printf("  FAIL: Subspace ring reaches anchor %d\n",i);return 0;
+            }
+        }
+        GameSim g;sim_init(&g,id);
+        g.attached_idx=i;g.color=(MagColor)m->color;
+        g.orbit_r=ORBIT_MAX_R;g.orbit_ang=0;g.orbit_av=ORBIT_MAX_AV;
+        g.px=m->x+g.orbit_r;g.py=m->y;
+        for(int step=0;step<60*8;step++) {
+            sim_update(&g,DT,-1);
+            if(g.deaths) { printf("  FAIL: cannot wait at Subspace anchor %d\n",i);return 0; }
+        }
+    }
+    printf("  ok: all %d Subspace landings survive a full pulse cycle with arrival spin\n",lv->n_mag);
+    return 1;
+}
+
 int main(void) {
     int fails = 0;
     printf("== MagLava sim tests ==\n");
@@ -118,14 +200,17 @@ int main(void) {
     int won = 0;
     for (int id = 1; id <= LEVEL_COUNT; id++) won += play_level(id, 1);
     printf("  %d/%d levels completed by bot\n", won, LEVEL_COUNT);
-    /* bot need not master anomaly/gauntlet levels, but the campaign spine
-     * (the 1280px story levels) must be beatable. Require a strong majority. */
-    if (won < 18) { printf("  FAIL: too few levels completable\n"); fails++; }
+    /* Every stage must remain completable; failures cannot hide in a majority. */
+    if (won != LEVEL_COUNT) { printf("  FAIL: too few levels completable\n"); fails++; }
 
     printf("[lava]\n");   if (!test_lava_kills()) fails++;
     printf("[scoring]\n"); if (!test_scoring())    fails++;
     printf("[tether orbit]\n"); if (!test_orbit()) fails++;
 
+    if (!test_subspace_rest_points()) { puts("FAIL Subspace landings"); fails++; }
+    if (!test_targeting()) { puts("FAIL targeting"); fails++; }
+    if (!test_checkpoint_recovery()) { puts("FAIL checkpoint recovery"); fails++; }
+    if (!test_goal_and_anomalies()) { puts("FAIL goal/anomaly"); fails++; }
     printf(fails ? "\nFAILED (%d)\n" : "\nALL PASS\n", fails);
     return fails ? 1 : 0;
 }

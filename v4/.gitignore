@@ -3,3 +3,7 @@ build-*/
 *.o
 *.png
 maglava_save.dat
+
+artifacts/
+dist/
+__pycache__/

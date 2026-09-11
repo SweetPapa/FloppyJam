@@ -1,7 +1,7 @@
 {
   "id": 13,
   "name": "Rising Heat",
-  "parTime": 197,
+  "parTime": 26,
   "lavaSpeed": 38,
   "lavaAcceleration": 0,
   "checkpoints": [

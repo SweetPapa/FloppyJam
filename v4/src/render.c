@@ -15,7 +15,7 @@
 
 /* tube depth in game px (play plane is z=0) */
 #define Z_BACK  (-120.0f)
-#define Z_FRONT (40.0f)
+#define Z_FRONT (-8.0f)
 /* lava never reaches past this, so it can't cover the player */
 #define Z_LAVA_FRONT (-12.0f)
 #define Y_WINDOW 1700.0f   /* draw only within this game-px of the player */
@@ -93,6 +93,7 @@ void render_reset_fx(App *a) {
     a->trail_timer = 0;
     a->land_pop = 0;
     a->land_idx = -1;
+    a->speed_norm = 0;
     a->death_flash = 0;
     a->time_scale = 1.0f;
 }
@@ -156,11 +157,11 @@ static void env_palette(int level_id) {
     if ((unsigned)level_id == g_env_seed) return;
     g_env_seed = (unsigned)level_id;
     unsigned int h = ehash((unsigned int)level_id * 2654435761u + 7u);
-    float hue = (float)(h % 1000u) / 1000.0f;
-    g_deep   = hsv2rgb(hue, 0.60f, 0.19f, 255);
-    g_wall   = hsv2rgb(hue + 0.02f, 0.45f, 0.46f, 255);
-    g_accent = hsv2rgb(hue + 0.48f, 0.75f, 1.00f, 255);
-    g_glowc  = hsv2rgb(hue + 0.10f, 0.60f, 0.95f, 255);
+    float hue = 0.54f + (float)(h % 100u) / 1000.0f;
+    g_deep   = hsv2rgb(hue, 0.40f, 0.12f, 255);
+    g_wall   = hsv2rgb(hue + 0.02f, 0.28f, 0.32f, 255);
+    g_accent = hsv2rgb(hue - 0.06f, 0.38f, 0.60f, 255);
+    g_glowc  = hsv2rgb(hue - 0.05f, 0.35f, 0.65f, 255);
 }
 
 /* how visible a bay is: fades out with distance, so the duct recedes */
@@ -184,7 +185,7 @@ static void draw_fans(App *a, float py) {
         Vector3 c = game_to_world(g_cx, gy, Z_BACK + 6.0f);
         DrawCircle3D(c, rad * WS, (Vector3){0, 0, 1}, 0, with_alpha(g_wall, f));
         DrawCircle3D(c, rad * 0.92f * WS, (Vector3){0, 0, 1}, 0, with_alpha(g_wall, f * 0.6f));
-        DrawCircle3D(c, rad * 0.28f * WS, (Vector3){0, 0, 1}, 0, with_alpha(g_accent, f * 0.75f));
+        DrawCircle3D(c, rad * 0.28f * WS, (Vector3){0, 0, 1}, 0, with_alpha(g_accent, f * 0.32f));
         /* soft light spilling out of the fan housing */
         BeginBlendMode(BLEND_ADDITIVE);
         DrawBillboard(a->cam, a->tex_glow, c, rad * 2.4f * WS, with_alpha(g_glowc, f * 0.16f));
@@ -218,7 +219,7 @@ static void draw_conduits(App *a, float py) {
             float f = depth_fade(gy, py);
             if (f <= 0.05f) continue;
             Vector3 p = game_to_world(insets[s], gy, Z_BACK + 26.0f);
-            DrawBillboard(a->cam, a->tex_spark, p, 26.0f * WS, with_alpha(g_glowc, f * 0.75f));
+            DrawBillboard(a->cam, a->tex_spark, p, 26.0f * WS, with_alpha(g_glowc, f * 0.32f));
         }
     }
     EndBlendMode();
@@ -239,7 +240,7 @@ static void draw_motes(App *a, float py) {
         if (f <= 0.04f) continue;
         Vector3 p = game_to_world(gx, gy, z);
         DrawBillboard(a->cam, a->tex_spark, p, (5.0f + (float)(h % 7u)) * WS,
-                      with_alpha(g_glowc, f * 0.30f));
+                      with_alpha(g_glowc, f * 0.16f));
     }
     EndBlendMode();
 }
@@ -282,8 +283,8 @@ static void draw_shaft(App *a, float py) {
                 Vector3 a0 = game_to_world(cxx - w, gy + hgt, Z_BACK + 14.0f);
                 Vector3 a1 = game_to_world(cxx, gy, Z_BACK + 14.0f);
                 Vector3 a2 = game_to_world(cxx + w, gy + hgt, Z_BACK + 14.0f);
-                DrawLine3D(a0, a1, with_alpha(g_accent, f * 0.7f));
-                DrawLine3D(a1, a2, with_alpha(g_accent, f * 0.7f));
+                DrawLine3D(a0, a1, with_alpha(g_accent, f * 0.25f));
+                DrawLine3D(a1, a2, with_alpha(g_accent, f * 0.25f));
             }
         }
     }
@@ -298,7 +299,7 @@ static void draw_shaft(App *a, float py) {
         float dl = fabsf(gy - a->sim.lava_y);
         float heat = clampf(1.0f - dl / 700.0f, 0.0f, 1.0f);
         Color rung = g_wall;
-        rung.r = (unsigned char)clampf(rung.r + heat * 190.0f, 0, 255);
+        rung.r = (unsigned char)clampf(rung.r + heat * 85.0f, 0, 255);
         rung.g = (unsigned char)clampf(rung.g + heat * 40.0f, 0, 255);
         rung.b = (unsigned char)clampf(rung.b - heat * 40.0f, 0, 255);
         rung = with_alpha(rung, 0.35f + f * 0.65f);
@@ -321,33 +322,31 @@ static void draw_shaft(App *a, float py) {
     p0 = game_to_world(rx, y0, Z_FRONT); p1 = game_to_world(rx, y1, Z_FRONT);
     DrawLine3D(p0, p1, post);
 
+    /* Solid inset columns give the shaft weight without wire clutter. */
+    for (int side = -1; side <= 1; side += 2) {
+        Vector3 post = game_to_world(g_cx + side * (g_half + 9), py, -66);
+        DrawCubeV(post, (Vector3){18*WS, Y_WINDOW*2*WS, 104*WS}, (Color){20,28,37,255});
+        Vector3 rail = game_to_world(g_cx + side * (g_half - 4), py, -10);
+        DrawCubeV(rail, (Vector3){3*WS,Y_WINDOW*2*WS,3*WS}, g_wall);
+    }
     draw_motes(a, py);
 }
 
 static void draw_lava(App *a) {
     float ly = a->sim.lava_y;
-    float pulse = 0.5f + 0.5f * sinf(a->t * 3.0f);
-    /* Lava occupies only the space BEHIND the play plane so it can never
-     * cover the player, even when it is right at their feet. */
-    float zmid = (Z_BACK + Z_LAVA_FRONT) * 0.5f;
-    float d = (Z_LAVA_FRONT - Z_BACK) * WS;
-    float w = (g_half * 2.0f + 20.0f) * WS;
-
-    Color surf = (Color){255, (unsigned char)(120 + pulse * 60), 40, 255};
-    /* wavy crust: a few slabs at slightly different heights */
-    for (int i = 0; i < 5; i++) {
-        float fx = g_cx - g_half + (g_half * 2.0f) * ((i + 0.5f) / 5.0f);
-        float wob = sinf(a->t * 2.4f + i * 1.3f) * 5.0f;
-        Vector3 sc = game_to_world(fx, ly + wob, zmid);
-        DrawCubeV(sc, (Vector3){w / 5.0f + 0.02f, 14.0f * WS, d}, surf);
+    float depth = (Z_LAVA_FRONT - Z_BACK) * WS;
+    Vector3 body = game_to_world(g_cx, ly + 900, (Z_BACK + Z_LAVA_FRONT)*0.5f);
+    DrawCubeV(body, (Vector3){g_half*2*WS, 1800*WS, depth}, (Color){107,26,17,255});
+    for (int i = 0; i < 28; i++) {
+        float x = g_cx - g_half + (i + .5f)*g_half*2/28;
+        float wave = sinf(a->t*1.4f+i*.65f)*2.5f;
+        Vector3 p = game_to_world(x, ly+wave, (Z_BACK+Z_LAVA_FRONT)*.5f);
+        Color c = {255,(unsigned char)(125+28*sinf(i+a->t)),43,255};
+        DrawCubeV(p, (Vector3){g_half*2*WS/28+.01f,6*WS,depth}, c);
+        Vector3 crack = game_to_world(x, ly+25+(i%4)*19, Z_LAVA_FRONT+1);
+        DrawLine3D(p, crack, (Color){246,86,27,150});
     }
-    /* molten body extending down */
-    Vector3 body = game_to_world(g_cx, ly + 900.0f, zmid);
-    DrawCubeV(body, (Vector3){w, 1800.0f * WS, d}, (Color){150, 25, 10, 255});
-    /* soft heat glow, kept behind the plane and modest so it never blooms
-     * over the player */
-    Vector3 gl = game_to_world(g_cx, ly - 10.0f, Z_LAVA_FRONT);
-    draw_glow(a, gl, g_half * 1.5f * WS, (Color){255, 100, 25, 90});
+    draw_glow(a, game_to_world(g_cx,ly,-20),g_half*1.4f*WS,(Color){255,108,32,65});
 }
 
 static void draw_magnets(App *a) {
@@ -360,13 +359,18 @@ static void draw_magnets(App *a) {
         MagColor mc = (MagColor)lv->mag[i].color;
         Color main = mag_color(mc, 0);
         Color glow = mag_color(mc, 1);
-        float pulse = 1.0f + 0.12f * sinf(a->t * 6.28f + i);
-        /* landing pop */
-        if (i == a->land_idx) pulse += a->land_pop * 0.7f;
+        float pulse = 1.0f;
+        if (i == a->land_idx) pulse += a->land_pop * 0.16f;
         int is_last = (i == lv->n_mag - 1);
-        draw_glow(a, pos, (is_last ? 90.0f : 58.0f) * WS * pulse, glow);
-        DrawSphere(pos, 22.0f * WS * pulse, main);
-        DrawSphere(pos, 11.0f * WS, (Color){255,255,255,255});
+        draw_glow(a, pos, (is_last ? 76.0f : 56.0f) * WS, with_alpha(glow, 0.28f));
+        Vector3 back = pos; back.z -= 9*WS;
+        DrawCylinderEx(back, pos, 22*WS*pulse, 22*WS*pulse, 24, (Color){22,30,41,255});
+        Vector3 face = pos; face.z += WS;
+        DrawCircle3D(face, 20*WS*pulse, (Vector3){0,0,1}, 0, main);
+        face.z += 2*WS;
+        DrawSphereEx(face, 11*WS*pulse, 10, 16, main);
+        face.z += 10*WS;
+        DrawSphereEx(face, 3*WS, 6, 8, (Color){235,248,255,255});
         if (is_last) { /* goal beacon: rising rings */
             for (int k = 0; k < 3; k++) {
                 float ph = fmodf(a->t * 0.6f + k * 0.333f, 1.0f);
@@ -388,10 +392,10 @@ static void draw_targets(App *a) {
         int idx = sim_find_magnet(g, g->px, g->py, (MagColor)c, exclude);
         if (idx < 0) continue;
         Vector3 p = game_to_world(g->lv->mag[idx].x, g->lv->mag[idx].y, 0);
-        float ph = fmodf(a->t * 1.4f + c * 0.25f, 1.0f);
+        float ph = 0.5f;
         Color col = mag_color((MagColor)c, 1);
         /* contracting reticle ring */
-        DrawCircle3D(p, (52.0f - ph * 18.0f) * WS, (Vector3){0,0,1}, 0,
+        DrawCircle3D(p, (34.0f - ph * 2.0f) * WS, (Vector3){0,0,1}, 0,
                      with_alpha(col, 0.25f + 0.45f * (1.0f - ph)));
     }
 }
@@ -439,10 +443,9 @@ static void draw_obstacles(App *a) {
             Vector3 s = game_to_world(d->x, d->y, 0);
             Vector3 e = game_to_world(d->ex, d->ey, 0);
             Color c; float r;
-            if (o->lstate == 2) { c = (Color){255,0,0,255}; r = 6.0f * WS; }
+            if (o->lstate == 2) { c = (Color){255,75,69,255}; r = 3.0f * WS; }
             else if (o->lstate == 1) {
-                int fl = ((int)(a->t * 20) & 1);
-                c = fl ? (Color){255,80,0,220} : (Color){120,30,0,160}; r = 3.5f * WS;
+                c = (Color){255,177,64,220}; r = 2.0f * WS;
             } else { c = (Color){80,10,10,140}; r = 2.0f * WS; }
             DrawCylinderEx(s, e, r, r, 6, c);
             if (o->lstate == 2) {
@@ -453,17 +456,20 @@ static void draw_obstacles(App *a) {
         }
         case OB_ROAMER: {
             Vector3 c = game_to_world(o->x, o->y, 0);
-            draw_glow(a, c, 44.0f * WS, (Color){102,255,102,160});
-            DrawSphere(c, ROAMER_SIZE * WS, (Color){0,230,0,255});
-            DrawSphereWires(c, ROAMER_SIZE * (1.3f + 0.08f * sinf(a->t * 5 + i)) * WS,
-                            5, 6, (Color){150,255,150,180});
+            draw_glow(a,c,48*WS,(Color){255,132,72,75});
+            DrawCubeV(c,(Vector3){30*WS,30*WS,16*WS},(Color){141,59,40,255});
+            Vector3 face=c; face.z+=9*WS;
+            DrawCubeWiresV(face,(Vector3){31*WS,31*WS,1*WS},(Color){255,171,97,255});
+            DrawLine3D((Vector3){c.x-12*WS,c.y-12*WS,c.z+10*WS},
+                       (Vector3){c.x+12*WS,c.y+12*WS,c.z+10*WS},(Color){255,199,130,255});
+            DrawLine3D((Vector3){c.x-12*WS,c.y+12*WS,c.z+10*WS},
+                       (Vector3){c.x+12*WS,c.y-12*WS,c.z+10*WS},(Color){255,199,130,255});
             break;
         }
         case OB_MINE: {
             Vector3 c = game_to_world(o->x, o->y, 0);
             Color col = o->polarity == 0 ? (Color){0,136,255,255} : (Color){255,68,68,255};
-            float pl = 1.0f + 0.2f * sinf(a->t * 7.0f + i);
-            DrawSphere(c, MINE_SIZE * WS * pl, col);
+            DrawCubeV(c,(Vector3){24*WS,24*WS,18*WS},col);
             DrawCircle3D(c, MINE_FORCE_RADIUS * WS, (Vector3){0,0,1}, 0, scale_color(col, 0.5f));
             break;
         }
@@ -484,7 +490,7 @@ static void draw_trail(App *a) {
         float f = 1.0f - (float)k / (float)TRAIL_LEN;
         if (have_prev) {
             /* swells into a comet at speed, thins to almost nothing at rest */
-            float mo = 0.35f + a->speed_norm * 1.5f;
+            float mo = 0.20f + a->speed_norm * 0.48f;
             float r = (1.5f + 6.0f * f) * WS * mo;
             /* skip degenerate segments (raylib dislikes zero-length cylinders) */
             float dx = p.x - prev.x, dy = p.y - prev.y, dz = p.z - prev.z;
@@ -499,7 +505,7 @@ static void draw_trail(App *a) {
 static void draw_player(App *a) {
     GameSim *g = &a->sim;
     if (g->state == PS_DEAD) return;
-    Vector3 pos = game_to_world(g->px, g->py, 0);
+    Vector3 pos = game_to_world(a->render_x, a->render_y, 0);
     Color glow = mag_color(g->color, 1);
     /* tether while swinging: taut beam with a bright core */
     if (g->state == PS_SWINGING && g->target_idx >= 0) {
@@ -514,24 +520,14 @@ static void draw_player(App *a) {
                                   g->lv->mag[g->attached_idx].y, 0);
         DrawCylinderEx(pos, t, 2.2f * WS, 1.0f * WS, 6, with_alpha(glow, 0.7f));
     }
-    float spin = a->t * 4.0f;
-    float speed = sqrtf(g->vx * g->vx + g->vy * g->vy);
-    float stretch = 1.0f + clampf(speed / 900.0f, 0, 0.35f);
-    /* Softer halo than a magnet's so the bright white core stays the thing
-     * your eye locks onto — the player must never read as a node. */
-    draw_glow(a, pos, 54.0f * WS * stretch, with_alpha(glow, 0.7f));
-    DrawSphere(pos, PLAYER_SIZE * WS, (Color){255,255,255,255});
-    DrawSphereWires(pos, PLAYER_SIZE * 1.5f * WS, 6, 8, glow);
-    /* orbiting spark shows the armed color */
-    Vector3 orb = game_to_world(g->px + cosf(spin) * 30, g->py + sinf(spin) * 30, 0);
-    draw_glow(a, orb, 24.0f * WS, glow);
-    if (g->immune > 0) {
-        int fl = (g->immune > 3.0f) || ((int)(a->t * 8) & 1);
-        if (fl) {
-            DrawSphereWires(pos, (PLAYER_SIZE + 20 + 3 * sinf(a->t * 6)) * WS, 8, 10,
-                            (Color){0,255,255,150});
-        }
-    }
+    draw_glow(a, pos, 48*WS, with_alpha(glow, 0.28f));
+    DrawSphereEx(pos, 14*WS, 12, 20, (Color){231,244,250,255});
+    Vector3 face = pos; face.z += 13*WS;
+    DrawSphereEx(face, 5*WS, 8, 12, glow);
+    DrawCircle3D(pos, PLAYER_SIZE*WS, (Vector3){0,0,1}, 0, with_alpha(glow,.8f));
+    if (g->immune > 0)
+        DrawCircle3D(pos, (PLAYER_SIZE+6)*WS, (Vector3){0,0,1}, 0,
+                     (Color){140,226,244,120});
 }
 
 static void draw_ai(App *a) {
@@ -557,7 +553,7 @@ void render_spawn_burst(App *a, float gx, float gy, Color col, int n, float spd)
         p->vy = fabsf(cosf(el)) * sp;
         p->vz = sinf(ang) * sinf(el) * sp * 0.5f;
         p->life = p->max_life = 0.4f + (float)((r >> 5) & 63) / 63.0f * 0.5f;
-        p->size = (6.0f + (float)((r >> 12) & 15)) * WS;
+        p->size = (3.0f + (float)((r >> 12) & 7)) * WS;
         p->color = col;
         p->active = 1;
     }
@@ -594,7 +590,7 @@ void render_update_fx(App *a, float dt) {
     a->trail_timer -= dt;
     if (a->trail_timer <= 0 && a->sim.state != PS_DEAD) {
         a->trail_timer = 0.016f;
-        Vector3 w = game_to_world(a->sim.px, a->sim.py, 0);
+        Vector3 w = game_to_world(a->render_x, a->render_y, 0);
         TrailPt *tp = &a->trail[a->trail_head];
         tp->x = w.x; tp->y = w.y; tp->z = w.z; tp->used = 1;
         a->trail_head = (a->trail_head + 1) % TRAIL_LEN;
@@ -611,15 +607,6 @@ void render_update_fx(App *a, float dt) {
     /* fast attack, slow release: motion blooms instantly and lingers */
     float rate = (raw_n > a->speed_norm) ? 12.0f : 3.0f;
     a->speed_norm += (raw_n - a->speed_norm) * fminf(1.0f, dt * rate);
-
-    /* a hard shove of acceleration fires the anime speed lines */
-    float accel = (speed - a->prev_speed);
-    if (accel > 55.0f && speed > 240.0f) {
-        float amt = clampf(accel / 260.0f, 0.25f, 1.0f);
-        if (amt > a->speed_burst) a->speed_burst = amt;
-    }
-    a->prev_speed = speed;
-    a->speed_burst = fmaxf(0.0f, a->speed_burst - dt * 3.2f); /* short and sharp */
 
     /* decay pops/flashes */
     a->land_pop = fmaxf(0.0f, a->land_pop - dt * 3.5f);
@@ -653,127 +640,30 @@ static void draw_embers(App *a) {
         float fy = a->sim.lava_y - rise * 300.0f;
         if (fabsf(fy - a->sim.py) > Y_WINDOW) continue;
         /* keep embers behind the play plane too */
-        Vector3 w = game_to_world(fx, fy, Z_LAVA_FRONT * (0.3f + 0.6f * sinf(ph)));
+        Vector3 w = game_to_world(fx, fy, Z_LAVA_FRONT - 12.0f * (1.0f + sinf(ph)));
         Color c = (Color){255, 150, 40, (unsigned char)(200 * (1.0f - rise))};
         DrawBillboard(a->cam, a->tex_spark, w, (14.0f - rise * 8.0f) * WS, c);
     }
     EndBlendMode();
 }
 
-/* In-world rush streaks: short bright dashes scrolling past the player,
- * aligned to the direction of travel. Gives the shaft itself a sense of
- * rushing by, so speed is felt in the world and not just the HUD. */
-static void draw_rush(App *a) {
-    float sn = a->speed_norm;
-    if (sn < 0.04f) return;
-    float vx = a->sim.vx, vy = a->sim.vy;
-    float sp = sqrtf(vx * vx + vy * vy);
-    if (sp < 1.0f) return;
-    float ux = vx / sp, uy = vy / sp;
-
-    BeginBlendMode(BLEND_ADDITIVE);
-    for (int i = 0; i < 30; i++) {
-        unsigned int h = (unsigned int)i * 2246822519u + 12345u;
-        float ox = (float)((h >> 8) & 511) / 511.0f * 2.0f - 1.0f;
-        float oy = (float)((h >> 17) & 511) / 511.0f * 2.0f - 1.0f;
-        /* scroll each dash backwards along the travel axis */
-        float scroll = fmodf(a->t * (1.2f + sn * 3.0f) + (float)i * 0.37f, 1.0f);
-        float back = scroll * 640.0f - 320.0f;
-        float gx = a->sim.px + ox * 300.0f - ux * back;
-        float gy = a->sim.py + oy * 340.0f - uy * back;
-        float len = 26.0f + 110.0f * sn;
-        Vector3 p0 = game_to_world(gx, gy, -24.0f);
-        Vector3 p1 = game_to_world(gx - ux * len, gy - uy * len, -24.0f);
-        /* fade in at the ends of the scroll so dashes don't pop */
-        float fade = sinf(scroll * 3.1416f);
-        Color c = (Color){190, 215, 255, (unsigned char)(clampf(120.0f * sn * fade, 0, 255))};
-        DrawLine3D(p0, p1, c);
-    }
-    EndBlendMode();
-}
-
-/* Anime speed lines: screen-space streaks radiating from a focus point just
- * ahead of the player. They re-scatter ~18x/sec for that hand-inked,
- * frame-by-frame look, and only really bloom on a burst of acceleration. */
-static void draw_speed_lines(App *a) {
-    /* Weighted hard toward the burst: sustained flight keeps only a whisper
-     * of streaking, so the lines punctuate acceleration instead of becoming
-     * permanent screen furniture. */
-    float intensity = a->speed_norm * 0.20f + a->speed_burst * 0.95f;
-    if (intensity < 0.03f) return;
-    intensity = clampf(intensity, 0.0f, 1.1f);
-
-    int sw = GetScreenWidth(), sh = GetScreenHeight();
-    Vector2 focus = GetWorldToScreen(game_to_world(a->sim.px, a->sim.py, 0), a->cam);
-    /* push the vanishing point ahead of travel so the world streaks past */
-    float sp = sqrtf(a->sim.vx * a->sim.vx + a->sim.vy * a->sim.vy);
-    if (sp > 1.0f) {
-        focus.x += (a->sim.vx / sp) * 70.0f;
-        focus.y += (-a->sim.vy / sp) * -70.0f; /* game y is inverted on screen */
-    }
-
-    float maxr = sqrtf((float)(sw * sw + sh * sh)) * 0.62f;
-    /* the clear centre shrinks as we accelerate, tightening the tunnel */
-    float inner = 190.0f - 90.0f * intensity;
-    Color tint = mag_color(a->sim.color, 1);
-    int tick = (int)(a->t * 18.0f); /* re-scatter for hand-drawn shimmer */
-    int n = 11 + (int)(intensity * 24.0f);
-
-    BeginBlendMode(BLEND_ADDITIVE);
-    for (int i = 0; i < n; i++) {
-        unsigned int h = ((unsigned int)i * 2654435761u) ^ ((unsigned int)tick * 40503u);
-        float ang = (float)((h >> 8) & 1023) / 1024.0f * 6.28318f;
-        float len = 0.30f + (float)((h >> 18) & 255) / 255.0f * 0.70f;
-        float r0 = inner + (float)((h >> 3) & 63);
-        float r1 = r0 + maxr * len * (0.45f + intensity * 0.75f);
-        float ca = cosf(ang), sa = sinf(ang);
-        Vector2 p0 = {focus.x + ca * r0, focus.y + sa * r0};
-        Vector2 p1 = {focus.x + ca * r1, focus.y + sa * r1};
-        float thick = 1.0f + 3.0f * intensity * (0.35f + len * 0.65f);
-        /* mostly white with a wash of the armed colour */
-        Color c = {(unsigned char)((tint.r + 510) / 3), (unsigned char)((tint.g + 510) / 3),
-                   (unsigned char)((tint.b + 510) / 3),
-                   (unsigned char)clampf(92.0f * intensity * (0.35f + len * 0.65f), 0, 255)};
-        DrawLineEx(p0, p1, thick, c);
-    }
-    EndBlendMode();
-}
-
-/* ------------------------------------------------------------------ */
 static void update_camera(App *a) {
-    GameSim *g = &a->sim;
-    float yp = (LEVEL_HEIGHT - g->py) * WS;
-    /* velocity look-ahead makes fast swings feel anticipated */
-    float lead = clampf(-g->vy * WS * 0.18f, -1.2f, 1.6f);
-    a->cam_y = lerpf(a->cam_y, yp + lead, 0.11f);
-
-    float xp = (g->px - g_cx) * WS;
-    a->cam_x = lerpf(a->cam_x, xp * 0.45f, 0.07f);
-
-    /* Dolly + FOV both widen with momentum: pulled in and tight when you're
-     * hanging still, kicked wide the instant you launch. */
-    float want = 7.9f + a->speed_norm * 1.5f + a->speed_burst * 0.5f;
-    a->cam_dist = lerpf(a->cam_dist, want, 0.08f);
-    float want_fov = a->speed_norm * 7.0f + a->speed_burst * 9.0f;
-    a->fov_extra = lerpf(a->fov_extra, want_fov, 0.14f);
-    a->cam.fovy = 58.0f + a->fov_extra;
-
-    float sx = 0, sy = 0;
-    if (a->cam_shake > 0.001f) {
-        sx = sinf(a->t * 90.0f) * a->cam_shake;
-        sy = cosf(a->t * 77.0f) * a->cam_shake;
-    }
-    /* high-speed micro-jitter: engine rumble, not a hit */
-    if (a->speed_norm > 0.25f) {
-        float j = (a->speed_norm - 0.25f) * 0.05f;
-        sx += sinf(a->t * 61.0f) * j;
-        sy += cosf(a->t * 53.0f) * j;
-    }
-    a->cam.target = (Vector3){a->cam_x, a->cam_y + 1.6f, 0};
-    a->cam.position = (Vector3){a->cam_x + sx, a->cam_y - 2.6f + sy, a->cam_dist};
-    /* rotating-camera anomaly: roll the up-vector */
-    float roll = g->rot_cam * 0.01745329f;
-    a->cam.up = (Vector3){sinf(roll), cosf(roll), 0};
+    if (a->screen == SCR_PAUSED) return;
+    float dt = a->frame_dt;
+    float yp = (LEVEL_HEIGHT - a->render_y) * WS;
+    float lead = clampf(-a->sim.vy * WS * 0.08f, -0.3f, 0.65f);
+    a->cam_y = lerpf(a->cam_y, yp + lead, 1-expf(-9*dt));
+    a->cam_x = lerpf(a->cam_x, (a->render_x-g_cx)*WS*.12f, 1-expf(-5*dt));
+    /* Fixed lens; aspect-aware distance keeps both side lanes visible. */
+    float aspect = (float)GetScreenWidth()/GetScreenHeight();
+    float dist = fmaxf(11.5f, (g_half*WS+1.2f)/(aspect*.43f));
+    a->cam_dist = lerpf(a->cam_dist, dist, 1-expf(-5*dt));
+    a->cam.fovy = 54;
+    float shake = a->save.reduced_motion ? 0 : a->cam_shake;
+    a->cam.target = (Vector3){a->cam_x,a->cam_y+2.2f,0};
+    a->cam.position = (Vector3){a->cam_x+sinf(a->t*75)*shake,a->cam_y+.5f,a->cam_dist};
+    float roll = a->save.reduced_motion ? 0 : a->sim.rot_cam*.01745329f*.45f;
+    a->cam.up = (Vector3){sinf(roll),cosf(roll),0};
 }
 
 /* screen-space overlays that need the 3D camera */
@@ -798,8 +688,8 @@ static void draw_overlays(App *a) {
             Color col = mag_color((MagColor)c, 1);
             DrawCircle((int)s.x, (int)s.y, 11, (Color){8, 8, 16, 190});
             DrawCircleLines((int)s.x, (int)s.y, 11, col);
-            int w = MeasureText(KEYS[c], 14);
-            DrawText(KEYS[c], (int)s.x - w / 2, (int)s.y - 7, 14, col);
+            int w = ui_text_width(KEYS[c], 14);
+            ui_text(KEYS[c], (int)s.x - w / 2, (int)s.y - 7, 14, col);
         }
     }
 
@@ -810,13 +700,13 @@ static void draw_overlays(App *a) {
         float f = p->life / p->max_life;
         Vector3 w = game_to_world(p->gx, p->gy, 0);
         Vector2 s = GetWorldToScreen(w, a->cam);
-        int sz = 22;
-        int tw = MeasureText(p->text, sz);
+        int sz = 16;
+        int tw = ui_text_width(p->text, sz);
         float rise = (1.0f - f) * 46.0f;
         Color c = with_alpha(p->color, f);
-        DrawText(p->text, (int)s.x - tw / 2 + 1, (int)(s.y - rise) + 1, sz,
+        ui_text(p->text, (int)s.x - tw / 2 + 1, (int)(s.y - rise) + 1, sz,
                  with_alpha((Color){0,0,0,255}, f * 0.6f));
-        DrawText(p->text, (int)s.x - tw / 2, (int)(s.y - rise), sz, c);
+        ui_text(p->text, (int)s.x - tw / 2, (int)(s.y - rise), sz, c);
     }
 }
 
@@ -833,7 +723,7 @@ void render_world(App *a) {
     Color top = (Color){(unsigned char)((base.r + g_deep.r) / 2),
                         (unsigned char)((base.g + g_deep.g) / 2),
                         (unsigned char)((base.b + g_deep.b) / 2), 255};
-    Color bot = scale_color(top, 2.6f);
+    Color bot = scale_color(top, 1.3f);
     DrawRectangleGradientV(0, 0, GetScreenWidth(), GetScreenHeight(), scale_color(top, 0.55f), bot);
 
     BeginMode3D(a->cam);
@@ -844,22 +734,22 @@ void render_world(App *a) {
         draw_magnets(a);
         draw_targets(a);
         draw_obstacles(a);
-        draw_rush(a);
+
         draw_ai(a);
         draw_trail(a);
         draw_player(a);
         draw_particles(a);
     EndMode3D();
 
-    draw_speed_lines(a);
+
     draw_overlays(a);
 
-    /* flashlight anomaly (level 12): darken all but a disc around player */
-    if (g->level_id == LEVEL_FLASHLIGHT && g->state != PS_DEAD) {
+    /* flashlight anomaly: darken all but a disc around player */
+    if (g->lv->anomaly == ANOM_FLASHLIGHT && g->state != PS_DEAD) {
         Vector3 pw = game_to_world(g->px, g->py, 0);
         Vector2 ps = GetWorldToScreen(pw, a->cam);
         int mn = GetScreenWidth() < GetScreenHeight() ? GetScreenWidth() : GetScreenHeight();
-        float r = mn * 0.40f;
+        float r = mn * 0.52f;
         Rectangle src = {0, 0, (float)a->tex_flash.width, (float)a->tex_flash.height};
         Rectangle dst = {ps.x - r, ps.y - r, r * 2, r * 2};
         int sw = GetScreenWidth(), sh = GetScreenHeight();
@@ -875,8 +765,8 @@ void render_world(App *a) {
     float prox = clampf(1.0f - (g->lava_y - g->py) / LAVA_WARNING_DIST, 0, 1);
     if (prox > 0.01f) {
         int sw = GetScreenWidth(), sh = GetScreenHeight();
-        float beat = 0.75f + 0.25f * sinf(a->t * 9.0f);
-        unsigned char al = (unsigned char)(prox * beat * 130);
+        float beat = 0.85f;
+        unsigned char al = (unsigned char)(prox * beat * 75);
         Color v = (Color){255, 40, 0, al};
         Color clear = (Color){255, 40, 0, 0};
         DrawRectangleGradientV(0, sh - sh / 3, sw, sh / 3, clear, v);
@@ -884,13 +774,13 @@ void render_world(App *a) {
         DrawRectangleGradientH(0, 0, sw / 8, sh, (Color){255,40,0,(unsigned char)(al*0.6f)}, clear);
         DrawRectangleGradientH(sw - sw / 8, 0, sw / 8, sh, clear, (Color){255,40,0,(unsigned char)(al*0.6f)});
     }
-    if (a->lava_flash > 0.01f) {
+    if (!a->save.reduced_motion && a->lava_flash > 0.01f) {
         DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(),
                       (Color){255, 68, 0, (unsigned char)(a->lava_flash * 55)});
     }
-    if (a->death_flash > 0.01f) {
+    if (!a->save.reduced_motion && a->death_flash > 0.01f) {
         DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(),
-                      (Color){255, 0, 0, (unsigned char)(a->death_flash * 110)});
+                      (Color){255, 0, 0, (unsigned char)(a->death_flash * 45)});
     }
     if (a->fade > 0.001f) {
         DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(),

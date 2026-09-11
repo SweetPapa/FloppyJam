@@ -1,0 +1,151 @@
+{
+  "name": "Reactor Waltz",
+  "coordinateFormat": "540px",
+  "parTime": 30,
+  "lavaSpeed": 44,
+  "lavaAcceleration": 0,
+  "magnets": [
+    {
+      "id": "m0",
+      "x": 270,
+      "y": 4800,
+      "color": "blue"
+    },
+    {
+      "id": "m1",
+      "x": 140,
+      "y": 4605,
+      "color": "green"
+    },
+    {
+      "id": "m2",
+      "x": 200,
+      "y": 4410,
+      "color": "yellow"
+    },
+    {
+      "id": "m3",
+      "x": 340,
+      "y": 4215,
+      "color": "red"
+    },
+    {
+      "id": "m4",
+      "x": 400,
+      "y": 4020,
+      "color": "blue"
+    },
+    {
+      "id": "m5",
+      "x": 270,
+      "y": 3825,
+      "color": "green"
+    },
+    {
+      "id": "m6",
+      "x": 140,
+      "y": 3630,
+      "color": "yellow"
+    },
+    {
+      "id": "m7",
+      "x": 200,
+      "y": 3435,
+      "color": "red"
+    },
+    {
+      "id": "m8",
+      "x": 340,
+      "y": 3240,
+      "color": "blue"
+    },
+    {
+      "id": "m9",
+      "x": 400,
+      "y": 3045,
+      "color": "green"
+    },
+    {
+      "id": "m10",
+      "x": 270,
+      "y": 2850,
+      "color": "yellow"
+    },
+    {
+      "id": "m11",
+      "x": 140,
+      "y": 2655,
+      "color": "red"
+    },
+    {
+      "id": "m12",
+      "x": 200,
+      "y": 2460,
+      "color": "blue"
+    },
+    {
+      "id": "m13",
+      "x": 340,
+      "y": 2265,
+      "color": "green"
+    },
+    {
+      "id": "m14",
+      "x": 400,
+      "y": 2070,
+      "color": "yellow"
+    },
+    {
+      "id": "m15",
+      "x": 270,
+      "y": 1875,
+      "color": "red"
+    }
+  ],
+  "checkpoints": [
+    {
+      "id": "cp-m4",
+      "y": 4075,
+      "respawnPlatformId": "m4"
+    },
+    {
+      "id": "cp-m8",
+      "y": 3295,
+      "respawnPlatformId": "m8"
+    },
+    {
+      "id": "cp-m12",
+      "y": 2515,
+      "respawnPlatformId": "m12"
+    }
+  ],
+  "obstacles": [
+    {
+      "id": "reactor-waltz-0",
+      "type": "sweeper",
+      "x": 270,
+      "y": 4117.5,
+      "length": 50,
+      "speed": 55
+    },
+    {
+      "id": "reactor-waltz-5",
+      "type": "pulse_ring",
+      "x": 100,
+      "y": 3337.5,
+      "speed": 30
+    },
+    {
+      "id": "reactor-waltz-7",
+      "type": "laser_gate",
+      "x": 70,
+      "y": 2557.5,
+      "length": 180,
+      "onDuration": 1000,
+      "offDuration": 4200
+    }
+  ],
+  "background": {
+    "color": "#09131e"
+  }
+}

@@ -1,7 +1,7 @@
 {
   "id": 5,
   "name": "Careful Hands",
-  "parTime": 180,
+  "parTime": 18,
   "lavaSpeed": 25,
   "lavaAcceleration": 0,
   "checkpoints": [],

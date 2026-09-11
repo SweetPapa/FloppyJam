@@ -1,11 +1,15 @@
 #include "save.h"
 #include "flags/flags.h"
 #include "art/artkit.h"
+#include "content/content.h"
+#include "investigation/investigation.h"
 
 #include <stdio.h>
 #include <string.h>
 
 static Settings g_set;
+static bool g_writes=true;
+void save_allow_writes(bool enabled){g_writes=enabled;}
 static char     g_last_scene[64] = "p_gate";
 
 Settings *settings(void) { return &g_set; }
@@ -36,19 +40,18 @@ void settings_load(void)
     settings_defaults();
     FILE *f = fopen("huedunit.cfg", "rb");
     if (!f) return;
-    char key[64];
-    int v;
-    while (fscanf(f, "%63s %d", key, &v) == 2) {
-        if (!strcmp(key, "text"))       g_set.text_size = v;
-        else if (!strcmp(key, "hilite")) g_set.highlight = v;
-        else if (!strcmp(key, "music"))  g_set.music_vol = v;
-        else if (!strcmp(key, "sfx"))    g_set.sfx_vol = v;
-        else if (!strcmp(key, "full"))   g_set.fullscreen = v;
-        else if (!strcmp(key, "motion")) g_set.reduce_motion = v;
-        else if (!strcmp(key, "name")) {
-            /* the value was a placeholder; the name follows on its own line */
-            if (fscanf(f, "%23s", g_set.detective) != 1)
-                snprintf(g_set.detective, sizeof g_set.detective, "%s", "Quill");
+    char line[256],key[64];int v;
+    while(fgets(line,sizeof line,f)) {
+        if(sscanf(line,"%63s %d",key,&v)!=2)continue;
+        if(!strcmp(key,"text"))g_set.text_size=v<0?0:v>2?2:v;
+        else if(!strcmp(key,"hilite"))g_set.highlight=v!=0;
+        else if(!strcmp(key,"music"))g_set.music_vol=v<0?0:v>10?10:v;
+        else if(!strcmp(key,"sfx"))g_set.sfx_vol=v<0?0:v>10?10:v;
+        else if(!strcmp(key,"full"))g_set.fullscreen=v!=0;
+        else if(!strcmp(key,"motion"))g_set.reduce_motion=v!=0;
+        else if(!strcmp(key,"name") && fgets(line,sizeof line,f)) {
+            line[strcspn(line,"\r\n")]=0;
+            if(line[0])snprintf(g_set.detective,sizeof g_set.detective,"%.23s",line);
         }
     }
     fclose(f);
@@ -56,12 +59,14 @@ void settings_load(void)
 
 void settings_store(void)
 {
-    FILE *f = fopen("huedunit.cfg", "wb");
+    if(!g_writes)return;
+    FILE *f = fopen("huedunit.cfg.tmp", "wb");
     if (!f) return;
     fprintf(f, "text %d\nhilite %d\nmusic %d\nsfx %d\nfull %d\nmotion %d\nname 0\n%s\n",
             g_set.text_size, g_set.highlight, g_set.music_vol, g_set.sfx_vol,
             g_set.fullscreen, g_set.reduce_motion, g_set.detective);
-    fclose(f);
+    bool ok=!ferror(f);if(fclose(f)!=0)ok=false;
+    if(!ok || !save_replace_file("huedunit.cfg.tmp","huedunit.cfg"))remove("huedunit.cfg.tmp");
 }
 
 static void slot_path(int slot, char *buf, int cap)
@@ -73,54 +78,60 @@ static void slot_path(int slot, char *buf, int cap)
  * save written before a chapter existed still loads after it ships. */
 bool save_write(int slot, const char *scene_id, const char *recap)
 {
-    char path[64];
-    slot_path(slot, path, sizeof path);
-    FILE *f = fopen(path, "wb");
+    if(!g_writes)return true;
+    if(slot<0||slot>9)return false;
+    char path[64],temp[80];
+    slot_path(slot,path,sizeof path);snprintf(temp,sizeof temp,"%s.tmp",path);
+    FILE *f = fopen(temp, "wb");
     if (!f) return false;
 
     fprintf(f, "HUEDUNIT %d\n", SAVE_VERSION);
     fprintf(f, "scene %s\n", scene_id ? scene_id : g_last_scene);
     fprintf(f, "stage %d\n", palette_stage());
     fprintf(f, "recap %s\n", recap ? recap : "");
+    for(int i=0;i<clue_count();i++)fprintf(f,"f %s 1\n",clue_at(i));
     int n = flags_count();
     for (int i = 0; i < n; i++) {
         int v = flags_value_at(i);
-        if (v == 0) continue;
+        if (v == 0 || !strncmp(flags_key_at(i),"clue.",5)) continue;
         fprintf(f, "f %s %d\n", flags_key_at(i), v);
     }
-    fclose(f);
-    return true;
+    fprintf(f,"end\n");
+    bool ok=!ferror(f);if(fclose(f)!=0)ok=false;
+    if(ok && save_replace_file(temp,path))return true;
+    remove(temp);return false;
 }
 
 bool save_read(int slot)
 {
-    char path[64];
-    slot_path(slot, path, sizeof path);
-    FILE *f = fopen(path, "rb");
-    if (!f) return false;
-
-    char line[256];
-    int ver = 0;
-    if (!fgets(line, sizeof line, f) || sscanf(line, "HUEDUNIT %d", &ver) != 1 ||
-        ver > SAVE_VERSION) {
-        fclose(f);
-        return false;
+    if(slot<0||slot>9)return false;
+    char path[64];slot_path(slot,path,sizeof path);FILE *f=fopen(path,"rb");if(!f)return false;
+    char line[768],scene[64]="";int ver=0,stage=-1,n=0;
+    struct {char key[FLAG_MAX_KEY];int value;} pending[FLAG_CAP];
+    bool ok=fgets(line,sizeof line,f) && sscanf(line,"HUEDUNIT %d",&ver)==1 && ver>=1 && ver<=SAVE_VERSION;
+    bool ended=false;
+    while(ok && fgets(line,sizeof line,f)) {
+        if(!strchr(line,'\n') && !feof(f)){ok=false;break;}
+        if(!strncmp(line,"f ",2)) {
+            if(n>=FLAG_CAP || sscanf(line,"f %47s %d",pending[n].key,&pending[n].value)!=2){ok=false;break;}
+            n++;
+        }else if(!strncmp(line,"scene ",6)){if(sscanf(line,"scene %63s",scene)!=1)ok=false;}
+        else if(!strncmp(line,"stage ",6)){if(sscanf(line,"stage %d",&stage)!=1)ok=false;}
+        else if(!strcmp(line,"end\n"))ended=true;
     }
+    if(ferror(f))ok=false;
+    fclose(f);Block b;
+    if(!ok || (ver>=2 && !ended) || stage<0 || stage>6 || !content_block("scene",scene,&b))return false;
+    /* Commit only after full validation. A damaged file never clears a live case. */
     flags_reset();
-    int stage = 0;
-    while (fgets(line, sizeof line, f)) {
-        char key[FLAG_MAX_KEY];
-        int v;
-        if (sscanf(line, "f %47s %d", key, &v) == 2) {
-            if (strncmp(key, "clue.", 5) == 0) clue_grant(key);
-            else flag_set(key, v);
-        } else if (sscanf(line, "scene %63s", g_last_scene) == 1) {
-            continue;
-        } else if (sscanf(line, "stage %d", &stage) == 1) {
-            palette_set_stage(stage);
-        }
+    for(int i=0;i<n;i++) {
+        if(!strncmp(pending[i].key,"clue.",5) && pending[i].value>0)clue_grant(pending[i].key);
+        else flag_set(pending[i].key,pending[i].value);
     }
-    fclose(f);
+    snprintf(g_last_scene,sizeof g_last_scene,"%s",scene);
+    int completed=investigation_chapter()-1;
+    if(completed>stage)stage=completed; /* saves made between a deduction and its bloom */
+    palette_set_stage(stage);
     return true;
 }
 
@@ -149,7 +160,7 @@ bool save_peek(int slot, char *chapter_out, int cap, char *recap_out, int rcap)
             static const char *names[7] = { "Prologue", "Chapter One", "Chapter Two",
                                             "Chapter Three", "Chapter Four",
                                             "Chapter Five", "Finale" };
-            if (chapter_out) snprintf(chapter_out, (size_t)cap, "%s", names[stage % 7]);
+            if (chapter_out) snprintf(chapter_out, (size_t)cap, "%s", names[stage<0?0:stage>6?6:stage]);
         } else if (strncmp(line, "recap ", 6) == 0 && recap_out) {
             snprintf(recap_out, (size_t)rcap, "%s", line + 6);
             int n = (int)strlen(recap_out);

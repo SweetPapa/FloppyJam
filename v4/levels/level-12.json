@@ -1,7 +1,7 @@
 {
   "id": 20,
   "name": "Danger Zone",
-  "parTime": 164,
+  "parTime": 22,
   "lavaSpeed": 46,
   "lavaAcceleration": 0.2,
   "checkpoints": [

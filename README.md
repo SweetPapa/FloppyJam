@@ -4,11 +4,15 @@ Games that fit on a 1.44 MB floppy disk. One directory per entry.
 
 | | | |
 | --- | --- | --- |
+| [`mobile/`](mobile) | **MAGLAVA MOBILE** | Native Swift/iOS and Kotlin/Android apps sharing v4's C physics and all 40 original campaign level files. |
+| [`v9/`](v9) | **AFTERGLOW** | A cozy 3D harbor mystery: five nights, procedural chalk art and music, kitchen-table puzzles, optional local model voices. No size cap. |
 | [`v7/`](v7) | **VOLLEYBAR** | Foosball crossed with Pong. Six rods of light, one ball that gets hotter every time you hit it. |
 | [`v5/`](v5) | **BREAK PAR** | Mini golf with a cue stick. 18 holes, real pool physics, a neon city, a jazz combo. |
 | `v1/`–`v4/`, `v6/` | earlier jams | |
 
-Everything else in the root supports shipping them.
+Everything else in the root supports shipping them. AFTERGLOW lifts the floppy
+size cap and uses Three.js/Electron for desktop and browser builds; see
+[`v9/README.md`](v9/README.md) for its build and playtest commands.
 
 ```
 art/            source artwork + the generated .icns / .ico

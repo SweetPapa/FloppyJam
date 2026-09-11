@@ -1,0 +1,145 @@
+{
+  "name": "Slingshot Alley",
+  "coordinateFormat": "540px",
+  "parTime": 28,
+  "lavaSpeed": 40,
+  "lavaAcceleration": 0,
+  "magnets": [
+    {
+      "id": "m0",
+      "x": 270,
+      "y": 4800,
+      "color": "blue"
+    },
+    {
+      "id": "m1",
+      "x": 110,
+      "y": 4585,
+      "color": "green"
+    },
+    {
+      "id": "m2",
+      "x": 270,
+      "y": 4370,
+      "color": "yellow"
+    },
+    {
+      "id": "m3",
+      "x": 430,
+      "y": 4155,
+      "color": "red"
+    },
+    {
+      "id": "m4",
+      "x": 270,
+      "y": 3940,
+      "color": "blue"
+    },
+    {
+      "id": "m5",
+      "x": 110,
+      "y": 3725,
+      "color": "green"
+    },
+    {
+      "id": "m6",
+      "x": 270,
+      "y": 3510,
+      "color": "yellow"
+    },
+    {
+      "id": "m7",
+      "x": 430,
+      "y": 3295,
+      "color": "red"
+    },
+    {
+      "id": "m8",
+      "x": 270,
+      "y": 3080,
+      "color": "blue"
+    },
+    {
+      "id": "m9",
+      "x": 110,
+      "y": 2865,
+      "color": "green"
+    },
+    {
+      "id": "m10",
+      "x": 270,
+      "y": 2650,
+      "color": "yellow"
+    },
+    {
+      "id": "m11",
+      "x": 430,
+      "y": 2435,
+      "color": "red"
+    },
+    {
+      "id": "m12",
+      "x": 270,
+      "y": 2220,
+      "color": "blue"
+    },
+    {
+      "id": "m13",
+      "x": 110,
+      "y": 2005,
+      "color": "green"
+    },
+    {
+      "id": "m14",
+      "x": 270,
+      "y": 1790,
+      "color": "yellow"
+    }
+  ],
+  "checkpoints": [
+    {
+      "id": "cp-m4",
+      "y": 3995,
+      "respawnPlatformId": "m4"
+    },
+    {
+      "id": "cp-m8",
+      "y": 3135,
+      "respawnPlatformId": "m8"
+    },
+    {
+      "id": "cp-m12",
+      "y": 2275,
+      "respawnPlatformId": "m12"
+    }
+  ],
+  "obstacles": [
+    {
+      "id": "slingshot-alley-0",
+      "type": "sweeper",
+      "x": 270,
+      "y": 4047.5,
+      "length": 50,
+      "speed": 55
+    },
+    {
+      "id": "slingshot-alley-1",
+      "type": "sweeper",
+      "x": 270,
+      "y": 3187.5,
+      "length": 50,
+      "speed": 55
+    },
+    {
+      "id": "slingshot-alley-2",
+      "type": "sweeper",
+      "x": 270,
+      "y": 2327.5,
+      "length": 50,
+      "speed": 55
+    }
+  ],
+  "background": {
+    "color": "#09131e"
+  }
+}

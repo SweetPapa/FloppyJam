@@ -1,254 +1,214 @@
-/* ui.c — 2D HUD and menu screens drawn over the 3D world. */
+/* Desktop UI: a quiet frame around the climb. */
 #include "app.h"
 #include <stdio.h>
 #include <math.h>
-#include <string.h>
+#include "fonts_gen.h"
 
-static Color COL_UI = (Color){230, 235, 255, 255};
-static Color COL_DIM = (Color){120, 130, 165, 255};
-
-static void text_c(const char *s, int cx, int y, int size, Color c) {
-    int w = MeasureText(s, size);
-    DrawText(s, cx - w / 2, y, size, c);
+static Font medium_font, bold_font;
+void ui_init(void) {
+    medium_font = LoadFontFromMemory(".ttf",font_medium,sizeof font_medium,48,0,0);
+    bold_font = LoadFontFromMemory(".ttf",font_bold,sizeof font_bold,96,0,0);
+    SetTextureFilter(medium_font.texture,TEXTURE_FILTER_BILINEAR);
+    SetTextureFilter(bold_font.texture,TEXTURE_FILTER_BILINEAR);
+}
+void ui_shutdown(void) { UnloadFont(medium_font); UnloadFont(bold_font); }
+void ui_text(const char *text, int x, int y, int size, Color color) {
+    DrawTextEx(size>=24?bold_font:medium_font,text,(Vector2){(float)x,(float)y},size,.6f,color);
+}
+int ui_text_width(const char *text,int size) {
+    return (int)ceilf(MeasureTextEx(size>=24?bold_font:medium_font,text,size,.6f).x);
 }
 
-/* One key cap. Always sits on an opaque dark plate so it stays readable over
- * any background; the active key fills with its magnet color. */
-static void draw_key(int x, int y, const char *k, MagColor mc, int active) {
-    Color c = mag_color(mc, active);
-    Rectangle r = {(float)x, (float)y, 26, 26};
-    /* solid dark cap so busy 3D behind it never bleeds through */
-    DrawRectangleRounded(r, 0.25f, 4, (Color){12, 14, 24, 255});
-    if (active) {
-        DrawRectangleRounded(r, 0.25f, 4, (Color){c.r, c.g, c.b, 255});
-    } else {
-        /* dim tint + saturated border keeps the color legible when idle */
-        DrawRectangleRounded(r, 0.25f, 4, (Color){c.r, c.g, c.b, 55});
+static const Color INK = {229,238,244,255};
+static const Color DIM = {135,158,177,255};
+static const Color AMBER = {255,155,83,255};
+static const Color TEAL = {116,224,211,255};
+
+static void centered(const char *s, int x, int y, int size, Color c) {
+    ui_text(s,x-ui_text_width(s,size)/2,y,size,c);
+}
+static void panel(Rectangle r) {
+    DrawRectangleRounded(r,.12f,6,(Color){12,21,31,245});
+    DrawRectangleRoundedLines(r,.12f,6,(Color){40,58,73,255});
+}
+static void stars(int x, int y, int filled, int size) {
+    for (int i=0;i<3;i++) {
+        Vector2 pts[10], center={(float)x+(i-1)*size*2.6f,(float)y};
+        for (int k=0;k<10;k++) {
+            float ang=-PI/2+k*PI/5, r=(k&1)?size*.43f:(float)size;
+            pts[k]=(Vector2){center.x+cosf(ang)*r,center.y+sinf(ang)*r};
+        }
+        for (int k=0;k<10;k++)
+            DrawTriangle(center,pts[(k+1)%10],pts[k],i<filled?AMBER:(Color){53,70,85,255});
     }
-    DrawRectangleRoundedLines(r, 0.25f, 4, active ? (Color){255,255,255,255} : c);
-    int w = MeasureText(k, 14);
-    Color tc = active ? (Color){10, 10, 20, 255} : (Color){235, 240, 255, 255};
-    DrawText(k, x + 13 - w / 2, y + 6, 14, tc);
 }
-
-/* soft dark plate behind HUD text so it reads over the bright 3D scene */
-static void plate(int x, int y, int w, int h, float alpha) {
-    DrawRectangleRounded((Rectangle){(float)x, (float)y, (float)w, (float)h},
-                         0.28f, 5, (Color){6, 8, 16, (unsigned char)(alpha * 255)});
+static void keycap(int x,int y,const char *key,MagColor color,int available,int active) {
+    Color c=mag_color(color,0);
+    Rectangle r={(float)x,(float)y,32,30};
+    DrawRectangleRounded(r,.18f,4,active?c:(Color){18,29,41,255});
+    Color border=c; border.a=available?255:140;
+    DrawRectangleRoundedLines(r,.18f,4,active?INK:border);
+    Color ink=active?(Color){10,20,30,255}:INK;
+    ui_text(key,x+5,y+7,16,ink);
+    /* Draw arrow glyphs explicitly so every font shows the keyboard mapping. */
+    Vector2 tip={(float)x+24,(float)y+10},tail={(float)x+24,(float)y+21};
+    if(color==COL_BLUE) { tip.y=y+21;tail.y=y+10; }
+    if(color==COL_YELLOW) { tip=(Vector2){x+19,y+15};tail=(Vector2){x+29,y+15}; }
+    if(color==COL_GREEN) { tip=(Vector2){x+29,y+15};tail=(Vector2){x+19,y+15}; }
+    DrawLineEx(tail,tip,1.5f,ink);
+    float dx=(tail.x-tip.x)*.4f,dy=(tail.y-tip.y)*.4f;
+    DrawLineEx(tip,(Vector2){tip.x+dx-dy*.8f,tip.y+dy+dx*.8f},1.5f,ink);
+    DrawLineEx(tip,(Vector2){tip.x+dx+dy*.8f,tip.y+dy-dx*.8f},1.5f,ink);
+    DrawRectangle(x+8,y+27,16,2,c);
+}
+static void menu_background(void) {
+    int w=GetScreenWidth(),h=GetScreenHeight();
+    DrawRectangleGradientV(0,0,w,h,(Color){8,16,25,255},(Color){17,29,40,255});
+    for (int x=32;x<w;x+=64) DrawLine(x,0,x,h,(Color){35,57,72,35});
+    for (int y=32;y<h;y+=64) DrawLine(0,y,w,y,(Color){35,57,72,35});
+    DrawRectangleGradientV(0,h-160,w,160,(Color){96,37,18,0},(Color){96,37,18,80});
 }
 
 void ui_hud(App *a) {
-    GameSim *g = &a->sim;
-    char buf[64];
-    int sw = GetScreenWidth();
-
-    /* top-left: level + score on a dark plate */
-    plate(10, 8, 300, g->combo > 1 ? 92 : 62, 0.55f);
-    snprintf(buf, sizeof buf, "LEVEL %s  %s", LEVEL_LABELS[g->level_id - 1], g->lv->name);
-    DrawText(buf, 18, 12, 20, COL_UI);
-    snprintf(buf, sizeof buf, "SCORE %d", (int)(a->score_shown + 0.5f));
-    DrawText(buf, 18, 36, 24, (Color){255, 221, 100, 255});
-
-    /* combo with a draining timeout bar */
-    if (g->combo > 1) {
-        int mult = g->combo < COMBO_MAX ? g->combo : COMBO_MAX;
-        snprintf(buf, sizeof buf, "COMBO x%d", mult);
-        float pulse = 1.0f + 0.1f * sinf(a->t * 12.0f);
-        DrawText(buf, 18, 66, (int)(22 * pulse), (Color){255, 120, 200, 255});
-        float frac = g->combo_timer / COMBO_TIMEOUT;
-        if (frac < 0) frac = 0; else if (frac > 1) frac = 1;
-        DrawRectangle(140, 74, 150, 6, (Color){40, 20, 40, 200});
-        DrawRectangle(140, 74, (int)(150 * frac), 6, (Color){255, 120, 200, 230});
+    GameSim *g=&a->sim; int w=GetScreenWidth(),h=GetScreenHeight(); char b[160];
+    panel((Rectangle){20,18,330,76});
+    snprintf(b,sizeof b,"%s / 40    %s",LEVEL_LABELS[g->level_id-1],g->lv->name);
+    ui_text(b,34,30,18,INK);
+    snprintf(b,sizeof b,"%06d",(int)(a->score_shown+.5f));
+    ui_text(b,34,57,24,AMBER);
+    if (g->combo>1) {
+        int combo=g->combo>COMBO_MAX?COMBO_MAX:g->combo;
+        snprintf(b,sizeof b,"x%d FLOW",combo); ui_text(b,170,60,18,TEAL);
+        DrawRectangle(170,83,150,2,(Color){41,61,72,255});
+        DrawRectangle(170,83,(int)(150*fmaxf(0,g->combo_timer)/COMBO_TIMEOUT),2,TEAL);
     }
-
-    /* top-right: timer + height + par */
-    plate(sw - 190, 8, 180, g->deaths > 0 ? 96 : 76, 0.55f);
-    snprintf(buf, sizeof buf, "%.1fs", g->elapsed);
-    int tw = MeasureText(buf, 24);
-    DrawText(buf, sw - 18 - tw, 12, 24, g->elapsed <= g->lv->par_time ? COL_UI : (Color){255,120,80,255});
-    snprintf(buf, sizeof buf, "PAR %.0fs", g->lv->par_time);
-    tw = MeasureText(buf, 16);
-    DrawText(buf, sw - 18 - tw, 40, 16, COL_DIM);
-    snprintf(buf, sizeof buf, "HEIGHT %.0f", sim_height(g));
-    tw = MeasureText(buf, 16);
-    DrawText(buf, sw - 18 - tw, 60, 16, COL_DIM);
-    if (g->deaths > 0) {
-        snprintf(buf, sizeof buf, "DEATHS %d", g->deaths);
-        tw = MeasureText(buf, 16);
-        DrawText(buf, sw - 18 - tw, 80, 16, (Color){255,120,120,255});
+    panel((Rectangle){w-204,18,184,76});
+    snprintf(b,sizeof b,"%05.1f",g->elapsed); ui_text(b,w-188,30,26,INK);
+    snprintf(b,sizeof b,"PAR %.0fs   %d RETRIES",g->lv->par_time,g->deaths);
+    ui_text(b,w-188,68,12,DIM);
+    float start=g->lv->mag[0].y,top=g->lv->mag[g->n_mag-1].y,span=fmaxf(1,start-top);
+    float prog=g->won?1:fminf(1,fmaxf(0,(start-g->py)/span));
+    int railx=w-31, rtop=124, rbottom=h-124;
+    DrawRectangle(railx,rtop,3,rbottom-rtop,(Color){48,66,78,255});
+    for(int i=0;i<g->lv->n_cp;i++) {
+        int y=rbottom-(int)((start-g->lv->cp[i].y)/span*(rbottom-rtop));
+        DrawLine(railx-4,y,railx+7,y,i<=g->cur_cp?TEAL:DIM);
     }
+    int py=rbottom-(int)(prog*(rbottom-rtop));
+    DrawRectangle(railx,py,3,rbottom-py,TEAL); DrawCircle(railx+1,py,4,INK);
+    float lava=fminf(1,fmaxf(0,(start-g->lava_y)/span));
+    DrawCircle(railx+1,rbottom-(int)(lava*(rbottom-rtop)),4,AMBER);
+    snprintf(b,sizeof b,"%.0f%%",prog*100); ui_text(b,w-51,rtop-22,14,DIM);
 
-    /* climb progress rail down the right edge */
-    {
-        float start_y = g->lv->mag[0].y, top_y = g->lv->mag[g->lv->n_mag - 1].y;
-        float span = start_y - top_y;
-        float prog = span > 1 ? (start_y - g->py) / span : 0;
-        if (prog < 0) prog = 0; else if (prog > 1) prog = 1;
-        int rx = sw - 16, ry0 = 120, ry1 = GetScreenHeight() - 120;
-        DrawRectangle(rx, ry0, 4, ry1 - ry0, (Color){30, 34, 54, 180});
-        int py = ry1 - (int)((ry1 - ry0) * prog);
-        DrawRectangle(rx, py, 4, ry1 - py, (Color){120, 200, 255, 200});
-        DrawCircle(rx + 2, py, 5, (Color){190, 230, 255, 255});
-        /* lava marker on the same rail */
-        float lprog = span > 1 ? (start_y - g->lava_y) / span : 0;
-        if (lprog < -0.1f) lprog = -0.1f; else if (lprog > 1) lprog = 1;
-        int ly = ry1 - (int)((ry1 - ry0) * lprog);
-        if (ly >= ry0 - 10 && ly <= ry1 + 10)
-            DrawCircle(rx + 2, ly, 5, (Color){255, 90, 30, 230});
-    }
-
-    /* bottom-center: control keys laid out in the real WASD keyboard shape
-     * (W on top, A/S/D below) so the direction->color mapping reads at a
-     * glance. Key box is 26px; step 30 leaves a 4px gap. */
-    int step = 30;
-    int cx = sw / 2;
-    int by = GetScreenHeight() - 36; /* bottom row */
-    int ty = by - step;              /* top row (W) */
-    int lft = cx - 13;               /* left edge of a centered key */
-    /* backdrop so the cluster stays legible over a bright/busy scene */
-    plate(cx - 60, ty - 8, 120, 2 * step + 16, 0.72f);
-    draw_key(lft,        ty, "W", COL_RED,    g->color == COL_RED);    /* up    */
-    draw_key(lft - step, by, "A", COL_YELLOW, g->color == COL_YELLOW); /* left  */
-    draw_key(lft,        by, "S", COL_BLUE,   g->color == COL_BLUE);   /* down  */
-    draw_key(lft + step, by, "D", COL_GREEN,  g->color == COL_GREEN);  /* right */
-
-    /* lava warning banner */
-    if (g->lava_y - g->py < LAVA_WARNING_DIST && g->state != PS_DEAD) {
-        if ((int)(a->t * 4) & 1)
-            text_c("!! LAVA RISING !!", sw / 2, 100, 26, (Color){255, 60, 30, 255});
-    }
-    /* AI race banner */
-    if (g->ai.active) {
-        const char *msg = (g->ai.y < g->py) ? "RIVAL AHEAD - CLIMB!" : "YOU'RE AHEAD";
-        Color c = (g->ai.y < g->py) ? (Color){255,120,120,255} : (Color){120,255,160,255};
-        text_c(msg, sw / 2, 130, 20, c);
-    }
-    if (g->race_lost) text_c("RIVAL REACHED THE TOP!", sw / 2, GetScreenHeight()/2 - 40, 30, (Color){255,80,120,255});
-
-    /* level intro card: slides in, holds, then fades */
-    if (a->intro_t < 2.6f) {
-        float t = a->intro_t;
-        float alpha = (t < 0.35f) ? (t / 0.35f) : (t > 2.0f ? 1.0f - (t - 2.0f) / 0.6f : 1.0f);
-        if (alpha < 0) alpha = 0; else if (alpha > 1) alpha = 1;
-        float slide = (t < 0.35f) ? (1.0f - t / 0.35f) * 40.0f : 0.0f;
-        int cy2 = GetScreenHeight() / 2 - 70;
-        unsigned char al = (unsigned char)(alpha * 255);
-        plate(sw / 2 - 250, cy2 - 14, 500, 96, alpha * 0.6f);
-        snprintf(buf, sizeof buf, "LEVEL %s", LEVEL_LABELS[g->level_id - 1]);
-        text_c(buf, sw / 2 + (int)slide, cy2, 26, (Color){180, 210, 255, al});
-        text_c(g->lv->name, sw / 2 - (int)slide, cy2 + 30, 40,
-               (Color){255, 235, 200, al});
-        text_c("RISE OR BURN", sw / 2, cy2 + 74, 16, (Color){255, 140, 90, al});
-    }
-}
-
-/* ---- star row ---------------------------------------------------- */
-static void draw_stars(int cx, int y, int filled, int size) {
-    for (int i = 0; i < 3; i++) {
-        int x = cx - (size + 6) + i * (size + 6);
-        Color c = i < filled ? (Color){255, 220, 90, 255} : (Color){70, 75, 100, 255};
-        /* simple 5-point star via triangles around center */
-        Vector2 pts[10];
-        for (int k = 0; k < 10; k++) {
-            float ang = -1.5708f + k * 0.62831f;
-            float rr = (k & 1) ? size * 0.4f : size * 0.9f;
-            pts[k] = (Vector2){x + cosf(ang) * rr, y + sinf(ang) * rr};
-        }
-        for (int k = 0; k < 10; k++)
-            DrawTriangle((Vector2){x, y}, pts[k], pts[(k + 1) % 10], c);
+    /* Preserve the physical WASD / arrow-key layout: W above A S D. */
+    panel((Rectangle){w/2-70,h-100,140,84});
+    int exclude=g->attached_idx>=0?g->attached_idx:g->target_idx;
+    static const char *keys[]={"W","S","A","D"};
+    static const int offsets_x[]={0,0,-36,36};
+    static const int offsets_y[]={0,36,36,36};
+    for(int c=0;c<4;c++) keycap(w/2-16+offsets_x[c],h-91+offsets_y[c],keys[c],(MagColor)c,
+        sim_find_magnet(g,g->px,g->py,(MagColor)c,exclude)>=0,g->color==(MagColor)c);
+    ui_text("ESC pause   R retry",24,h-34,14,DIM);
+    if(a->save.reduced_motion) ui_text("REDUCED MOTION",w-175,h-34,14,TEAL);
+    else ui_text("V reduced motion",w-175,h-34,14,DIM);
+    if(g->state==PS_DEAD) centered(g->cur_cp>=0?"RECONNECTING AT CHECKPOINT":"RECONNECTING AT START",w/2,h/2,22,INK);
+    else if(g->lava_y-g->py<LAVA_WARNING_DIST && !g->game_over)
+        centered("LAVA CLOSE  /  KEEP CLIMBING",w/2,h-130,18,AMBER);
+    if(g->ai.active && !g->game_over)
+        centered(g->race_lost?"RIVAL FINISHED - TRY AGAIN":g->ai.y<g->py?"RIVAL AHEAD":"YOU ARE AHEAD",w/2,110,18,TEAL);
+    if(a->intro_t<5 && !g->game_over && g->lava_y-g->py>=LAVA_WARNING_DIST) {
+        int y=h-142;
+        panel((Rectangle){w/2-390,y-9,780,36});
+        centered(g->lv->hint,w/2,y,14,INK);
     }
 }
 
 void ui_title(App *a) {
-    int sw = GetScreenWidth(), sh = GetScreenHeight();
-    float glow = 0.6f + 0.4f * sinf(a->t * 2.0f);
-    text_c("MAGLAVA", sw / 2, sh / 2 - 150, 92, (Color){255, (unsigned char)(80 + glow*80), 30, 255});
-    text_c("R I S E   O R   B U R N", sw / 2, sh / 2 - 66, 24, (Color){255, 180, 120, 255});
-
-    if ((int)(a->t * 1.5f) & 1 ? 1 : 1)
-        text_c("PRESS  ENTER  TO  PLAY", sw / 2, sh / 2 + 20,
-               28, (Color){(unsigned char)(180+glow*70),230,255,255});
-    text_c("Swing between magnetic nodes to climb above the rising lava.", sw/2, sh/2 + 70, 18, COL_DIM);
-    text_c("W/Up = RED     S/Down = BLUE     A/Left = YELLOW     D/Right = GREEN", sw/2, sh/2 + 96, 18, COL_UI);
-    text_c("Match a node's color to tether toward it.  Chain swings for combos.", sw/2, sh/2 + 122, 16, COL_DIM);
-    text_c("v4 C/Raylib port  -  original by Sweet Papa Technologies", sw/2, sh - 30, 14, COL_DIM);
+    menu_background();
+    int w=GetScreenWidth(),h=GetScreenHeight(),x=w/2;
+    centered("S W E E T   P A P A   T E C H N O L O G I E S",x,65,14,DIM);
+    /* A magnetic climb drawn as a restrained title emblem. */
+    Vector2 points[4]={{x-125,h*.29f+25},{x-40,h*.29f-26},{x+46,h*.29f+15},{x+128,h*.29f-48}};
+    for(int i=0;i<3;i++) DrawLineEx(points[i],points[i+1],2,(Color){72,104,121,255});
+    for(int i=0;i<4;i++) {
+        Color c=mag_color((MagColor)i,0);
+        DrawCircleV(points[i],13,(Color){17,30,42,255});
+        DrawCircleLinesV(points[i],13,c); DrawCircleV(points[i],5,c);
+    }
+    centered("MAGLAVA",x,(int)(h*.40f),86,INK);
+    centered("R I S E   O R   B U R N",x,(int)(h*.40f)+92,22,AMBER);
+    centered("One tether. Four colors. Nowhere to go but up.",x,(int)(h*.40f)+140,18,DIM);
+    Rectangle button={x-180,h*.70f,360,54}; panel(button);
+    centered(a->save.unlocked>1?"ENTER  /  CONTINUE CLIMBING":"ENTER  /  BEGIN THE CLIMB",x,(int)button.y+18,20,TEAL);
+    centered("W red    S blue    A yellow    D green",x,(int)button.y+75,16,DIM);
+    centered("40 handcrafted stages   /   Magnetic momentum   /   An ever-changing soundtrack",x,h-42,14,DIM);
 }
 
+Rectangle ui_level_cell(int index) {
+    int w=GetScreenWidth(),h=GetScreenHeight();
+    float grid=fminf(w-96,1100), cw=(grid-4*12)/5;
+    float ch=fminf(100,(h-310)/4.0f), x=(w-grid)/2;
+    int local=index%20;
+    return (Rectangle){x+(local%5)*(cw+12),132+(local/5)*(ch+12),cw,ch};
+}
 void ui_select(App *a) {
-    int sw = GetScreenWidth();
-    text_c("SELECT LEVEL", sw / 2, 40, 40, COL_UI);
-    text_c("Arrow keys / WASD to choose    ENTER to play    ESC to go back", sw / 2, 88, 18, COL_DIM);
-
-    int cols = 5;
-    int cell = 96, pad = 16;
-    int gridw = cols * cell + (cols - 1) * pad;
-    int x0 = sw / 2 - gridw / 2;
-    int y0 = 130;
-    for (int i = 0; i < LEVEL_COUNT; i++) {
-        int r = i / cols, c = i % cols;
-        int x = x0 + c * (cell + pad);
-        int y = y0 + r * (cell + pad);
-        int unlocked = (i + 1) <= a->save.unlocked;
-        int sel = (i == a->select_cursor);
-        Color box = unlocked ? (Color){40, 46, 80, 255} : (Color){24, 26, 38, 255};
-        DrawRectangle(x, y, cell, cell, box);
-        if (sel) DrawRectangleLinesEx((Rectangle){x-2, y-2, cell+4, cell+4}, 3, (Color){255,200,80,255});
-        else DrawRectangleLines(x, y, cell, cell, COL_DIM);
-
-        char buf[16];
-        snprintf(buf, sizeof buf, "%s", LEVEL_LABELS[i]);
-        Color tc = unlocked ? COL_UI : COL_DIM;
-        int tw = MeasureText(buf, 26);
-        DrawText(buf, x + cell/2 - tw/2, y + 16, 26, tc);
-        if (unlocked) draw_stars(x + cell/2, y + 66, a->save.stars[i], 12);
-        else text_c("LOCKED", x + cell/2, y + 52, 16, COL_DIM);
+    menu_background(); int w=GetScreenWidth(),h=GetScreenHeight(); char b[160];
+    ui_text("THE ASCENT",48,34,38,INK);
+    int total=0;for(int i=0;i<LEVEL_COUNT;i++)total+=a->save.stars[i];
+    snprintf(b,sizeof b,"%d / 120 STARS",total);ui_text(b,w-225,48,18,AMBER);
+    ui_text("Arrows / WASD to choose   Enter or click to play   PgUp / PgDn to change page",48,89,16,DIM);
+    int first=(a->select_cursor/20)*20;
+    for(int i=first;i<first+20&&i<LEVEL_COUNT;i++) {
+        Rectangle r=ui_level_cell(i); int unlocked=i<a->save.unlocked,sel=i==a->select_cursor;
+        panel(r);
+        if(sel) DrawRectangleRoundedLinesEx(r,.12f,6,2,TEAL);
+        if(!LEVELS[i].legacy_id) DrawRectangle((int)(r.x+r.width)-39,(int)r.y+12,27,3,TEAL);
+        Color c=unlocked?INK:DIM;
+        ui_text(LEVEL_LABELS[i],r.x+13,r.y+12,22,c);
+        int size=14;while(size>10&&ui_text_width(LEVELS[i].name,size)>r.width-24)size--;
+        ui_text(LEVELS[i].name,r.x+12,r.y+40,size,c);
+        if(unlocked) stars(r.x+r.width/2,r.y+r.height-16,a->save.stars[i],7);
+        else centered("LOCKED",r.x+r.width/2,r.y+r.height-24,12,DIM);
     }
-    /* selected level name */
-    if (a->select_cursor >= 0 && a->select_cursor < LEVEL_COUNT) {
-        const char *nm = LEVELS[a->select_cursor].name;
-        text_c(nm, sw / 2, y0 + 5 * (cell + pad) + 6, 22, (Color){255,220,120,255});
-    }
+    int i=a->select_cursor; const LevelDef *lv=&LEVELS[i];
+    centered(lv->name,w/2,h-119,24,INK);
+    if(a->save.best_time[i]>0)
+        snprintf(b,sizeof b,"BEST %.2fs   /   PAR %.0fs   /   HIGH SCORE %d",a->save.best_time[i],lv->par_time,a->save.best_score[i]);
+    else snprintf(b,sizeof b,"PAR %.0fs   /   %s",lv->par_time,lv->legacy_id?"ORIGINAL STAGE":"NEW STAGE");
+    centered(b,w/2,h-84,16,TEAL);
+    centered(lv->hint,w/2,h-58,14,DIM);
+    snprintf(b,sizeof b,"PAGE %d / 2",first/20+1); ui_text(b,w-140,h-29,14,DIM);
+    ui_text("ESC back",48,h-29,14,DIM);
 }
-
 void ui_pause(App *a) {
-    (void)a;
-    int sw = GetScreenWidth(), sh = GetScreenHeight();
-    DrawRectangle(0, 0, sw, sh, (Color){0, 0, 0, 150});
-    text_c("PAUSED", sw / 2, sh / 2 - 80, 60, COL_UI);
-    text_c("ESC  resume", sw / 2, sh / 2 + 10, 24, COL_UI);
-    text_c("R  restart level", sw / 2, sh / 2 + 44, 22, COL_DIM);
-    text_c("M  toggle sound", sw / 2, sh / 2 + 74, 22, COL_DIM);
-    text_c("Q  quit to level select", sw / 2, sh / 2 + 104, 22, COL_DIM);
+    int w=GetScreenWidth(),h=GetScreenHeight();
+    DrawRectangle(0,0,w,h,(Color){4,10,17,195});
+    panel((Rectangle){w/2-255,h/2-191,510,382});
+    centered("TAKE A BREATH",w/2,h/2-157,34,INK);
+    centered("The climb will wait.",w/2,h/2-109,18,DIM);
+    centered("ESC   Resume",w/2,h/2-51,22,TEAL);
+    centered("R   Restart level",w/2,h/2-9,20,INK);
+    centered(a->muted?"M   Sound off":"M   Sound on",w/2,h/2+28,18,DIM);
+    centered(a->save.reduced_motion?"V   Reduced motion on":"V   Reduced motion off",w/2,h/2+61,18,DIM);
+    centered("F11   Fullscreen",w/2,h/2+94,18,DIM);
+    centered("Q   Level select",w/2,h/2+139,18,DIM);
 }
-
 void ui_complete(App *a) {
-    GameSim *g = &a->sim;
-    int sw = GetScreenWidth(), sh = GetScreenHeight();
-    DrawRectangle(0, 0, sw, sh, (Color){0, 0, 0, 170});
-    text_c("LEVEL COMPLETE", sw / 2, sh / 2 - 170, 56, (Color){120, 255, 170, 255});
-
-    int stars = sim_stars(g);
-    /* reveal stars one at a time */
-    int shown = (int)(a->complete_t / 0.4f);
-    if (shown > stars) shown = stars;
-    draw_stars(sw / 2, sh / 2 - 80, shown, 34);
-
-    char buf[96];
-    snprintf(buf, sizeof buf, "SCORE  %d", g->score);
-    text_c(buf, sw / 2, sh / 2 - 10, 30, (Color){255, 221, 100, 255});
-    snprintf(buf, sizeof buf, "TIME  %.1fs   (PAR %.0fs)", g->elapsed, g->lv->par_time);
-    text_c(buf, sw / 2, sh / 2 + 28, 22, g->elapsed <= g->lv->par_time ? (Color){120,255,160,255} : COL_DIM);
-    snprintf(buf, sizeof buf, "DEATHS  %d", g->deaths);
-    text_c(buf, sw / 2, sh / 2 + 56, 22, g->deaths == 0 ? (Color){120,255,160,255} : COL_DIM);
-
-    /* star criteria hint */
-    text_c("1star finish   2star beat par   3star no deaths", sw/2, sh/2 + 92, 16, COL_DIM);
-
-    int last = (g->level_id >= LEVEL_COUNT);
-    if (a->complete_t > 1.2f) {
-        if (!last) text_c("ENTER  next level     R  retry     ESC  level select",
-                          sw / 2, sh / 2 + 140, 22, COL_UI);
-        else text_c("You conquered the facility!   R  retry     ESC  level select",
-                    sw / 2, sh / 2 + 140, 22, (Color){255,220,120,255});
+    GameSim *g=&a->sim;int w=GetScreenWidth(),h=GetScreenHeight(); char b[96];
+    DrawRectangle(0,0,w,h,(Color){4,10,17,205});
+    panel((Rectangle){w/2-340,h/2-230,680,460});
+    centered(g->level_id==LEVEL_COUNT?"YOU ROSE ABOVE IT ALL":"ASCENT COMPLETE",w/2,h/2-193,36,INK);
+    centered(g->lv->name,w/2,h/2-145,20,DIM);
+    int shown=(int)(a->complete_t/.28f); if(shown>sim_stars(g))shown=sim_stars(g);
+    stars(w/2,h/2-83,shown,24);
+    snprintf(b,sizeof b,"%.2fs  /  PAR %.0fs",g->elapsed,g->lv->par_time);
+    centered(b,w/2,h/2-26,28,INK);
+    snprintf(b,sizeof b,"%d POINTS     %d RETRIES",g->score,g->deaths);
+    centered(b,w/2,h/2+18,20,AMBER);
+    if(a->new_best) centered("PERSONAL BEST",w/2,h/2+56,16,TEAL);
+    centered("1 star: finish   /   2: beat par   /   3: no deaths",w/2,h/2+98,14,DIM);
+    if(a->complete_t>1.2f) {
+        centered(g->level_id<LEVEL_COUNT?"ENTER  /  NEXT ASCENT":"40 STAGES. ONE UNSTOPPABLE CLIMBER.",w/2,h/2+147,22,TEAL);
+        centered("R retry   /   ESC level select",w/2,h/2+188,16,DIM);
     }
 }

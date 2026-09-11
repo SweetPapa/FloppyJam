@@ -17,6 +17,13 @@
 #define STEP (1.0f / 60.0f)
 
 static App app;
+static int demo_wait = 0;
+static int demo_delay_ticks = 15;
+static float frame_samples[32768];
+static int compare_frame(const void *a, const void *b) {
+    float x=*(const float *)a,y=*(const float *)b;
+    return (x>y)-(x<y);
+}
 
 /* edge-triggered color input, original priority up>down>left>right */
 static int poll_color(void) {
@@ -44,15 +51,22 @@ static int bot_color(GameSim *g) {
 }
 
 static void start_level(int id) {
+    demo_wait = 0;
+    if (id < 1) id = 1;
+    if (id > LEVEL_COUNT) id = LEVEL_COUNT;
     app.level_id = id;
     sim_init(&app.sim, id);
     render_reset_fx(&app);
     app.cam_shake = 0;
     app.lava_flash = 0;
     app.accum = 0;
+    app.pending_color = -1;
+    app.previous_x = app.render_x = app.sim.px;
+    app.previous_y = app.render_y = app.sim.py;
+    app.new_best = 0;
     app.cam_y = (LEVEL_HEIGHT - app.sim.py) * WS;
     app.cam_x = 0;
-    app.cam_dist = 8.2f;
+    app.cam_dist = 11.5f;
     app.score_shown = 0;
     app.intro_t = 0;      /* replays the level-name card */
     app.fade = 1.0f;      /* fade up from black */
@@ -75,8 +89,8 @@ static void handle_events(void) {
         audio_play_pitched(&app, g->ev_attach_forward ? SFX_LAND : SFX_LAND_BACK,
                            g->ev_attach_forward ? pitch : 0.85f);
         render_spawn_burst(&app, g->px, g->py, mag_color(g->color, 1),
-                           10 + mult, 120.0f + mult * 12.0f);
-        app.cam_shake = fmaxf(app.cam_shake, 0.03f + mult * 0.004f);
+                           5 + mult / 2, 85.0f + mult * 5.0f);
+        app.cam_shake = fmaxf(app.cam_shake, 0.012f + mult * 0.001f);
         app.land_pop = 1.0f;
         app.land_idx = g->attached_idx;
         snprintf(buf, sizeof buf, "+%d", SCORE_LANDING * mult);
@@ -91,29 +105,33 @@ static void handle_events(void) {
     if (g->ev_checkpoint) {
         audio_play(&app, SFX_CHECKPOINT);
         render_spawn_burst(&app, g->px, g->py, (Color){120, 255, 170, 255}, 28, 220.0f);
-        app.lava_flash = fmaxf(app.lava_flash, 0.5f);
-        app.time_scale = 0.55f; /* brief hitch to punctuate the milestone */
+
         render_push_popup(&app, g->px, g->py - 60.0f, "CHECKPOINT", (Color){120, 255, 170, 255});
     }
     if (g->ev_death) {
         audio_play(&app, SFX_DEATH);
         render_spawn_burst(&app, g->px, g->py, (Color){255, 120, 60, 255}, 48, 320.0f);
-        app.cam_shake = 0.22f;
+        app.cam_shake = 0.10f;
         app.death_flash = 1.0f;
-        app.time_scale = 0.30f; /* slow-motion death, as in the original */
+        app.time_scale = app.save.reduced_motion ? 1.0f : 0.65f; /* slow-motion death, as in the original */
     }
     if (g->ev_complete) {
         audio_play(&app, SFX_COMPLETE);
         render_spawn_burst(&app, g->px, g->py, (Color){255, 230, 120, 255}, 80, 340.0f);
         app.cam_shake = fmaxf(app.cam_shake, 0.10f);
-        int stars = sim_stars(g);
-        save_record(&app.save, g->level_id, stars);
+        int i = g->level_id - 1;
+        app.new_best = app.save.best_time[i] == 0 || g->elapsed < app.save.best_time[i];
+        if (!app.demo) save_result(&app.save, g);
         app.screen = SCR_COMPLETE;
         app.complete_t = 0;
     }
     /* respawn: flash back in */
     if (app.prev_state == PS_DEAD && g->state != PS_DEAD) {
-        app.fade = 0.8f;
+        render_reset_fx(&app);
+        app.previous_x = app.render_x = g->px;
+        app.previous_y = app.render_y = g->py;
+        app.cam_y = (LEVEL_HEIGHT - g->py) * WS;
+        app.fade = 0.25f;
         render_spawn_burst(&app, g->px, g->py, (Color){160, 220, 255, 255}, 24, 180.0f);
     }
     app.prev_state = g->state;
@@ -129,6 +147,8 @@ static int g_levelframes = 0, g_levelcap = 2600; /* ~43s safety cap per level */
 
 /* advance the demo to the next playlist level; returns 0 when finished */
 static int demo_advance(void) {
+    fprintf(stdout,"PLAYTEST level=%d key=%s won=%d deaths=%d time=%.2f frames=%d\n",
+            app.level_id,app.sim.lv->key,app.sim.won,app.sim.deaths,app.sim.elapsed,g_levelframes);
     g_plidx++;
     if (g_plidx >= g_playn) return 0;
     start_level(g_play[g_plidx]);
@@ -137,7 +157,10 @@ static int demo_advance(void) {
 }
 
 static void update_playing(int demo) {
-    int pending = demo ? (g_idle ? -1 : bot_color(&app.sim)) : poll_color();
+    int pressed = demo ? -1 : poll_color();
+    if (pressed >= 0) app.pending_color = pressed;
+    if (!demo && !IsWindowFocused()) { app.pending_color = -1; app.screen = SCR_PAUSED; return; }
+    if (!demo && IsKeyPressed(KEY_R)) { start_level(app.level_id); return; }
     if (!demo && IsKeyPressed(KEY_ESCAPE)) { app.screen = SCR_PAUSED; return; }
 
     float raw = GetFrameTime();
@@ -146,8 +169,15 @@ static void update_playing(int demo) {
     app.accum += dt;
     int backtrack_prev = app.sim.backtrack_active;
     while (app.accum >= STEP) {
+        app.previous_x = app.sim.px; app.previous_y = app.sim.py;
+        int pending = app.pending_color;
+        if (demo) {
+            pending = -1;
+            if (app.sim.state != PS_ATTACHED) demo_wait = 0;
+            else if (!g_idle && demo_wait++ >= demo_delay_ticks) pending = bot_color(&app.sim);
+        }
         sim_update(&app.sim, STEP, pending);
-        pending = (demo && !g_idle) ? bot_color(&app.sim) : -1;
+        app.pending_color = -1;
         handle_events();
         app.accum -= STEP;
         if (app.screen != SCR_PLAYING) break; /* completed mid-substep */
@@ -179,14 +209,23 @@ static void update_playing(int demo) {
     /* HUD score counts up smoothly toward the real value */
     app.score_shown += ((float)app.sim.score - app.score_shown) * fminf(1.0f, raw * 6.0f);
 
+    float alpha = fminf(1.0f, app.accum / STEP);
+    app.render_x = app.previous_x + (app.sim.px - app.previous_x) * alpha;
+    app.render_y = app.previous_y + (app.sim.py - app.previous_y) * alpha;
     render_update_fx(&app, raw); /* visuals run on unscaled time */
-    app.cam_shake *= 0.88f;
-    app.lava_flash *= 0.90f;
+    app.cam_shake *= expf(-10.0f * raw);
+    app.lava_flash *= expf(-10.0f * raw);
 }
 
 int main(void) {
     int demo = getenv("MAGLAVA_DEMO") != NULL;
     g_idle = getenv("MAGLAVA_IDLE") != NULL;
+    if (getenv("MAGLAVA_DEMO_DELAY_MS")) {
+        long delay = strtol(getenv("MAGLAVA_DEMO_DELAY_MS"), NULL, 10);
+        if (delay < 0) delay = 0;
+        if (delay > 5000) delay = 5000;
+        demo_delay_ticks = (int)ceilf(delay * 0.06f);
+    }
     int shot = getenv("MAGLAVA_SHOT") ? atoi(getenv("MAGLAVA_SHOT")) : 0;
     int demo_level = getenv("MAGLAVA_LEVEL") ? atoi(getenv("MAGLAVA_LEVEL")) : 1;
 
@@ -220,41 +259,83 @@ int main(void) {
     }
 
     SetConfigFlags(FLAG_MSAA_4X_HINT | FLAG_WINDOW_RESIZABLE | FLAG_VSYNC_HINT);
-    InitWindow(960, 720, "MagLava");
-    SetTargetFPS(60);
+    InitWindow(1280, 800, "Maglava | Rise or Burn");
+    SetWindowMinSize(960, 640);
+    int refresh = GetMonitorRefreshRate(GetCurrentMonitor());
+    SetTargetFPS(refresh > 60 ? refresh : 60);
     SetExitKey(0); /* we handle ESC ourselves */
 
     save_load(&app.save);
+    app.demo = demo || shot || g_shots;
+    app.muted = app.save.muted;
     audio_init(&app);
+    audio_music_volume(&app, app.muted ? 0 : 0.60f);
     /* render_init needs a valid sim.lv for cam_y; seed with level 1 */
     sim_init(&app.sim, demo_level);
     app.level_id = demo_level;
     render_init(&app);
+    ui_init();
 
     app.screen = demo ? SCR_PLAYING : SCR_TITLE;
-    app.select_cursor = 0;
+    app.select_cursor = app.save.unlocked - 1;
     if (demo) start_level(demo_level);
 
-    int frame = 0;
+    /* Read-only UI captures for layout review at different window sizes. */
+    const char *capture = getenv("MAGLAVA_SCREEN");
+    if (capture && shot) {
+        app.demo = 1;
+        if (!strcmp(capture,"select")) {
+            app.screen = SCR_SELECT;
+            app.select_cursor = getenv("MAGLAVA_CURSOR") ? atoi(getenv("MAGLAVA_CURSOR")) : 0;
+            if (app.select_cursor < 0) app.select_cursor = 0;
+            if (app.select_cursor >= LEVEL_COUNT) app.select_cursor = LEVEL_COUNT - 1;
+        }
+    }
+    if (getenv("MAGLAVA_COMPACT")) SetWindowSize(960,640);
+    int frame = 0, sample_count = 0;
+    int profile = getenv("MAGLAVA_PROFILE") != NULL;
     while (!WindowShouldClose()) {
-        app.t += GetFrameTime();
+        app.frame_dt = fminf(GetFrameTime(), 0.1f);
+        if (app.screen != SCR_PAUSED) app.t += app.frame_dt;
         frame++;
+        if (profile && frame > 30 && sample_count < 32768)
+            frame_samples[sample_count++] = GetFrameTime()*1000;
+        if (IsKeyPressed(KEY_F11)) ToggleBorderlessWindowed();
+        if (IsKeyPressed(KEY_M)) {
+            app.muted = !app.muted; app.save.muted = app.muted;
+            audio_music_volume(&app, app.muted ? 0 : 0.60f);
+            if (!app.demo) save_store(&app.save);
+        }
+        if (IsKeyPressed(KEY_V)) {
+            app.save.reduced_motion = !app.save.reduced_motion;
+            if (!app.demo) save_store(&app.save);
+        }
 
         switch (app.screen) {
         case SCR_TITLE:
-            if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) {
+            if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE) || IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
                 audio_play(&app, SFX_UI); app.screen = SCR_SELECT;
             }
             break;
         case SCR_SELECT: {
+            if (capture && shot) break;
             int c = app.select_cursor;
             if (IsKeyPressed(KEY_RIGHT) || IsKeyPressed(KEY_D)) c++;
             if (IsKeyPressed(KEY_LEFT)  || IsKeyPressed(KEY_A)) c--;
             if (IsKeyPressed(KEY_DOWN)  || IsKeyPressed(KEY_S)) c += 5;
             if (IsKeyPressed(KEY_UP)    || IsKeyPressed(KEY_W)) c -= 5;
-            if (c < 0) c = 0; if (c >= LEVEL_COUNT) c = LEVEL_COUNT - 1;
+            if (IsKeyPressed(KEY_PAGE_DOWN)) c += 20;
+            if (IsKeyPressed(KEY_PAGE_UP)) c -= 20;
+            if (c < 0) c = 0;
+            if (c >= LEVEL_COUNT) c = LEVEL_COUNT - 1;
+            int clicked = -1;
+            if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+                int first = (app.select_cursor / 20) * 20;
+                for (int i = first; i < first + 20 && i < LEVEL_COUNT; i++)
+                    if (CheckCollisionPointRec(GetMousePosition(), ui_level_cell(i))) { c = i; clicked = i; }
+            }
             if (c != app.select_cursor) { app.select_cursor = c; audio_play(&app, SFX_UI); }
-            if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) {
+            if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE) || clicked >= 0) {
                 if (app.select_cursor + 1 <= app.save.unlocked) {
                     audio_play(&app, SFX_UI); start_level(app.select_cursor + 1);
                 }
@@ -272,17 +353,14 @@ int main(void) {
             }
             break;
         case SCR_PAUSED:
-            if (IsKeyPressed(KEY_ESCAPE)) app.screen = SCR_PLAYING;
+            if (IsKeyPressed(KEY_ESCAPE)) { app.pending_color = -1; app.screen = SCR_PLAYING; }
             if (IsKeyPressed(KEY_R)) { audio_play(&app, SFX_UI); start_level(app.level_id); }
-            if (IsKeyPressed(KEY_M)) {
-                app.muted = !app.muted;
-                audio_music_volume(&app, app.muted ? 0.0f : 0.75f);
-            }
-            if (IsKeyPressed(KEY_Q)) { app.screen = SCR_SELECT; }
+            if (IsKeyPressed(KEY_Q)) { app.select_cursor = app.level_id - 1; app.screen = SCR_SELECT; }
             break;
         case SCR_COMPLETE:
             app.complete_t += GetFrameTime();
-            render_update_fx(&app, GetFrameTime());
+            app.render_x = app.sim.px; app.render_y = app.sim.py;
+            render_update_fx(&app, app.frame_dt);
             if (demo) {
                 if (app.complete_t > 1.6f) { if (!demo_advance()) goto done; }
                 break;
@@ -314,7 +392,7 @@ int main(void) {
                                    (Color){10, 10, 22, 255}, (Color){20, 16, 34, 255});
             ui_select(&app);
         }
-        if (app.muted) DrawText("MUTED", GetScreenWidth() - 78, GetScreenHeight() - 24, 16, GRAY);
+        if (app.muted) ui_text("MUTED", GetScreenWidth() - 78, GetScreenHeight() - 24, 16, GRAY);
         EndDrawing();
 
         if (shot && frame == shot) {
@@ -336,6 +414,13 @@ int main(void) {
         }
     }
 done:
+    if (sample_count) {
+        double sum=0;for(int i=0;i<sample_count;i++)sum+=frame_samples[i];
+        qsort(frame_samples,sample_count,sizeof(float),compare_frame);
+        fprintf(stdout,"FRAME_TIMING samples=%d mean_ms=%.3f p95_ms=%.3f max_ms=%.3f\n",
+            sample_count,sum/sample_count,frame_samples[(sample_count-1)*95/100],frame_samples[sample_count-1]);
+    }
+    ui_shutdown();
     render_shutdown(&app);
     audio_shutdown(&app);
     CloseWindow();

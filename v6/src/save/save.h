@@ -9,7 +9,7 @@
 
 #include <stdbool.h>
 
-#define SAVE_VERSION 1
+#define SAVE_VERSION 2
 #define SAVE_SLOTS   3          /* 3 manual slots + slot 0 = autosave */
 
 typedef struct {
@@ -26,6 +26,10 @@ Settings *settings(void);
 float     text_scale(void);     /* 1.00 / 1.25 / 1.50 */
 
 void settings_defaults(void);
+/* Capture and smoke-test sessions are read-only, including settings. */
+void save_allow_writes(bool enabled);
+/* Internal platform seam for replacing an existing save atomically. */
+bool save_replace_file(const char *temporary, const char *destination);
 void settings_load(void);
 void settings_store(void);
 

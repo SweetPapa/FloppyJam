@@ -119,7 +119,7 @@ token.lantern = a lit lantern
 token.letter = a letter
 
 token.feed_pip = feed a frightened bird
-token.mend = mend it
+token.mend = mend
 token.promise = her word to keep a secret
 token.herself = out of her own pocket
 token.steal = take it and run

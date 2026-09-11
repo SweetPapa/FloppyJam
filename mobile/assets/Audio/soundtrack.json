@@ -1,0 +1,42 @@
+[
+  {
+    "file": "magLava-main-theme.m4a",
+    "source": "magLava/src/assets/audio/songsforgame/magLava-main-theme.ogg",
+    "source_sha256": "b78956f78b1e0cd4c3cf38e128d5a630323646b360388c576ca16073d1bb8459",
+    "sha256": "952a4a1e8189ffb914ceb52df1edd722d7cfdeaa5ff192594dda5b3efb769a68",
+    "duration_seconds": 108.451995,
+    "codec": "AAC-LC",
+    "target_bitrate": 128000,
+    "bytes": 1833745
+  },
+  {
+    "file": "magLava-game-bg-1.m4a",
+    "source": "magLava/src/assets/audio/songsforgame/magLava-game-bg-1.ogg",
+    "source_sha256": "d1ad7c82c41e28acdb0b47896e3c4f98cfc267cb580d4d6d1c7437ea7b351836",
+    "sha256": "f5269fa0c14c1317f49e567ab48de7a7e0137e33e0fb3b4af65b7a0eaed0f017",
+    "duration_seconds": 99.43,
+    "codec": "AAC-LC",
+    "target_bitrate": 128000,
+    "bytes": 1649202
+  },
+  {
+    "file": "magLava-game-bg-2.m4a",
+    "source": "magLava/src/assets/audio/songsforgame/magLava-game-bg-2.ogg",
+    "source_sha256": "169e40c7a09a2fd76304463442e23013366addfe9f14852b3cc336781f14156c",
+    "sha256": "d64318e1aed0cbda3335876599e6a2575e69f80df264746fea9550b3956e5a12",
+    "duration_seconds": 142.576009,
+    "codec": "AAC-LC",
+    "target_bitrate": 128000,
+    "bytes": 2364660
+  },
+  {
+    "file": "magLava-game-bg-3.m4a",
+    "source": "magLava/src/assets/audio/songsforgame/magLava-game-bg-3.ogg",
+    "source_sha256": "6cdc0a3a10a501d5aa024c71bc375a126b1229a4d13922d83792f21d91170426",
+    "sha256": "c3962d155122fb8657c3756f0371bad96c012e3b70621d470808220bceffb575",
+    "duration_seconds": 117.390998,
+    "codec": "AAC-LC",
+    "target_bitrate": 128000,
+    "bytes": 1945297
+  }
+]

@@ -1,9 +1,10 @@
 #include "scene.h"
+#include "investigation/investigation.h"
+#include "save/save.h"
 #include "content/content.h"
 #include "flags/flags.h"
 #include "art/artkit.h"
 #include "audio/synth.h"
-#include "save/save.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -14,7 +15,7 @@
 #define PI 3.14159265358979323846f
 #endif
 
-#define MAX_HOT    16
+#define MAX_HOT    24
 #define MAX_ACTORS 8
 
 typedef struct {
@@ -53,6 +54,10 @@ static int   g_pending = -1;
 static char  g_inspect[TEXT_MAX];
 static bool  g_inspect_open;
 static int   g_inspect_page, g_inspect_next = -1;
+static float g_last_click = -1;
+static int g_last_hot = -1;
+static bool g_hurry;
+bool scene_inspecting(void) { return g_inspect_open; }
 
 const char *scene_current(void) { return g_id; }
 const char *scene_title(void) { return g_title; }
@@ -454,6 +459,17 @@ bool scene_load(const char *id)
         }
     }
 
+    /* A physical object for each optional observation, sharing normal walking
+     * and inspection input. Append so the visible object wins overlapping art. */
+    for (int i=0;i<small_case_count();i++) for (int o=0;o<2;o++) {
+        const Observation *ob=&small_case(i)->obs[o];
+        if (!eq(ob->scene,id) || g_nhot>=MAX_HOT) continue;
+        Hot *h=&g_hot[g_nhot++]; memset(h,0,sizeof *h);
+        h->r=(Rectangle){ob->x-35,ob->y-35,70,70}; h->kind=101;
+        snprintf(h->arg,sizeof h->arg,"%d",i*2+o);
+        snprintf(h->label,sizeof h->label,"%s",ob->label);
+    }
+    g_hurry=false; g_last_hot=-1; g_last_click=-1;
     /* Arrive beside the exit that leads back to the scene we just left.
      * This makes walking right and then returning left put the detective
      * back on the right-hand edge of the original screen instead of at its
@@ -488,10 +504,20 @@ static bool hot_live(const Hot *h)
 static void fire(int i)
 {
     Hot *h = &g_hot[i];
+    if (h->kind == 101) {
+        int code=atoi(h->arg), ci=code/2, ob=code%2;
+        bool fresh=small_case_observe(ci,ob);
+        snprintf(g_inspect,sizeof g_inspect,"%s%s  [Casebook: %s]",
+                 fresh?"Observation recorded.  ":"",small_case(ci)->obs[ob].text,small_case(ci)->title);
+        g_inspect_open=true; g_inspect_page=0; g_inspect_next=-1;
+        if(fresh){sfx_play(SFX_CHIME);save_autosave(g_id);}else sfx_play(SFX_PAGE);
+        return;
+    }
     if (h->kind == 100) {
         flag_set(h->arg, 1);
         flag_add("feathers", 1);
         trust_add("pip", 1);        /* the hint economy IS the relationship (§5.2) */
+        save_autosave(g_id);
         sfx_play(SFX_FEATHER);
         snprintf(g_inspect, sizeof g_inspect, "%s", ui_str("feather.found"));
         g_inspect_open = true;
@@ -546,11 +572,16 @@ scene_request scene_update(float dt)
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !g_inspect_open) {
         int hit = -1;
         for (int i = 0; i < g_nhot; i++)
-            if (hot_live(&g_hot[i]) && CheckCollisionPointRec(m, g_hot[i].r)) hit = i;
+            if (hot_live(&g_hot[i]) && (CheckCollisionPointRec(m, g_hot[i].r) ||
+                (g_hot[i].kind==SC_EXIT && (g_hot[i].r.x<100 || g_hot[i].r.x>1100) &&
+                 CheckCollisionPointRec(m,(Rectangle){g_hot[i].r.x<100?12:1100,546,166,36})))) hit = i;
 
         if (hit >= 0) {
+            g_hurry=(g_last_hot==hit && g_time-g_last_click<0.34f);
+            g_last_hot=hit; g_last_click=g_time;
             g_pending = hit;
             g_tx = g_hot[hit].r.x + g_hot[hit].r.width * 0.5f;
+            if(g_hot[hit].kind==101 || g_hot[hit].kind==SC_TALK)g_tx += g_px<=g_tx?-100:100;
             if (g_tx < g_walk.x + 40) g_tx = g_walk.x + 40;
             if (g_tx > g_walk.x + g_walk.width - 40) g_tx = g_walk.x + g_walk.width - 40;
             g_ty = g_walk.y + g_walk.height * 0.62f;
@@ -571,7 +602,7 @@ scene_request scene_update(float dt)
     if (g_walking) {
         float dx = g_tx - g_px, dy = g_ty - g_py;
         float d = sqrtf(dx * dx + dy * dy);
-        float sp = 300.0f * dt;
+        float sp = (g_hurry ? 1050.0f : 420.0f) * dt;
         if (d <= sp) {
             g_px = g_tx; g_py = g_ty;
             g_walking = false;
@@ -580,7 +611,7 @@ scene_request scene_update(float dt)
                 g_pending = -1;
                 int kind = g_hot[i].kind;
                 fire(i);
-                if (kind != 100 && kind != SC_NONE) return (scene_request)kind;
+                if (kind != 100 && kind != 101 && kind != SC_NONE) return (scene_request)kind;
             }
         } else {
             g_px += dx / d * sp;
@@ -598,6 +629,41 @@ scene_request scene_update(float dt)
 void scene_draw(void)
 {
     scene_draw_backdrop(g_bg, g_time);
+
+    /* A few large, readable props give the second screen in each district
+     * its own silhouette. Ink and paper remain the visual vocabulary. */
+    if(eq(g_id,"ch2_post")) {
+        paper_panel((Rectangle){170,250,175,160},2,18100);
+        for(int i=0;i<6;i++)doodle(D_ENVELOPE,207+(i%2)*90,285+(i/2)*47,25,0,col_ink_soft());
+        art_text("POST",194,218,29,col_ink());
+    } else if(eq(g_id,"ch3_library")) {
+        paper_panel((Rectangle){160,265,215,165},2,18110);
+        for(int i=0;i<8;i++)doodle(D_BOOK,185+(i%4)*54,306+(i/4)*83,24,0,col_ink_soft());
+        art_text("READING ROOM",166,230,24,col_ink());
+    } else if(eq(g_id,"ch4_hives")) {
+        for(int i=0;i<3;i++) {
+            Rectangle hive={155+i*118.0f,355-i*12.0f,85,75};
+            paper_panel(hive,2,18120+i);
+            for(int k=1;k<4;k++)ink_line(hive.x+4,hive.y+k*18,hive.x+81,hive.y+k*18,2,0,18130+k,col_ink_soft());
+            doodle(D_BEE,hive.x+48+12*sinf(g_time),hive.y-24,16,0,col_accent_a());
+        }
+    } else if(eq(g_id,"ch5_lodge")) {
+        for(int i=0;i<4;i++)doodle(D_LANTERN,185+i*70,325,28,0,col_accent_a());
+        art_text("THE LAMPLIGHTER",163,240,23,col_ink());
+    } else if(eq(g_id,"ch1_quay")) {
+        ink_line(680,400,1010,400,4,1,18150,col_ink());
+        ink_line(680,400,738,458,4,1,18151,col_ink());
+        ink_line(738,458,970,458,4,1,18152,col_ink());
+        ink_line(970,458,1010,400,4,1,18153,col_ink());
+        art_text(small_case_solved(1)?"TANSY":"TOMORROW",773,416,22,col_ink());
+    }
+    if(eq(g_id,"p_square") && small_case_completed()>0) {
+        paper_panel((Rectangle){398,538,430,45},2,18170);
+        for(int i=0;i<small_case_count();i++)if(small_case_solved(i)) {
+            float x=430+i*72.0f;
+            doodle(small_case(i)->decoration,x,560,27,0,(Color){223,184,121,255});
+        }
+    }
 
     /* actors and the Detective, sorted back to front */
     typedef struct { float y; int npc; float x; int pose; } Drawable;
@@ -623,11 +689,32 @@ void scene_draw(void)
         if (!hot_live(&g_hot[i])) continue;
         Rectangle r = g_hot[i].r;
         float cx = r.x + r.width * 0.5f, cy = r.y + r.height * 0.5f;
+        if (g_hot[i].kind == 101) {
+            int code=atoi(g_hot[i].arg);const SmallCase *c=small_case(code/2);
+            paper_panel((Rectangle){cx-29,cy-29,58,58},2,18200+i);
+            doodle(c->obs[code%2].doodle,cx,cy,24,0,(Color){210,179,128,255});
+            ink_circle(cx,cy,37,small_case_seen(code/2,code%2)?1:2.5f,0,18240+i,col_ink_soft());
+            ink_line(cx+27,cy+27,cx+39,cy+39,3,0,18280+i,col_ink_soft());
+        }
         if (g_hot[i].kind == 100)
             doodle(D_FEATHER, cx, cy, 20, sinf(g_time * 1.3f + i) * 0.3f,
                    (Color){ 236, 210, 128, 255 });
-        sparkle(cx, cy, fmaxf(r.width, r.height) * 0.45f, g_time + i);
+        if(g_hot[i].kind!=101)sparkle(cx, cy, fmaxf(r.width, r.height) * 0.45f, g_time + i);
+        if(g_hot[i].kind==SC_EXIT && (r.x<100 || r.x>1100)) {
+            const char *label=g_hot[i].label;
+            for(int p=0;p<town_place_count();p++)if(eq(g_hot[i].arg,town_place(p)->id))label=town_place(p)->name;
+            Rectangle sign={r.x<100?12:1100,546,166,36};
+            DrawRectangleRounded(sign,.08f,3,(Color){242,234,215,240});
+            art_text_fit(label,(Rectangle){sign.x+8,sign.y+6,150,24},15,col_ink());
+        }
         if (CheckCollisionPointRec(m, r)) hover = i;
+        if (IsKeyDown(KEY_SPACE) && !g_inspect_open && g_hot[i].kind!=SC_NONE && g_hot[i].kind!=100) {
+            const char *lab=g_hot[i].label;
+            float w=fminf(230,art_text_w(lab,15)+16);
+            float x=fmaxf(8,fminf(VW-w-8,cx-w*.5f));
+            paper_panel((Rectangle){x,cy-18,w,36},1,18300+i);
+            art_text_fit(lab,(Rectangle){x+7,cy-12,w-14,26},15,col_ink());
+        }
     }
 
     if (hover >= 0 && g_hot[hover].label[0]) {

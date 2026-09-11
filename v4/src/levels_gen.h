@@ -39,6 +39,24 @@ static const ObstacleDef L1_ob[] = {
 };
 
 static const MagnetDef L2_mag[] = {
+  {270.0f,4800.0f,1},
+  {200.0f,4630.0f,3},
+  {270.0f,4460.0f,2},
+  {340.0f,4290.0f,0},
+  {270.0f,4120.0f,1},
+  {200.0f,3950.0f,3},
+  {270.0f,3780.0f,2},
+  {340.0f,3610.0f,0},
+  {270.0f,3440.0f,1},
+  {220.0f,3270.0f,3},
+  {270.0f,3100.0f,2},
+};
+static const CheckpointDef L2_cp[] = {
+  {4175.0f,4},
+  {3495.0f,8},
+};
+
+static const MagnetDef L3_mag[] = {
   {240.0f,4640.0f,3},
   {240.0f,4440.0f,1},
   {120.0f,3960.0f,0},
@@ -54,7 +72,26 @@ static const MagnetDef L2_mag[] = {
   {300.0f,2560.0f,0},
 };
 
-static const MagnetDef L3_mag[] = {
+static const MagnetDef L4_mag[] = {
+  {270.0f,4800.0f,1},
+  {160.0f,4620.0f,3},
+  {160.0f,4440.0f,2},
+  {270.0f,4260.0f,0},
+  {380.0f,4080.0f,1},
+  {380.0f,3900.0f,3},
+  {270.0f,3720.0f,2},
+  {160.0f,3540.0f,0},
+  {160.0f,3360.0f,1},
+  {270.0f,3180.0f,3},
+  {380.0f,3000.0f,2},
+  {270.0f,2820.0f,0},
+};
+static const CheckpointDef L4_cp[] = {
+  {4135.0f,4},
+  {3415.0f,8},
+};
+
+static const MagnetDef L5_mag[] = {
   {240.0f,4580.0f,1},
   {240.0f,4460.0f,1},
   {320.0f,4340.0f,0},
@@ -74,7 +111,11 @@ static const MagnetDef L3_mag[] = {
   {340.0f,2800.0f,1},
   {340.0f,2600.0f,2},
 };
-static const ObstacleDef L3_ob[] = {
+static const CheckpointDef L5_cp[] = {
+  {3380.0f,11},
+  {2860.0f,15},
+};
+static const ObstacleDef L5_ob[] = {
   {2,180.0f,4520.0f,150.0f,330.0f,4520.0f,0.0f,1200.0f,5000.0f,0.0f,0},
   {2,200.0f,4000.0f,150.0f,350.0f,4000.0f,0.0f,1200.0f,5000.0f,0.0f,0},
   {0,260.0f,3540.0f,100.0f,0.0f,0.0f,60.0f,0.0f,0.0f,0.0f,0},
@@ -84,7 +125,7 @@ static const ObstacleDef L3_ob[] = {
   {0,340.0f,2660.0f,100.0f,0.0f,0.0f,60.0f,0.0f,0.0f,0.0f,0},
 };
 
-static const MagnetDef L4_mag[] = {
+static const MagnetDef L6_mag[] = {
   {207.141f,4800.0f,2},
   {205.031f,4580.0f,3},
   {172.969f,4360.0f,1},
@@ -110,18 +151,41 @@ static const MagnetDef L4_mag[] = {
   {304.172f,300.0f,0},
   {245.531f,250.0f,2},
 };
-static const CheckpointDef L4_cp[] = {
+static const CheckpointDef L6_cp[] = {
   {4042.0f,4},
   {3283.0f,7},
   {2525.0f,12},
   {1767.0f,16},
   {1008.0f,19},
 };
-static const ObstacleDef L4_ob[] = {
+static const ObstacleDef L6_ob[] = {
   {0,240.047f,2600.0f,114.0f,0.0f,0.0f,-66.0f,0.0f,0.0f,0.0f,0},
 };
 
-static const MagnetDef L5_mag[] = {
+static const MagnetDef L7_mag[] = {
+  {270.0f,4800.0f,1},
+  {145.0f,4600.0f,3},
+  {270.0f,4400.0f,2},
+  {270.0f,4200.0f,0},
+  {145.0f,4000.0f,1},
+  {270.0f,3800.0f,3},
+  {270.0f,3600.0f,2},
+  {145.0f,3400.0f,0},
+  {270.0f,3200.0f,1},
+  {270.0f,3000.0f,3},
+  {145.0f,2800.0f,2},
+  {395.0f,4600.0f,2},
+  {395.0f,4000.0f,3},
+  {395.0f,3400.0f,1},
+  {395.0f,2800.0f,0},
+  {270.0f,2600.0f,0},
+};
+static const CheckpointDef L7_cp[] = {
+  {4055.0f,4},
+  {3255.0f,8},
+};
+
+static const MagnetDef L8_mag[] = {
   {140.0f,4300.0f,0},
   {320.0f,3880.0f,3},
   {240.0f,4080.0f,1},
@@ -137,13 +201,13 @@ static const MagnetDef L5_mag[] = {
   {280.0f,3020.0f,0},
   {280.0f,2020.0f,1},
 };
-static const ObstacleDef L5_ob[] = {
+static const ObstacleDef L8_ob[] = {
   {0,280.0f,2720.0f,100.0f,0.0f,0.0f,60.0f,0.0f,0.0f,0.0f,0},
   {0,280.0f,3780.0f,100.0f,0.0f,0.0f,60.0f,0.0f,0.0f,0.0f,0},
   {0,110.798f,3264.41f,100.0f,0.0f,0.0f,60.0f,0.0f,0.0f,0.0f,0},
 };
 
-static const MagnetDef L6_mag[] = {
+static const MagnetDef L9_mag[] = {
   {260.0f,4740.0f,0},
   {180.0f,4620.0f,1},
   {340.0f,4620.0f,2},
@@ -169,10 +233,10 @@ static const MagnetDef L6_mag[] = {
   {320.0f,3660.0f,1},
   {260.0f,3580.0f,2},
 };
-static const CheckpointDef L6_cp[] = {
+static const CheckpointDef L9_cp[] = {
   {4160.0f,5},
 };
-static const ObstacleDef L6_ob[] = {
+static const ObstacleDef L9_ob[] = {
   {0,260.0f,4600.0f,100.0f,0.0f,0.0f,60.0f,0.0f,0.0f,0.0f,0},
   {2,180.0f,4280.0f,150.0f,330.0f,4280.0f,0.0f,1200.0f,5000.0f,0.0f,0},
   {2,180.0f,4440.0f,150.0f,330.0f,4440.0f,0.0f,1200.0f,5000.0f,0.0f,0},
@@ -181,7 +245,31 @@ static const ObstacleDef L6_ob[] = {
   {0,260.0f,3700.0f,100.0f,0.0f,0.0f,60.0f,0.0f,0.0f,0.0f,0},
 };
 
-static const MagnetDef L7_mag[] = {
+static const MagnetDef L10_mag[] = {
+  {270.0f,4800.0f,1},
+  {160.0f,4605.0f,3},
+  {270.0f,4410.0f,2},
+  {380.0f,4215.0f,0},
+  {270.0f,4020.0f,1},
+  {160.0f,3825.0f,3},
+  {270.0f,3630.0f,2},
+  {380.0f,3435.0f,0},
+  {270.0f,3240.0f,1},
+  {160.0f,3045.0f,3},
+  {270.0f,2850.0f,2},
+  {380.0f,2655.0f,0},
+  {270.0f,2460.0f,1},
+};
+static const CheckpointDef L10_cp[] = {
+  {4075.0f,4},
+  {3295.0f,8},
+};
+static const ObstacleDef L10_ob[] = {
+  {0,270.0f,4117.5f,50.0f,0.0f,0.0f,55.0f,0.0f,0.0f,0.0f,0},
+  {0,270.0f,3337.5f,50.0f,0.0f,0.0f,55.0f,0.0f,0.0f,0.0f,0},
+};
+
+static const MagnetDef L11_mag[] = {
   {216.422f,4800.0f,0},
   {314.297f,4580.0f,3},
   {310.078f,4360.0f,2},
@@ -207,19 +295,39 @@ static const MagnetDef L7_mag[] = {
   {200.812f,447.0f,2},
   {298.688f,227.0f,2},
 };
-static const CheckpointDef L7_cp[] = {
+static const CheckpointDef L11_cp[] = {
   {4038.0f,4},
   {3276.0f,8},
   {2514.0f,12},
   {1751.0f,17},
   {989.0f,20},
 };
-static const ObstacleDef L7_ob[] = {
+static const ObstacleDef L11_ob[] = {
   {0,211.359f,3333.0f,118.0f,0.0f,0.0f,-118.0f,0.0f,0.0f,0.0f,0},
   {3,229.078f,1867.0f,0.0f,0.0f,0.0f,80.0f,0.0f,0.0f,303.0f,0},
 };
 
-static const MagnetDef L8_mag[] = {
+static const MagnetDef L12_mag[] = {
+  {270.0f,4800.0f,1},
+  {210.0f,4620.0f,3},
+  {150.0f,4440.0f,2},
+  {210.0f,4260.0f,0},
+  {270.0f,4080.0f,1},
+  {330.0f,3900.0f,3},
+  {390.0f,3720.0f,2},
+  {330.0f,3540.0f,0},
+  {270.0f,3360.0f,1},
+  {210.0f,3180.0f,3},
+  {270.0f,3000.0f,2},
+  {330.0f,2820.0f,0},
+  {270.0f,2640.0f,1},
+};
+static const CheckpointDef L12_cp[] = {
+  {4135.0f,4},
+  {3415.0f,8},
+};
+
+static const MagnetDef L13_mag[] = {
   {202.675f,4676.55f,2},
   {169.328f,4378.51f,3},
   {288.125f,4151.34f,1},
@@ -243,17 +351,17 @@ static const MagnetDef L8_mag[] = {
   {300.0f,1780.0f,3},
   {120.0f,1300.0f,3},
 };
-static const CheckpointDef L8_cp[] = {
+static const CheckpointDef L13_cp[] = {
   {3280.0f,8},
 };
-static const ObstacleDef L8_ob[] = {
+static const ObstacleDef L13_ob[] = {
   {3,283.364f,3144.22f,0.0f,0.0f,0.0f,60.0f,0.0f,0.0f,73.0f,0},
   {3,108.982f,2586.66f,0.0f,0.0f,0.0f,60.0f,0.0f,0.0f,74.0f,0},
   {3,392.639f,2479.47f,0.0f,0.0f,0.0f,60.0f,0.0f,0.0f,75.0f,0},
   {3,433.867f,3699.09f,0.0f,0.0f,0.0f,60.0f,0.0f,0.0f,76.0f,0},
 };
 
-static const MagnetDef L9_mag[] = {
+static const MagnetDef L14_mag[] = {
   {274.219f,4800.0f,3},
   {186.047f,4580.0f,2},
   {184.781f,4360.0f,1},
@@ -279,19 +387,46 @@ static const MagnetDef L9_mag[] = {
   {295.312f,447.0f,3},
   {197.438f,227.0f,0},
 };
-static const CheckpointDef L9_cp[] = {
+static const CheckpointDef L14_cp[] = {
   {4038.0f,4},
   {3276.0f,8},
   {2514.0f,12},
   {1751.0f,17},
   {989.0f,20},
 };
-static const ObstacleDef L9_ob[] = {
+static const ObstacleDef L14_ob[] = {
   {3,233.719f,3333.0f,0.0f,0.0f,0.0f,77.0f,0.0f,0.0f,302.0f,0},
   {0,211.359f,1867.0f,123.0f,0.0f,0.0f,-120.0f,0.0f,0.0f,0.0f,0},
 };
 
-static const MagnetDef L10_mag[] = {
+static const MagnetDef L15_mag[] = {
+  {270.0f,4800.0f,1},
+  {180.0f,4610.0f,3},
+  {180.0f,4420.0f,2},
+  {270.0f,4230.0f,0},
+  {360.0f,4040.0f,1},
+  {360.0f,3850.0f,3},
+  {270.0f,3660.0f,2},
+  {180.0f,3470.0f,0},
+  {180.0f,3280.0f,1},
+  {270.0f,3090.0f,3},
+  {360.0f,2900.0f,2},
+  {360.0f,2710.0f,0},
+  {270.0f,2520.0f,1},
+  {270.0f,2330.0f,3},
+};
+static const CheckpointDef L15_cp[] = {
+  {4095.0f,4},
+  {3335.0f,8},
+  {2575.0f,12},
+};
+static const ObstacleDef L15_ob[] = {
+  {2,70.0f,4135.0f,180.0f,250.0f,4135.0f,0.0f,1000.0f,4200.0f,0.0f,0},
+  {2,70.0f,3375.0f,180.0f,250.0f,3375.0f,0.0f,1000.0f,4200.0f,0.0f,0},
+  {2,70.0f,2615.0f,180.0f,250.0f,2615.0f,0.0f,1000.0f,4200.0f,0.0f,0},
+};
+
+static const MagnetDef L16_mag[] = {
   {240.0f,4640.0f,0},
   {300.0f,4400.0f,1},
   {260.0f,4240.0f,1},
@@ -317,10 +452,10 @@ static const MagnetDef L10_mag[] = {
   {300.0f,2220.0f,1},
   {300.0f,2100.0f,0},
 };
-static const CheckpointDef L10_cp[] = {
+static const CheckpointDef L16_cp[] = {
   {3540.0f,4},
 };
-static const ObstacleDef L10_ob[] = {
+static const ObstacleDef L16_ob[] = {
   {2,80.0f,2700.0f,150.0f,230.0f,2700.0f,0.0f,1200.0f,5000.0f,0.0f,0},
   {3,280.0f,3640.0f,0.0f,0.0f,0.0f,60.0f,0.0f,0.0f,75.0f,0},
   {3,140.0f,3600.0f,0.0f,0.0f,0.0f,60.0f,0.0f,0.0f,76.0f,0},
@@ -330,7 +465,7 @@ static const ObstacleDef L10_ob[] = {
   {0,260.0f,4120.0f,100.0f,0.0f,0.0f,60.0f,0.0f,0.0f,0.0f,0},
 };
 
-static const MagnetDef L11_mag[] = {
+static const MagnetDef L17_mag[] = {
   {40.0f,4620.0f,1},
   {260.0f,4520.0f,3},
   {500.0f,4620.0f,0},
@@ -360,11 +495,11 @@ static const MagnetDef L11_mag[] = {
   {260.0f,1440.0f,1},
   {260.0f,1320.0f,1},
 };
-static const CheckpointDef L11_cp[] = {
+static const CheckpointDef L17_cp[] = {
   {2920.0f,14},
   {1360.0f,15},
 };
-static const ObstacleDef L11_ob[] = {
+static const ObstacleDef L17_ob[] = {
   {2,20.0f,2640.0f,150.0f,170.0f,2640.0f,0.0f,1200.0f,5000.0f,0.0f,0},
   {2,120.0f,2640.0f,150.0f,270.0f,2640.0f,0.0f,1200.0f,5000.0f,0.0f,0},
   {2,220.0f,2640.0f,150.0f,370.0f,2640.0f,0.0f,1200.0f,5000.0f,0.0f,0},
@@ -392,7 +527,34 @@ static const ObstacleDef L11_ob[] = {
   {3,80.0f,3620.0f,0.0f,0.0f,0.0f,60.0f,0.0f,0.0f,187.0f,0},
 };
 
-static const MagnetDef L12_mag[] = {
+static const MagnetDef L18_mag[] = {
+  {270.0f,4800.0f,1},
+  {145.0f,4610.0f,3},
+  {145.0f,4420.0f,2},
+  {270.0f,4230.0f,0},
+  {395.0f,4040.0f,1},
+  {395.0f,3850.0f,3},
+  {270.0f,3660.0f,2},
+  {145.0f,3470.0f,0},
+  {145.0f,3280.0f,1},
+  {270.0f,3090.0f,3},
+  {395.0f,2900.0f,2},
+  {395.0f,2710.0f,0},
+  {270.0f,2520.0f,1},
+  {270.0f,2330.0f,3},
+};
+static const CheckpointDef L18_cp[] = {
+  {4095.0f,4},
+  {3335.0f,8},
+  {2575.0f,12},
+};
+static const ObstacleDef L18_ob[] = {
+  {1,100.0f,4135.0f,0.0f,0.0f,0.0f,30.0f,0.0f,0.0f,0.0f,0},
+  {1,440.0f,3375.0f,0.0f,0.0f,0.0f,30.0f,0.0f,0.0f,0.0f,0},
+  {1,100.0f,2615.0f,0.0f,0.0f,0.0f,30.0f,0.0f,0.0f,0.0f,0},
+};
+
+static const MagnetDef L19_mag[] = {
   {267.469f,4800.0f,3},
   {217.266f,4580.0f,3},
   {173.391f,4360.0f,0},
@@ -418,19 +580,41 @@ static const MagnetDef L12_mag[] = {
   {272.109f,447.0f,1},
   {174.234f,227.0f,2},
 };
-static const CheckpointDef L12_cp[] = {
+static const CheckpointDef L19_cp[] = {
   {4038.0f,4},
   {3276.0f,8},
   {2514.0f,12},
   {1751.0f,17},
   {989.0f,20},
 };
-static const ObstacleDef L12_ob[] = {
+static const ObstacleDef L19_ob[] = {
   {0,227.391f,3333.0f,128.0f,0.0f,0.0f,-89.0f,0.0f,0.0f,0.0f,0},
   {3,237.094f,1867.0f,0.0f,0.0f,0.0f,60.0f,0.0f,0.0f,303.0f,0},
 };
 
-static const MagnetDef L13_mag[] = {
+static const MagnetDef L20_mag[] = {
+  {270.0f,4800.0f,1},
+  {200.0f,4615.0f,3},
+  {140.0f,4430.0f,2},
+  {220.0f,4245.0f,0},
+  {300.0f,4060.0f,1},
+  {380.0f,3875.0f,3},
+  {300.0f,3690.0f,2},
+  {220.0f,3505.0f,0},
+  {140.0f,3320.0f,1},
+  {220.0f,3135.0f,3},
+  {300.0f,2950.0f,2},
+  {380.0f,2765.0f,0},
+  {300.0f,2580.0f,1},
+  {270.0f,2395.0f,3},
+};
+static const CheckpointDef L20_cp[] = {
+  {4115.0f,4},
+  {3375.0f,8},
+  {2635.0f,12},
+};
+
+static const MagnetDef L21_mag[] = {
   {209.672f,4800.0f,2},
   {229.078f,4580.0f,0},
   {309.656f,4361.0f,1},
@@ -458,21 +642,20 @@ static const MagnetDef L13_mag[] = {
   {180.141f,300.0f,0},
   {216.844f,250.0f,3},
 };
-static const CheckpointDef L13_cp[] = {
+static const CheckpointDef L21_cp[] = {
   {4042.0f,4},
   {3283.0f,9},
   {2525.0f,13},
   {1767.0f,17},
   {1008.0f,21},
 };
-static const ObstacleDef L13_ob[] = {
+static const ObstacleDef L21_ob[] = {
   {3,234.984f,3700.0f,0.0f,0.0f,0.0f,69.0f,0.0f,0.0f,302.0f,0},
   {0,213.469f,2600.0f,130.0f,0.0f,0.0f,109.0f,0.0f,0.0f,0.0f,0},
 };
 
-static const MagnetDef L14_mag[] = {
+static const MagnetDef L22_mag[] = {
   {280.0f,4540.0f,1},
-  {340.0f,3540.0f,2},
   {200.0f,4120.0f,2},
   {320.0f,4100.0f,3},
   {400.0f,4000.0f,0},
@@ -508,27 +691,48 @@ static const MagnetDef L14_mag[] = {
   {80.0f,4180.0f,0},
   {280.0f,1700.0f,0},
 };
-static const CheckpointDef L14_cp[] = {
-  {3096.8f,20},
+static const CheckpointDef L22_cp[] = {
+  {4235.0f,33},
+  {3615.0f,8},
+  {3075.0f,19},
+  {2295.0f,26},
 };
-static const ObstacleDef L14_ob[] = {
-  {1,220.0f,4240.0f,0.0f,0.0f,0.0f,35.0f,0.0f,0.0f,0.0f,0},
-  {1,283.979f,3963.75f,0.0f,0.0f,0.0f,35.0f,0.0f,0.0f,0.0f,0},
-  {1,100.0f,3820.0f,0.0f,0.0f,0.0f,35.0f,0.0f,0.0f,0.0f,0},
-  {1,220.0f,3620.0f,0.0f,0.0f,0.0f,35.0f,0.0f,0.0f,0.0f,0},
-  {1,320.0f,3380.0f,0.0f,0.0f,0.0f,35.0f,0.0f,0.0f,0.0f,0},
-  {1,320.0f,3120.0f,0.0f,0.0f,0.0f,35.0f,0.0f,0.0f,0.0f,0},
-  {1,120.0f,3300.0f,0.0f,0.0f,0.0f,35.0f,0.0f,0.0f,0.0f,0},
-  {1,120.0f,2560.0f,0.0f,0.0f,0.0f,35.0f,0.0f,0.0f,0.0f,0},
-  {1,360.0f,2420.0f,0.0f,0.0f,0.0f,35.0f,0.0f,0.0f,0.0f,0},
-  {1,160.0f,2340.0f,0.0f,0.0f,0.0f,35.0f,0.0f,0.0f,0.0f,0},
-  {1,80.0f,3000.0f,0.0f,0.0f,0.0f,35.0f,0.0f,0.0f,0.0f,0},
-  {1,222.448f,2800.61f,0.0f,0.0f,0.0f,35.0f,0.0f,0.0f,0.0f,0},
-  {1,420.0f,2640.0f,0.0f,0.0f,0.0f,35.0f,0.0f,0.0f,0.0f,0},
-  {1,200.0f,1800.0f,0.0f,0.0f,0.0f,35.0f,0.0f,0.0f,0.0f,0},
+static const ObstacleDef L22_ob[] = {
+  {1,410.0f,4320.0f,0.0f,0.0f,0.0f,24.0f,0.0f,0.0f,0.0f,0},
+  {1,55.0f,3960.0f,0.0f,0.0f,0.0f,24.0f,0.0f,0.0f,0.0f,0},
+  {1,450.0f,3040.0f,0.0f,0.0f,0.0f,24.0f,0.0f,0.0f,0.0f,0},
+  {1,420.0f,2240.0f,0.0f,0.0f,0.0f,24.0f,0.0f,0.0f,0.0f,0},
+  {1,95.0f,1980.0f,0.0f,0.0f,0.0f,24.0f,0.0f,0.0f,0.0f,0},
 };
 
-static const MagnetDef L15_mag[] = {
+static const MagnetDef L23_mag[] = {
+  {270.0f,4800.0f,1},
+  {160.0f,4605.0f,3},
+  {250.0f,4410.0f,2},
+  {380.0f,4215.0f,0},
+  {290.0f,4020.0f,1},
+  {160.0f,3825.0f,3},
+  {250.0f,3630.0f,2},
+  {380.0f,3435.0f,0},
+  {290.0f,3240.0f,1},
+  {160.0f,3045.0f,3},
+  {250.0f,2850.0f,2},
+  {380.0f,2655.0f,0},
+  {270.0f,2460.0f,1},
+  {270.0f,2265.0f,3},
+};
+static const CheckpointDef L23_cp[] = {
+  {4075.0f,4},
+  {3295.0f,8},
+  {2515.0f,12},
+};
+static const ObstacleDef L23_ob[] = {
+  {4,230.0f,4117.5f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,1},
+  {4,230.0f,3337.5f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0},
+  {4,230.0f,2557.5f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,1},
+};
+
+static const MagnetDef L24_mag[] = {
   {251.016f,4800.0f,3},
   {245.109f,4580.0f,1},
   {278.859f,4360.0f,2},
@@ -556,19 +760,47 @@ static const MagnetDef L15_mag[] = {
   {220.641f,300.0f,2},
   {210.938f,250.0f,3},
 };
-static const CheckpointDef L15_cp[] = {
+static const CheckpointDef L24_cp[] = {
   {4042.0f,4},
   {3283.0f,9},
   {2525.0f,13},
   {1767.0f,17},
   {1008.0f,21},
 };
-static const ObstacleDef L15_ob[] = {
+static const ObstacleDef L24_ob[] = {
   {0,222.75f,3700.0f,127.0f,0.0f,0.0f,120.0f,0.0f,0.0f,0.0f,0},
   {2,186.891f,2600.0f,188.0f,266.203f,2600.0f,0.0f,1200.0f,5000.0f,0.0f,0},
 };
 
-static const MagnetDef L16_mag[] = {
+static const MagnetDef L25_mag[] = {
+  {270.0f,4800.0f,1},
+  {110.0f,4585.0f,3},
+  {270.0f,4370.0f,2},
+  {430.0f,4155.0f,0},
+  {270.0f,3940.0f,1},
+  {110.0f,3725.0f,3},
+  {270.0f,3510.0f,2},
+  {430.0f,3295.0f,0},
+  {270.0f,3080.0f,1},
+  {110.0f,2865.0f,3},
+  {270.0f,2650.0f,2},
+  {430.0f,2435.0f,0},
+  {270.0f,2220.0f,1},
+  {110.0f,2005.0f,3},
+  {270.0f,1790.0f,2},
+};
+static const CheckpointDef L25_cp[] = {
+  {3995.0f,4},
+  {3135.0f,8},
+  {2275.0f,12},
+};
+static const ObstacleDef L25_ob[] = {
+  {0,270.0f,4047.5f,50.0f,0.0f,0.0f,55.0f,0.0f,0.0f,0.0f,0},
+  {0,270.0f,3187.5f,50.0f,0.0f,0.0f,55.0f,0.0f,0.0f,0.0f,0},
+  {0,270.0f,2327.5f,50.0f,0.0f,0.0f,55.0f,0.0f,0.0f,0.0f,0},
+};
+
+static const MagnetDef L26_mag[] = {
   {269.156f,4800.0f,1},
   {299.531f,4580.0f,3},
   {201.656f,4360.0f,2},
@@ -596,19 +828,52 @@ static const MagnetDef L16_mag[] = {
   {264.094f,300.0f,2},
   {252.281f,250.0f,1},
 };
-static const CheckpointDef L16_cp[] = {
+static const CheckpointDef L26_cp[] = {
   {4042.0f,4},
   {3283.0f,9},
   {2525.0f,13},
   {1767.0f,17},
   {1008.0f,21},
 };
-static const ObstacleDef L16_ob[] = {
+static const ObstacleDef L26_ob[] = {
   {3,252.703f,3700.0f,0.0f,0.0f,0.0f,60.0f,0.0f,0.0f,302.0f,0},
   {0,232.453f,2600.0f,117.0f,0.0f,0.0f,90.0f,0.0f,0.0f,0.0f,0},
 };
 
-static const MagnetDef L17_mag[] = {
+static const MagnetDef L27_mag[] = {
+  {270.0f,4800.0f,1},
+  {145.0f,4600.0f,3},
+  {270.0f,4400.0f,2},
+  {270.0f,4200.0f,0},
+  {145.0f,4000.0f,1},
+  {270.0f,3800.0f,3},
+  {270.0f,3600.0f,2},
+  {145.0f,3400.0f,0},
+  {270.0f,3200.0f,1},
+  {270.0f,3000.0f,3},
+  {145.0f,2800.0f,2},
+  {270.0f,2600.0f,0},
+  {270.0f,2400.0f,1},
+  {145.0f,2200.0f,3},
+  {395.0f,4600.0f,2},
+  {395.0f,4000.0f,3},
+  {395.0f,3400.0f,1},
+  {395.0f,2800.0f,0},
+  {395.0f,2200.0f,2},
+  {270.0f,2000.0f,2},
+};
+static const CheckpointDef L27_cp[] = {
+  {4055.0f,4},
+  {3255.0f,8},
+  {2455.0f,12},
+};
+static const ObstacleDef L27_ob[] = {
+  {2,70.0f,4100.0f,180.0f,250.0f,4100.0f,0.0f,1000.0f,4200.0f,0.0f,0},
+  {2,70.0f,3300.0f,180.0f,250.0f,3300.0f,0.0f,1000.0f,4200.0f,0.0f,0},
+  {2,70.0f,2500.0f,180.0f,250.0f,2500.0f,0.0f,1000.0f,4200.0f,0.0f,0},
+};
+
+static const MagnetDef L28_mag[] = {
   {227.812f,4800.0f,1},
   {293.203f,4580.0f,0},
   {305.016f,4360.0f,2},
@@ -637,19 +902,19 @@ static const MagnetDef L17_mag[] = {
   {245.953f,300.0f,2},
   {242.578f,250.0f,3},
 };
-static const CheckpointDef L17_cp[] = {
+static const CheckpointDef L28_cp[] = {
   {4042.0f,4},
   {3283.0f,9},
   {2525.0f,13},
   {1767.0f,18},
   {1008.0f,22},
 };
-static const ObstacleDef L17_ob[] = {
+static const ObstacleDef L28_ob[] = {
   {3,247.219f,2160.0f,0.0f,0.0f,0.0f,72.0f,0.0f,0.0f,302.0f,0},
   {3,237.938f,1280.0f,0.0f,0.0f,0.0f,66.0f,0.0f,0.0f,303.0f,0},
 };
 
-static const MagnetDef L18_mag[] = {
+static const MagnetDef L29_mag[] = {
   {255.656f,4800.0f,0},
   {227.812f,4580.0f,3},
   {229.922f,4360.0f,2},
@@ -677,19 +942,41 @@ static const MagnetDef L18_mag[] = {
   {183.094f,315.0f,1},
   {229.922f,250.0f,2},
 };
-static const CheckpointDef L18_cp[] = {
+static const CheckpointDef L29_cp[] = {
   {4042.0f,4},
   {3283.0f,9},
   {2525.0f,13},
   {1767.0f,17},
   {1008.0f,21},
 };
-static const ObstacleDef L18_ob[] = {
+static const ObstacleDef L29_ob[] = {
   {3,249.328f,3700.0f,0.0f,0.0f,0.0f,80.0f,0.0f,0.0f,302.0f,0},
   {3,240.891f,2600.0f,0.0f,0.0f,0.0f,68.0f,0.0f,0.0f,303.0f,0},
 };
 
-static const MagnetDef L19_mag[] = {
+static const MagnetDef L30_mag[] = {
+  {270.0f,4800.0f,1},
+  {200.0f,4580.0f,3},
+  {330.0f,4360.0f,2},
+  {180.0f,4140.0f,0},
+  {360.0f,3920.0f,1},
+  {200.0f,3700.0f,3},
+  {330.0f,3480.0f,2},
+  {180.0f,3260.0f,0},
+  {360.0f,3040.0f,1},
+  {200.0f,2820.0f,3},
+  {330.0f,2600.0f,2},
+  {180.0f,2380.0f,0},
+  {360.0f,2160.0f,1},
+  {270.0f,1940.0f,3},
+};
+static const CheckpointDef L30_cp[] = {
+  {3975.0f,4},
+  {3095.0f,8},
+  {2215.0f,12},
+};
+
+static const MagnetDef L31_mag[] = {
   {263.672f,4800.0f,3},
   {274.219f,4580.0f,0},
   {305.438f,4360.0f,2},
@@ -718,19 +1005,19 @@ static const MagnetDef L19_mag[] = {
   {280.547f,315.0f,2},
   {230.344f,250.0f,3},
 };
-static const CheckpointDef L19_cp[] = {
+static const CheckpointDef L31_cp[] = {
   {4042.0f,4},
   {3283.0f,9},
   {2525.0f,13},
   {1767.0f,18},
   {1008.0f,22},
 };
-static const ObstacleDef L19_ob[] = {
+static const ObstacleDef L31_ob[] = {
   {2,203.344f,2160.0f,225.0f,298.266f,2160.0f,0.0f,1200.0f,5000.0f,0.0f,0},
   {0,211.781f,1280.0f,120.0f,0.0f,0.0f,-97.0f,0.0f,0.0f,0.0f,0},
 };
 
-static const MagnetDef L20_mag[] = {
+static const MagnetDef L32_mag[] = {
   {193.641f,4800.0f,2},
   {160.312f,4586.0f,2},
   {237.938f,4366.0f,3},
@@ -759,19 +1046,48 @@ static const MagnetDef L20_mag[] = {
   {196.594f,324.0f,0},
   {221.062f,250.0f,3},
 };
-static const CheckpointDef L20_cp[] = {
+static const CheckpointDef L32_cp[] = {
   {4042.0f,4},
   {3283.0f,9},
   {2525.0f,13},
   {1767.0f,18},
   {1008.0f,22},
 };
-static const ObstacleDef L20_ob[] = {
+static const ObstacleDef L32_ob[] = {
   {2,186.047f,2160.0f,193.0f,267.469f,2160.0f,0.0f,1200.0f,5000.0f,0.0f,0},
   {3,213.047f,1280.0f,0.0f,0.0f,0.0f,76.0f,0.0f,0.0f,303.0f,0},
 };
 
-static const MagnetDef L21_mag[] = {
+static const MagnetDef L33_mag[] = {
+  {270.0f,4800.0f,1},
+  {140.0f,4605.0f,3},
+  {200.0f,4410.0f,2},
+  {340.0f,4215.0f,0},
+  {400.0f,4020.0f,1},
+  {270.0f,3825.0f,3},
+  {140.0f,3630.0f,2},
+  {200.0f,3435.0f,0},
+  {340.0f,3240.0f,1},
+  {400.0f,3045.0f,3},
+  {270.0f,2850.0f,2},
+  {140.0f,2655.0f,0},
+  {200.0f,2460.0f,1},
+  {340.0f,2265.0f,3},
+  {400.0f,2070.0f,2},
+  {270.0f,1875.0f,0},
+};
+static const CheckpointDef L33_cp[] = {
+  {4075.0f,4},
+  {3295.0f,8},
+  {2515.0f,12},
+};
+static const ObstacleDef L33_ob[] = {
+  {0,270.0f,4117.5f,50.0f,0.0f,0.0f,55.0f,0.0f,0.0f,0.0f,0},
+  {1,100.0f,3337.5f,0.0f,0.0f,0.0f,30.0f,0.0f,0.0f,0.0f,0},
+  {2,70.0f,2557.5f,180.0f,250.0f,2557.5f,0.0f,1000.0f,4200.0f,0.0f,0},
+};
+
+static const MagnetDef L34_mag[] = {
   {272.109f,4800.0f,0},
   {171.281f,4600.0f,1},
   {269.578f,4380.0f,3},
@@ -803,14 +1119,14 @@ static const MagnetDef L21_mag[] = {
   {292.781f,395.0f,2},
   {233.297f,250.0f,3},
 };
-static const CheckpointDef L21_cp[] = {
+static const CheckpointDef L34_cp[] = {
   {4042.0f,5},
   {3283.0f,10},
   {2525.0f,15},
   {1767.0f,21},
   {1008.0f,26},
 };
-static const ObstacleDef L21_ob[] = {
+static const ObstacleDef L34_ob[] = {
   {2,221.062f,4067.0f,193.0f,302.484f,4067.0f,0.0f,1200.0f,5000.0f,0.0f,0},
   {3,211.781f,3333.0f,0.0f,0.0f,0.0f,80.0f,0.0f,0.0f,303.0f,0},
   {3,226.547f,2600.0f,0.0f,0.0f,0.0f,66.0f,0.0f,0.0f,304.0f,0},
@@ -818,7 +1134,7 @@ static const ObstacleDef L21_ob[] = {
   {0,239.203f,1133.0f,131.0f,0.0f,0.0f,-111.0f,0.0f,0.0f,0.0f,0},
 };
 
-static const MagnetDef L22_mag[] = {
+static const MagnetDef L35_mag[] = {
   {211.359f,4800.0f,3},
   {157.359f,4580.0f,3},
   {255.234f,4360.0f,0},
@@ -850,14 +1166,14 @@ static const MagnetDef L22_mag[] = {
   {207.141f,381.0f,2},
   {221.906f,250.0f,2},
 };
-static const CheckpointDef L22_cp[] = {
+static const CheckpointDef L35_cp[] = {
   {4042.0f,5},
   {3283.0f,10},
   {2525.0f,15},
   {1767.0f,21},
   {1008.0f,26},
 };
-static const ObstacleDef L22_ob[] = {
+static const ObstacleDef L35_ob[] = {
   {2,227.391f,4067.0f,231.0f,324.844f,4067.0f,0.0f,1200.0f,5000.0f,0.0f,0},
   {2,210.938f,3333.0f,230.0f,307.969f,3333.0f,0.0f,1200.0f,5000.0f,0.0f,0},
   {3,240.047f,2600.0f,0.0f,0.0f,0.0f,80.0f,0.0f,0.0f,304.0f,0},
@@ -865,7 +1181,37 @@ static const ObstacleDef L22_ob[] = {
   {0,234.562f,1133.0f,114.0f,0.0f,0.0f,-114.0f,0.0f,0.0f,0.0f,0},
 };
 
-static const MagnetDef L23_mag[] = {
+static const MagnetDef L36_mag[] = {
+  {270.0f,4800.0f,1},
+  {170.0f,4600.0f,3},
+  {270.0f,4400.0f,2},
+  {370.0f,4200.0f,0},
+  {270.0f,4000.0f,1},
+  {170.0f,3800.0f,3},
+  {270.0f,3600.0f,2},
+  {370.0f,3400.0f,0},
+  {270.0f,3200.0f,1},
+  {170.0f,3000.0f,3},
+  {270.0f,2800.0f,2},
+  {370.0f,2600.0f,0},
+  {270.0f,2400.0f,1},
+  {170.0f,2200.0f,3},
+  {270.0f,2000.0f,2},
+  {370.0f,1800.0f,0},
+  {270.0f,1600.0f,1},
+};
+static const CheckpointDef L36_cp[] = {
+  {4055.0f,4},
+  {3255.0f,8},
+  {2455.0f,12},
+};
+static const ObstacleDef L36_ob[] = {
+  {3,270.0f,4100.0f,0.0f,0.0f,0.0f,44.0f,0.0f,0.0f,98.0f,0},
+  {3,270.0f,3300.0f,0.0f,0.0f,0.0f,44.0f,0.0f,0.0f,97.0f,0},
+  {3,270.0f,2500.0f,0.0f,0.0f,0.0f,44.0f,0.0f,0.0f,96.0f,0},
+};
+
+static const MagnetDef L37_mag[] = {
   {280.0f,4680.0f,1},
   {360.0f,3100.0f,3},
   {80.0f,4520.0f,0},
@@ -890,13 +1236,13 @@ static const MagnetDef L23_mag[] = {
   {240.0f,2040.0f,1},
   {240.0f,1680.0f,3},
 };
-static const CheckpointDef L23_cp[] = {
+static const CheckpointDef L37_cp[] = {
   {4240.0f,0},
   {3360.0f,0},
   {2780.0f,15},
   {2120.0f,19},
 };
-static const ObstacleDef L23_ob[] = {
+static const ObstacleDef L37_ob[] = {
   {3,160.0f,4600.0f,0.0f,0.0f,0.0f,60.0f,0.0f,0.0f,73.0f,0},
   {3,380.0f,4600.0f,0.0f,0.0f,0.0f,60.0f,0.0f,0.0f,74.0f,0},
   {3,260.0f,4460.0f,0.0f,0.0f,0.0f,60.0f,0.0f,0.0f,75.0f,0},
@@ -929,7 +1275,7 @@ static const ObstacleDef L23_ob[] = {
   {3,440.0f,2320.0f,0.0f,0.0f,0.0f,60.0f,0.0f,0.0f,214.0f,0},
 };
 
-static const MagnetDef L24_mag[] = {
+static const MagnetDef L38_mag[] = {
   {160.0f,4700.0f,1},
   {380.0f,4600.0f,0},
   {180.0f,4500.0f,2},
@@ -968,13 +1314,13 @@ static const MagnetDef L24_mag[] = {
   {340.0f,200.0f,3},
   {240.0f,150.0f,0},
 };
-static const CheckpointDef L24_cp[] = {
+static const CheckpointDef L38_cp[] = {
   {3660.0f,10},
   {2060.0f,18},
   {1280.0f,26},
   {720.0f,26},
 };
-static const ObstacleDef L24_ob[] = {
+static const ObstacleDef L38_ob[] = {
   {0,20.0f,2200.0f,100.0f,0.0f,0.0f,60.0f,0.0f,0.0f,0.0f,0},
   {0,520.0f,2200.0f,100.0f,0.0f,0.0f,60.0f,0.0f,0.0f,0.0f,0},
   {0,80.0f,3320.0f,100.0f,0.0f,0.0f,60.0f,0.0f,0.0f,0.0f,0},
@@ -1021,7 +1367,41 @@ static const ObstacleDef L24_ob[] = {
   {0,160.0f,200.0f,100.0f,0.0f,0.0f,60.0f,0.0f,0.0f,0.0f,0},
 };
 
-static const MagnetDef L25_mag[] = {
+static const MagnetDef L39_mag[] = {
+  {270.0f,4800.0f,1},
+  {130.0f,4590.0f,3},
+  {270.0f,4380.0f,2},
+  {410.0f,4170.0f,0},
+  {270.0f,3960.0f,1},
+  {170.0f,3750.0f,3},
+  {370.0f,3540.0f,2},
+  {270.0f,3330.0f,0},
+  {130.0f,3120.0f,1},
+  {270.0f,2910.0f,3},
+  {410.0f,2700.0f,2},
+  {270.0f,2490.0f,0},
+  {170.0f,2280.0f,1},
+  {370.0f,2070.0f,3},
+  {270.0f,1860.0f,2},
+  {130.0f,1650.0f,0},
+  {270.0f,1440.0f,1},
+  {410.0f,1230.0f,3},
+  {270.0f,1020.0f,2},
+};
+static const CheckpointDef L39_cp[] = {
+  {4015.0f,4},
+  {3175.0f,8},
+  {2335.0f,12},
+  {1495.0f,16},
+};
+static const ObstacleDef L39_ob[] = {
+  {0,270.0f,4065.0f,50.0f,0.0f,0.0f,55.0f,0.0f,0.0f,0.0f,0},
+  {4,230.0f,3225.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,0.0f,1},
+  {2,70.0f,2385.0f,180.0f,250.0f,2385.0f,0.0f,1000.0f,4200.0f,0.0f,0},
+  {0,270.0f,1545.0f,50.0f,0.0f,0.0f,55.0f,0.0f,0.0f,0.0f,0},
+};
+
+static const MagnetDef L40_mag[] = {
   {237.516f,4800.0f,3},
   {313.875f,4580.0f,3},
   {294.047f,4360.0f,0},
@@ -1050,46 +1430,61 @@ static const MagnetDef L25_mag[] = {
   {201.234f,350.0f,0},
   {250.594f,250.0f,1},
 };
-static const CheckpointDef L25_cp[] = {
+static const CheckpointDef L40_cp[] = {
   {4042.0f,4},
   {3283.0f,9},
   {2525.0f,13},
   {1767.0f,18},
   {1008.0f,22},
 };
-static const ObstacleDef L25_ob[] = {
+static const ObstacleDef L40_ob[] = {
   {3,220.641f,2160.0f,0.0f,0.0f,0.0f,60.0f,0.0f,0.0f,302.0f,0},
   {0,217.688f,1280.0f,133.0f,0.0f,0.0f,84.0f,0.0f,0.0f,0.0f,0},
 };
 
 const LevelDef LEVELS[LEVEL_COUNT] = {
-  {"Getting Started",268.0f,28.0f,0.0f,0x0a0a1au, 24,L1_mag, 5,L1_cp, 1,L1_ob},
-  {"4-Color Park Walk",180.0f,25.0f,0.0f,0x0a0a1au, 13,L2_mag, 0,0, 0,0},
-  {"New Level",180.0f,25.0f,0.0f,0x0a0a1au, 18,L3_mag, 0,0, 7,L3_ob},
-  {"First Colors",246.0f,30.0f,0.0f,0x0a0a1au, 24,L4_mag, 5,L4_cp, 1,L4_ob},
-  {"Careful Hands",180.0f,25.0f,0.0f,0x0a0a1au, 14,L5_mag, 0,0, 3,L5_ob},
-  {"New Level",180.0f,25.0f,0.0f,0x0a0a1au, 24,L6_mag, 1,L6_cp, 6,L6_ob},
-  {"Building Speed",228.0f,33.0f,0.0f,0x0a0a1au, 24,L7_mag, 5,L7_cp, 2,L7_ob},
-  {"Dangerous Highway",180.0f,25.0f,0.0f,0x0a0a1au, 22,L8_mag, 1,L8_cp, 4,L8_ob},
-  {"First Obstacles",212.0f,36.0f,0.0f,0x0a0a1au, 24,L9_mag, 5,L9_cp, 2,L9_ob},
-  {"Vertical Insanity",180.0f,25.0f,0.0f,0x0a0a1au, 24,L10_mag, 1,L10_cp, 7,L10_ob},
-  {"New Level",180.0f,25.0f,0.0f,0x0a0a1au, 28,L11_mag, 2,L11_cp, 25,L11_ob},
-  {"Cave of Shadows",220.0f,34.0f,0.0f,0x0a0a1au, 24,L12_mag, 5,L12_cp, 2,L12_ob},
-  {"Rising Heat",197.0f,38.0f,0.0f,0x0a0a1au, 26,L13_mag, 5,L13_cp, 2,L13_ob},
-  {"Magnetic Subspace",180.0f,60.0f,2.0f,0x0a0a1au, 36,L14_mag, 1,L14_cp, 14,L14_ob},
-  {"Color Sprint",190.0f,39.0f,0.0f,0x0a0a1au, 26,L15_mag, 5,L15_cp, 2,L15_ob},
-  {"Tricky Paths",184.0f,41.0f,0.0f,0x0a0a1au, 26,L16_mag, 5,L16_cp, 2,L16_ob},
-  {"Swift Ascent",179.0f,42.0f,0.0f,0x0a0a1au, 27,L17_mag, 5,L17_cp, 2,L17_ob},
-  {"The Race",190.0f,39.0f,0.0f,0x0a0a1au, 26,L18_mag, 5,L18_cp, 2,L18_ob},
-  {"Magnet Storm",169.0f,44.0f,0.2f,0x0a0a1au, 27,L19_mag, 5,L19_cp, 2,L19_ob},
-  {"Danger Zone",164.0f,46.0f,0.2f,0x0a0a1au, 27,L20_mag, 5,L20_cp, 2,L20_ob},
-  {"Heat Wave",155.0f,48.0f,0.2f,0x0a0a1au, 30,L21_mag, 5,L21_cp, 5,L21_ob},
-  {"Gauntlet Run",147.0f,51.0f,0.2f,0x0a0a1au, 30,L22_mag, 5,L22_cp, 5,L22_ob},
-  {"New Level",180.0f,25.0f,0.0f,0xce383bu, 23,L23_mag, 4,L23_cp, 30,L23_ob},
-  {"New Level",180.0f,25.0f,0.0f,0x0a0a1au, 37,L24_mag, 4,L24_cp, 44,L24_ob},
-  {"Spinning World",173.0f,43.0f,0.2f,0x0a0a1au, 27,L25_mag, 5,L25_cp, 2,L25_ob},
+  {"Getting Started","level-1a","Press the color of a node above you. W red, S blue, A yellow, D green.",1,ANOM_NONE,24.0f,28.0f,0.0f,0x0a0a1au, 24,L1_mag, 5,L1_cp, 1,L1_ob},
+  {"Stepping Stones","stepping-stones","A steady four-color rhythm. Read the next key before you launch.",0,ANOM_NONE,22.0f,24.0f,0.0f,0x09131eu, 11,L2_mag, 2,L2_cp, 0,0},
+  {"4-Color Park Walk","level-1b","Every key matches a color, regardless of which direction the node lies.",2,ANOM_NONE,12.0f,25.0f,0.0f,0x0a0a1au, 13,L3_mag, 0,0, 0,0},
+  {"Switchback","switchback","Climb the steps, then cut across. Repeated colors still lead upward.",0,ANOM_NONE,24.0f,26.0f,0.0f,0x09131eu, 12,L4_mag, 2,L4_cp, 0,0},
+  {"Signal Crossing","level-1c","Read the key badges, chain your swings, and climb above the lava.",3,ANOM_NONE,12.0f,25.0f,0.0f,0x0a0a1au, 18,L5_mag, 2,L5_cp, 7,L5_ob},
+  {"First Colors","level-2a","Read the key badges, chain your swings, and climb above the lava.",4,ANOM_NONE,26.0f,30.0f,0.0f,0x0a0a1au, 24,L6_mag, 5,L6_cp, 1,L6_ob},
+  {"Split Decision","split-decision","Two routes rejoin at each landing. Choose a color and commit.",0,ANOM_NONE,24.0f,28.0f,0.0f,0x09131eu, 16,L7_mag, 2,L7_cp, 0,0},
+  {"Careful Hands","level-2b","Read the key badges, chain your swings, and climb above the lava.",5,ANOM_NONE,18.0f,25.0f,0.0f,0x0a0a1au, 14,L8_mag, 0,0, 3,L8_ob},
+  {"The Long Cut","level-2c","Read the key badges, chain your swings, and climb above the lava.",6,ANOM_NONE,12.0f,25.0f,0.0f,0x0a0a1au, 24,L9_mag, 1,L9_cp, 6,L9_ob},
+  {"Clockwork","clockwork","Watch the amber arms. The outside lane gives you room to swing.",0,ANOM_NONE,24.0f,30.0f,0.0f,0x09131eu, 13,L10_mag, 2,L10_cp, 2,L10_ob},
+  {"Building Speed","level-3a","Read the key badges, chain your swings, and climb above the lava.",7,ANOM_NONE,24.0f,33.0f,0.0f,0x0a0a1au, 24,L11_mag, 5,L11_cp, 2,L11_ob},
+  {"Blue Hour","blue-hour","A quiet climb. Link the curves and keep your combo alive.",0,ANOM_NONE,24.0f,30.0f,0.0f,0x09131eu, 13,L12_mag, 2,L12_cp, 0,0},
+  {"Dangerous Highway","level-3b","Read the key badges, chain your swings, and climb above the lava.",8,ANOM_NONE,18.0f,25.0f,0.0f,0x0a0a1au, 22,L13_mag, 1,L13_cp, 4,L13_ob},
+  {"First Obstacles","level-4a","Read the key badges, chain your swings, and climb above the lava.",9,ANOM_NONE,24.0f,36.0f,0.0f,0x0a0a1au, 24,L14_mag, 5,L14_cp, 2,L14_ob},
+  {"Airlock","airlock","Amber gates are charging. Cross in the dark or use the open side.",0,ANOM_NONE,26.0f,32.0f,0.0f,0x09131eu, 14,L15_mag, 3,L15_cp, 3,L15_ob},
+  {"Vertical Insanity","level-4b","Read the key badges, chain your swings, and climb above the lava.",10,ANOM_NONE,16.0f,25.0f,0.0f,0x0a0a1au, 24,L16_mag, 1,L16_cp, 7,L16_ob},
+  {"Security Grid","level-4c","Read the key badges, chain your swings, and climb above the lava.",11,ANOM_NONE,30.0f,25.0f,0.0f,0x0a0a1au, 28,L17_mag, 2,L17_cp, 25,L17_ob},
+  {"Heartbeat","heartbeat","Pink rings expand and retreat. Trace the outer lanes.",0,ANOM_NONE,26.0f,32.0f,0.0f,0x09131eu, 14,L18_mag, 3,L18_cp, 3,L18_ob},
+  {"Cave of Shadows","level-5","The shaft is dark. Follow the nearest lights upward.",12,ANOM_FLASHLIGHT,26.0f,34.0f,0.0f,0x0a0a1au, 24,L19_mag, 5,L19_cp, 2,L19_ob},
+  {"Lantern Walk","lantern-walk","Trust the nearby key badges. Each light reveals the next part of the route.",0,ANOM_FLASHLIGHT,26.0f,32.0f,0.0f,0x09131eu, 14,L20_mag, 3,L20_cp, 0,0},
+  {"Rising Heat","level-6a","Read the key badges, chain your swings, and climb above the lava.",13,ANOM_NONE,26.0f,38.0f,0.0f,0x0a0a1au, 26,L21_mag, 5,L21_cp, 2,L21_ob},
+  {"Magnetic Subspace","level-6b","Settle on a node to read the route. Pulse rings sit beside the safe landings.",14,ANOM_NONE,50.0f,34.0f,0.0f,0x0a0a1au, 35,L22_mag, 4,L22_cp, 5,L22_ob},
+  {"Polarity Garden","polarity-garden","Magnetic fields bend your flight. Retarget in midair to correct your arc.",0,ANOM_NONE,26.0f,36.0f,0.0f,0x09131eu, 14,L23_mag, 3,L23_cp, 3,L23_ob},
+  {"Color Sprint","level-7","Read the key badges, chain your swings, and climb above the lava.",15,ANOM_NONE,24.0f,39.0f,0.0f,0x0a0a1au, 26,L24_mag, 5,L24_cp, 2,L24_ob},
+  {"Slingshot Alley","slingshot-alley","Carry momentum across the shaft. There is time to line up each launch.",0,ANOM_NONE,28.0f,40.0f,0.0f,0x09131eu, 15,L25_mag, 3,L25_cp, 3,L25_ob},
+  {"Tricky Paths","level-8","Read the key badges, chain your swings, and climb above the lava.",16,ANOM_NONE,24.0f,41.0f,0.0f,0x0a0a1au, 26,L26_mag, 5,L26_cp, 2,L26_ob},
+  {"Braided Current","braided-current","Twin routes weave around charged gates. Pick the open branch.",0,ANOM_NONE,28.0f,40.0f,0.0f,0x09131eu, 20,L27_mag, 3,L27_cp, 3,L27_ob},
+  {"Swift Ascent","level-9","Read the key badges, chain your swings, and climb above the lava.",17,ANOM_NONE,22.0f,42.0f,0.0f,0x0a0a1au, 27,L28_mag, 5,L28_cp, 2,L28_ob},
+  {"The Race","level-10","Beat the violet rival to the summit. Keep your swings connected.",18,ANOM_RACE,24.0f,39.0f,0.0f,0x0a0a1au, 26,L29_mag, 5,L29_cp, 2,L29_ob},
+  {"Victory Lap","victory-lap","A fast, clean sprint after the race. Chase your personal best.",0,ANOM_NONE,26.0f,44.0f,0.0f,0x09131eu, 14,L30_mag, 3,L30_cp, 0,0},
+  {"Magnet Storm","level-11","Read the key badges, chain your swings, and climb above the lava.",19,ANOM_NONE,22.0f,44.0f,0.2f,0x0a0a1au, 27,L31_mag, 5,L31_cp, 2,L31_ob},
+  {"Danger Zone","level-12","Read the key badges, chain your swings, and climb above the lava.",20,ANOM_NONE,22.0f,46.0f,0.2f,0x0a0a1au, 27,L32_mag, 5,L32_cp, 2,L32_ob},
+  {"Reactor Waltz","reactor-waltz","Three beats: sweep, pulse, gate. Use the landings to read the next hazard.",0,ANOM_NONE,30.0f,44.0f,0.0f,0x09131eu, 16,L33_mag, 3,L33_cp, 3,L33_ob},
+  {"Heat Wave","level-13","Read the key badges, chain your swings, and climb above the lava.",21,ANOM_NONE,22.0f,48.0f,0.2f,0x0a0a1au, 30,L34_mag, 5,L34_cp, 5,L34_ob},
+  {"Gauntlet Run","level-14a","Read the key badges, chain your swings, and climb above the lava.",22,ANOM_NONE,26.0f,51.0f,0.2f,0x0a0a1au, 30,L35_mag, 5,L35_cp, 5,L35_ob},
+  {"Eye of the Storm","eye-of-the-storm","Roamers patrol the center. The side lanes are your escape route.",0,ANOM_NONE,30.0f,46.0f,0.0f,0x09131eu, 17,L36_mag, 3,L36_cp, 3,L36_ob},
+  {"Magnetic Lockdown","level-14b","Read the key badges, chain your swings, and climb above the lava.",23,ANOM_NONE,14.0f,25.0f,0.0f,0xce383bu, 23,L37_mag, 4,L37_cp, 30,L37_ob},
+  {"Core Breach","level-14c","Read the key badges, chain your swings, and climb above the lava.",24,ANOM_NONE,28.0f,25.0f,0.0f,0x0a0a1au, 37,L38_mag, 4,L38_cp, 44,L38_ob},
+  {"Escape Velocity","escape-velocity","One last rehearsal: wide arcs, fields, and gates. Keep looking one node ahead.",0,ANOM_NONE,34.0f,48.0f,0.0f,0x09131eu, 19,L39_mag, 4,L39_cp, 4,L39_ob},
+  {"Spinning World","level-15","The world rolls; your color keys stay the same. V enables reduced motion.",25,ANOM_ROLL,24.0f,43.0f,0.2f,0x0a0a1au, 27,L40_mag, 5,L40_cp, 2,L40_ob},
 };
 
 const char *const LEVEL_LABELS[LEVEL_COUNT] = {
-  "1-1", "1-2", "1-3", "2-1", "2-2", "2-3", "3-1", "3-2", "4-1", "4-2", "4-3", "5", "6-1", "6-2", "7", "8", "9", "10", "11", "12", "13", "14-1", "14-2", "14-3", "15"
+  "01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32", "33", "34", "35", "36", "37", "38", "39", "40"
 };

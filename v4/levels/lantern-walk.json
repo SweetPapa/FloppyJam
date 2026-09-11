@@ -1,0 +1,114 @@
+{
+  "name": "Lantern Walk",
+  "coordinateFormat": "540px",
+  "parTime": 26,
+  "lavaSpeed": 32,
+  "lavaAcceleration": 0,
+  "magnets": [
+    {
+      "id": "m0",
+      "x": 270,
+      "y": 4800,
+      "color": "blue"
+    },
+    {
+      "id": "m1",
+      "x": 200,
+      "y": 4615,
+      "color": "green"
+    },
+    {
+      "id": "m2",
+      "x": 140,
+      "y": 4430,
+      "color": "yellow"
+    },
+    {
+      "id": "m3",
+      "x": 220,
+      "y": 4245,
+      "color": "red"
+    },
+    {
+      "id": "m4",
+      "x": 300,
+      "y": 4060,
+      "color": "blue"
+    },
+    {
+      "id": "m5",
+      "x": 380,
+      "y": 3875,
+      "color": "green"
+    },
+    {
+      "id": "m6",
+      "x": 300,
+      "y": 3690,
+      "color": "yellow"
+    },
+    {
+      "id": "m7",
+      "x": 220,
+      "y": 3505,
+      "color": "red"
+    },
+    {
+      "id": "m8",
+      "x": 140,
+      "y": 3320,
+      "color": "blue"
+    },
+    {
+      "id": "m9",
+      "x": 220,
+      "y": 3135,
+      "color": "green"
+    },
+    {
+      "id": "m10",
+      "x": 300,
+      "y": 2950,
+      "color": "yellow"
+    },
+    {
+      "id": "m11",
+      "x": 380,
+      "y": 2765,
+      "color": "red"
+    },
+    {
+      "id": "m12",
+      "x": 300,
+      "y": 2580,
+      "color": "blue"
+    },
+    {
+      "id": "m13",
+      "x": 270,
+      "y": 2395,
+      "color": "green"
+    }
+  ],
+  "checkpoints": [
+    {
+      "id": "cp-m4",
+      "y": 4115,
+      "respawnPlatformId": "m4"
+    },
+    {
+      "id": "cp-m8",
+      "y": 3375,
+      "respawnPlatformId": "m8"
+    },
+    {
+      "id": "cp-m12",
+      "y": 2635,
+      "respawnPlatformId": "m12"
+    }
+  ],
+  "obstacles": [],
+  "background": {
+    "color": "#09131e"
+  }
+}

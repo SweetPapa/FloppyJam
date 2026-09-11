@@ -23,6 +23,7 @@ bool scene_load(const char *id);
  * anything else, scene_request_id() says what they walked into. */
 scene_request scene_update(float dt);
 void          scene_draw(void);
+bool          scene_inspecting(void);
 const char   *scene_request_id(void);
 const char   *scene_current(void);
 const char   *scene_title(void);

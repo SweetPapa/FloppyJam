@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.22)
+project(maglava_jni C)
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../../../../.." "${CMAKE_CURRENT_BINARY_DIR}/core")
+add_library(maglava SHARED bridge.c)
+target_link_libraries(maglava PRIVATE maglava_core)
+target_link_options(maglava PRIVATE "-Wl,-z,max-page-size=16384")

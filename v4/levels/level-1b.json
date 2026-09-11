@@ -1,7 +1,7 @@
 {
   "id": 2,
   "name": "4-Color Park Walk",
-  "parTime": 180,
+  "parTime": 12,
   "lavaSpeed": 25,
   "lavaAcceleration": 0,
   "checkpoints": [],

@@ -33,12 +33,15 @@ int main(int argc, char **argv)
         }
     }
 
+    if(shot_wait<1)shot_wait=1;
     SetTraceLogLevel(LOG_WARNING);
     SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT);
     InitWindow(1280, 720, "HUEDUNIT");
+    SetWindowMinSize(960,540);
     SetTargetFPS(60);
     SetExitKey(KEY_NULL);            /* ESC is a game verb, not a quit key */
 
+    if(shot)save_allow_writes(false);
     app_init();
     if (settings()->fullscreen && !shot) ToggleFullscreen();
 

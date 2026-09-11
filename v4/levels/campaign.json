@@ -1,0 +1,227 @@
+[
+  {
+    "key": "level-1a",
+    "legacy_id": 1,
+    "hint": "Press the color of a node above you. W red, S blue, A yellow, D green.",
+    "anomaly": "none"
+  },
+  {
+    "key": "stepping-stones",
+    "hint": "A steady four-color rhythm. Read the next key before you launch.",
+    "anomaly": "none"
+  },
+  {
+    "key": "level-1b",
+    "legacy_id": 2,
+    "hint": "Every key matches a color, regardless of which direction the node lies.",
+    "anomaly": "none"
+  },
+  {
+    "key": "switchback",
+    "hint": "Climb the steps, then cut across. Repeated colors still lead upward.",
+    "anomaly": "none"
+  },
+  {
+    "key": "level-1c",
+    "legacy_id": 3,
+    "hint": "Read the key badges, chain your swings, and climb above the lava.",
+    "anomaly": "none"
+  },
+  {
+    "key": "level-2a",
+    "legacy_id": 4,
+    "hint": "Read the key badges, chain your swings, and climb above the lava.",
+    "anomaly": "none"
+  },
+  {
+    "key": "split-decision",
+    "hint": "Two routes rejoin at each landing. Choose a color and commit.",
+    "anomaly": "none"
+  },
+  {
+    "key": "level-2b",
+    "legacy_id": 5,
+    "hint": "Read the key badges, chain your swings, and climb above the lava.",
+    "anomaly": "none"
+  },
+  {
+    "key": "level-2c",
+    "legacy_id": 6,
+    "hint": "Read the key badges, chain your swings, and climb above the lava.",
+    "anomaly": "none"
+  },
+  {
+    "key": "clockwork",
+    "hint": "Watch the amber arms. The outside lane gives you room to swing.",
+    "anomaly": "none"
+  },
+  {
+    "key": "level-3a",
+    "legacy_id": 7,
+    "hint": "Read the key badges, chain your swings, and climb above the lava.",
+    "anomaly": "none"
+  },
+  {
+    "key": "blue-hour",
+    "hint": "A quiet climb. Link the curves and keep your combo alive.",
+    "anomaly": "none"
+  },
+  {
+    "key": "level-3b",
+    "legacy_id": 8,
+    "hint": "Read the key badges, chain your swings, and climb above the lava.",
+    "anomaly": "none"
+  },
+  {
+    "key": "level-4a",
+    "legacy_id": 9,
+    "hint": "Read the key badges, chain your swings, and climb above the lava.",
+    "anomaly": "none"
+  },
+  {
+    "key": "airlock",
+    "hint": "Amber gates are charging. Cross in the dark or use the open side.",
+    "anomaly": "none"
+  },
+  {
+    "key": "level-4b",
+    "legacy_id": 10,
+    "hint": "Read the key badges, chain your swings, and climb above the lava.",
+    "anomaly": "none"
+  },
+  {
+    "key": "level-4c",
+    "legacy_id": 11,
+    "hint": "Read the key badges, chain your swings, and climb above the lava.",
+    "anomaly": "none"
+  },
+  {
+    "key": "heartbeat",
+    "hint": "Pink rings expand and retreat. Trace the outer lanes.",
+    "anomaly": "none"
+  },
+  {
+    "key": "level-5",
+    "legacy_id": 12,
+    "hint": "The shaft is dark. Follow the nearest lights upward.",
+    "anomaly": "flashlight"
+  },
+  {
+    "key": "lantern-walk",
+    "hint": "Trust the nearby key badges. Each light reveals the next part of the route.",
+    "anomaly": "flashlight"
+  },
+  {
+    "key": "level-6a",
+    "legacy_id": 13,
+    "hint": "Read the key badges, chain your swings, and climb above the lava.",
+    "anomaly": "none"
+  },
+  {
+    "key": "level-6b",
+    "legacy_id": 14,
+    "hint": "Settle on a node to read the route. Pulse rings sit beside the safe landings.",
+    "anomaly": "none"
+  },
+  {
+    "key": "polarity-garden",
+    "hint": "Magnetic fields bend your flight. Retarget in midair to correct your arc.",
+    "anomaly": "none"
+  },
+  {
+    "key": "level-7",
+    "legacy_id": 15,
+    "hint": "Read the key badges, chain your swings, and climb above the lava.",
+    "anomaly": "none"
+  },
+  {
+    "key": "slingshot-alley",
+    "hint": "Carry momentum across the shaft. There is time to line up each launch.",
+    "anomaly": "none"
+  },
+  {
+    "key": "level-8",
+    "legacy_id": 16,
+    "hint": "Read the key badges, chain your swings, and climb above the lava.",
+    "anomaly": "none"
+  },
+  {
+    "key": "braided-current",
+    "hint": "Twin routes weave around charged gates. Pick the open branch.",
+    "anomaly": "none"
+  },
+  {
+    "key": "level-9",
+    "legacy_id": 17,
+    "hint": "Read the key badges, chain your swings, and climb above the lava.",
+    "anomaly": "none"
+  },
+  {
+    "key": "level-10",
+    "legacy_id": 18,
+    "hint": "Beat the violet rival to the summit. Keep your swings connected.",
+    "anomaly": "race"
+  },
+  {
+    "key": "victory-lap",
+    "hint": "A fast, clean sprint after the race. Chase your personal best.",
+    "anomaly": "none"
+  },
+  {
+    "key": "level-11",
+    "legacy_id": 19,
+    "hint": "Read the key badges, chain your swings, and climb above the lava.",
+    "anomaly": "none"
+  },
+  {
+    "key": "level-12",
+    "legacy_id": 20,
+    "hint": "Read the key badges, chain your swings, and climb above the lava.",
+    "anomaly": "none"
+  },
+  {
+    "key": "reactor-waltz",
+    "hint": "Three beats: sweep, pulse, gate. Use the landings to read the next hazard.",
+    "anomaly": "none"
+  },
+  {
+    "key": "level-13",
+    "legacy_id": 21,
+    "hint": "Read the key badges, chain your swings, and climb above the lava.",
+    "anomaly": "none"
+  },
+  {
+    "key": "level-14a",
+    "legacy_id": 22,
+    "hint": "Read the key badges, chain your swings, and climb above the lava.",
+    "anomaly": "none"
+  },
+  {
+    "key": "eye-of-the-storm",
+    "hint": "Roamers patrol the center. The side lanes are your escape route.",
+    "anomaly": "none"
+  },
+  {
+    "key": "level-14b",
+    "legacy_id": 23,
+    "hint": "Read the key badges, chain your swings, and climb above the lava.",
+    "anomaly": "none"
+  },
+  {
+    "key": "level-14c",
+    "legacy_id": 24,
+    "hint": "Read the key badges, chain your swings, and climb above the lava.",
+    "anomaly": "none"
+  },
+  {
+    "key": "escape-velocity",
+    "hint": "One last rehearsal: wide arcs, fields, and gates. Keep looking one node ahead.",
+    "anomaly": "none"
+  },
+  {
+    "key": "level-15",
+    "legacy_id": 25,
+    "hint": "The world rolls; your color keys stay the same. V enables reduced motion.",
+    "anomaly": "roll"
+  }
+]

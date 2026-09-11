@@ -24,16 +24,20 @@ static float dist2(float ax, float ay, float bx, float by) {
 static float flen(float x, float y) { return sqrtf(x * x + y * y); }
 static float lerpf(float a, float b, float t) { return a + (b - a) * t; }
 
-/* nearest magnet of a color within detection range, excluding one index */
+/* Prefer forward color matches; retain a fallback for recovery/backtracking. */
 int sim_find_magnet(const GameSim *g, float x, float y, MagColor c, int exclude) {
     const LevelDef *lv = g->lv;
-    int best = -1;
+    int best = -1, forward = 0;
     float bestd = DETECTION_RANGE * DETECTION_RANGE;
     for (int i = 0; i < lv->n_mag; i++) {
         if (i == exclude || !g->mag_alive[i]) continue;
         if (lv->mag[i].color != (unsigned char)c) continue;
         float d = dist2(x, y, lv->mag[i].x, lv->mag[i].y);
-        if (d <= bestd) { bestd = d; best = i; }
+        if (d > DETECTION_RANGE * DETECTION_RANGE) continue;
+        int above = lv->mag[i].y < y - 40.0f;
+        if ((above && !forward) || (above == forward && d <= bestd)) {
+            bestd = d; best = i; forward = above;
+        }
     }
     return best;
 }
@@ -86,7 +90,7 @@ void sim_init(GameSim *g, int level_id) {
 
     g->level_id = level_id;
     g->lv = lv;
-    g->rng = 0x1234567u ^ (unsigned)(level_id * 2654435761u);
+    g->rng = 0x1234567u ^ (unsigned)((lv->legacy_id ? lv->legacy_id : level_id) * 2654435761u);
     g->n_mag = lv->n_mag;
     g->n_ob = lv->n_ob;
     for (int i = 0; i < lv->n_mag; i++) g->mag_alive[i] = 1;
@@ -112,7 +116,7 @@ void sim_init(GameSim *g, int level_id) {
 
     /* anomalies */
     g->rot_dir = 1;
-    if (level_id == LEVEL_AIRACER && lv->n_mag > 0) {
+    if (lv->anomaly == ANOM_RACE && lv->n_mag > 0) {
         g->ai.active = 1;
         g->ai.x = lv->mag[0].x;
         g->ai.y = lv->mag[0].y;
@@ -491,7 +495,7 @@ static void update_ai(GameSim *g, float dt) {
 }
 
 static void update_rotcam(GameSim *g, float dt) {
-    if (g->level_id != LEVEL_ROTCAM) return;
+    if (g->lv->anomaly != ANOM_ROLL) return;
     g->rot_cam += ROTCAM_SPEED * (float)g->rot_dir * dt;
     if (g->rot_cam >= ROTCAM_MAX) { g->rot_cam = ROTCAM_MAX; g->rot_dir = -1; }
     else if (g->rot_cam <= -ROTCAM_MAX) { g->rot_cam = -ROTCAM_MAX; g->rot_dir = 1; }
@@ -514,7 +518,7 @@ static void respawn(GameSim *g) {
     int midx; float rlava;
     if (g->cur_cp >= 0) {
         midx = lv->cp[g->cur_cp].respawn;
-        rlava = g->cp_lava_y;
+        rlava = fmaxf(g->cp_lava_y, lv->mag[midx].y + LAVA_START_OFFSET);
     } else {
         midx = 0;
         rlava = lv->mag[0].y + LAVA_START_OFFSET;
@@ -534,6 +538,8 @@ static void respawn(GameSim *g) {
     orbit_rest(g, midx);
     g->immune = IMMUNITY_TIME;
 
+    g->race_lost = 0;
+    g->race_lost_timer = 0;
     g->lava_y = rlava;
     g->highest_y = lv->mag[midx].y;
     g->last_attach_y = lv->mag[midx].y;
@@ -592,7 +598,7 @@ void sim_update(GameSim *g, float dt, int color_pressed) {
         int exclude = g->attached_idx >= 0 ? g->attached_idx : g->target_idx;
         int idx = sim_find_magnet(g, g->px, g->py, g->color, exclude);
         if (idx >= 0) start_swing(g, idx);
-        else if (g->state == PS_ATTACHED) { g->attached_idx = -1; g->state = PS_FALLING; }
+        /* An unavailable color keeps the current tether: no accidental fall. */
     }
 
     /* --- player physics --- */
@@ -605,6 +611,7 @@ void sim_update(GameSim *g, float dt, int color_pressed) {
     default: break;
     }
 
+    if (g->game_over) return; /* a goal landing cannot also die this tick */
     update_mines(g, dt);
     update_obstacles(g, dt);
 

@@ -1,7 +1,7 @@
 {
   "id": 16,
   "name": "Tricky Paths",
-  "parTime": 184,
+  "parTime": 24,
   "lavaSpeed": 41,
   "lavaAcceleration": 0,
   "checkpoints": [

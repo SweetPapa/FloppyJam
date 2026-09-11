@@ -1,7 +1,7 @@
 {
   "id": 25,
   "name": "Spinning World",
-  "parTime": 173,
+  "parTime": 24,
   "lavaSpeed": 43,
   "lavaAcceleration": 0.2,
   "checkpoints": [

@@ -1,5 +1,6 @@
 #include "artkit.h"
 #include "rlgl.h"
+#include "generated/font_data.h"
 #include "save/save.h"
 
 #include <math.h>
@@ -106,7 +107,7 @@ Color pal_at(Color c, float x, float y)
      * pulled down a little. Without that darkening a pale sky and pale paper
      * land on the same value and the whole town reads as a blank page —
      * gray has to keep its tonal drawing or there is nothing to restore. */
-    float lum = (0.299f * c.r + 0.587f * c.g + 0.114f * c.b) * 0.78f;
+    float lum = (0.299f * c.r + 0.587f * c.g + 0.114f * c.b) * 0.86f;
     float gr = lum * 1.03f, gg = lum * 1.00f, gb = lum * 0.93f;
     float k = amt;
     Color o;
@@ -136,6 +137,8 @@ Color col_cool(void)       { return pal((Color){  96, 158, 116, 255 }); }  /* gr
  * frame plumbing: virtual canvas, camera, shake, fade
  * ========================================================================== */
 static RenderTexture2D g_canvas;
+static Font g_font;
+static Font text_font(void) { return g_font.texture.id ? g_font : GetFontDefault(); }
 static bool  g_have_canvas;
 static float g_cam_x, g_cam_y;
 static float g_shake_amt, g_shake_t, g_shake_dur;
@@ -146,6 +149,12 @@ static Vector2 g_grain[1400];
 
 void art_init(void)
 {
+    int glyphs[360], count=0;
+    for(int c=32;c<127;c++) glyphs[count++]=c;
+    glyphs[count++]=8212; glyphs[count++]=8211; glyphs[count++]=8217;
+    glyphs[count++]=8220; glyphs[count++]=8221; glyphs[count++]=8230;
+    g_font = LoadFontFromMemory(".ttf", hd_font_data, sizeof hd_font_data, 48, glyphs, count);
+    SetTextureFilter(g_font.texture, TEXTURE_FILTER_BILINEAR);
     g_canvas = LoadRenderTexture(VW, VH);
     SetTextureFilter(g_canvas.texture, TEXTURE_FILTER_BILINEAR);
     g_have_canvas = true;
@@ -162,6 +171,7 @@ void art_init(void)
 
 void art_shutdown(void)
 {
+    if (g_font.texture.id) { UnloadFont(g_font); g_font = (Font){0}; }
     if (g_have_canvas) { UnloadRenderTexture(g_canvas); g_have_canvas = false; }
 }
 
@@ -505,16 +515,16 @@ void wind_lines(float t, float amt, Color c)
 float art_text(const char *s, float x, float y, float size, Color c)
 {
     float sz = size * text_scale();
-    Font f = GetFontDefault();
-    Vector2 m = MeasureTextEx(f, s, sz, sz / 10.0f);
-    DrawTextEx(f, s, (Vector2){ x, y }, sz, sz / 10.0f, pal_at(c, x, y));
+    Font f = text_font();
+    Vector2 m = MeasureTextEx(f, s, sz, sz / 35.0f);
+    DrawTextEx(f, s, (Vector2){ x, y }, sz, sz / 35.0f, pal_at(c, x, y));
     return m.x;
 }
 
 float art_text_w(const char *s, float size)
 {
     float sz = size * text_scale();
-    return MeasureTextEx(GetFontDefault(), s, sz, sz / 10.0f).x;
+    return MeasureTextEx(text_font(), s, sz, sz / 35.0f).x;
 }
 
 int art_text_flow(const char *s, int start, float x, float y, float wide,
@@ -522,9 +532,9 @@ int art_text_flow(const char *s, int start, float x, float y, float wide,
                   float *out_h)
 {
     float sz = size * text_scale();
-    Font f = GetFontDefault();
+    Font f = text_font();
     float lh = sz * 1.42f;
-    float spacing = sz / 10.0f;
+    float spacing = sz / 35.0f;
     int n = (int)strlen(s);
     if (start < 0) start = 0;
     if (out_h) *out_h = 0;
@@ -619,19 +629,13 @@ void sparkle(float x, float y, float r, float t)
     if (!settings()->highlight) return;
     if (settings()->reduce_motion) t = 0.35f;
     Color c = pal_at((Color){ 232, 188, 58, 255 }, x, y);
-    Color orbit = c;
-    orbit.a = 82;
-    DrawEllipseLines((int)x, (int)y, r * 0.62f, r * 0.43f, orbit);
-    DrawEllipseLines((int)(x + 1), (int)y, r * 0.48f, r * 0.33f,
-                     (Color){ orbit.r, orbit.g, orbit.b, 48 });
-    for (int i = 0; i < 6; i++) {
-        float a = t * 1.2f + i * (PI / 3.0f);
-        float rr = r * (0.72f + 0.24f * sinf(t * 2.4f + i));
-        float px = x + cosf(a) * rr, py = y + sinf(a) * rr * 0.7f;
-        float s = 4.1f + sinf(t * 3.0f + i * 2.1f) * 1.2f;
-        DrawLineEx((Vector2){ px - s, py }, (Vector2){ px + s, py }, 2.0f, c);
-        DrawLineEx((Vector2){ px, py - s }, (Vector2){ px, py + s }, 2.0f, c);
-    }
+    /* A quiet glint marks an interaction; rings used to engulf every actor. */
+    float px=x+r*.42f,py=y-r*.42f;
+    float size=3.2f+0.8f*sinf(t*2.0f);
+    c.a=190;
+    DrawLineEx((Vector2){px-size,py},(Vector2){px+size,py},1.5f,c);
+    DrawLineEx((Vector2){px,py-size},(Vector2){px,py+size},1.5f,c);
+
 }
 
 /* ==========================================================================

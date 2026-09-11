@@ -1,7 +1,7 @@
 {
   "id": 6,
-  "name": "New Level",
-  "parTime": 180,
+  "name": "The Long Cut",
+  "parTime": 12,
   "lavaSpeed": 25,
   "lavaAcceleration": 0,
   "checkpoints": [

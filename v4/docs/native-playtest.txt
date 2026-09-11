@@ -1,0 +1,28 @@
+native-playthrough.log
+PLAYTEST level=1 key=level-1a won=1 deaths=0 time=12.83 frames=911
+PLAYTEST level=2 key=stepping-stones won=1 deaths=0 time=4.47 frames=321
+PLAYTEST level=7 key=split-decision won=1 deaths=0 time=6.33 frames=458
+PLAYTEST level=15 key=airlock won=1 deaths=1 time=9.13 frames=738
+PLAYTEST level=18 key=heartbeat won=1 deaths=1 time=9.03 frames=732
+PLAYTEST level=19 key=level-5 won=1 deaths=1 time=14.90 frames=1156
+PLAYTEST level=23 key=polarity-garden won=1 deaths=0 time=7.23 frames=519
+PLAYTEST level=27 key=braided-current won=1 deaths=0 time=7.98 frames=574
+PLAYTEST level=29 key=level-10 won=1 deaths=0 time=12.80 frames=919
+PLAYTEST level=35 key=level-14a won=1 deaths=1 time=14.02 frames=1090
+PLAYTEST level=39 key=escape-velocity won=1 deaths=1 time=14.02 frames=1094
+PLAYTEST level=40 key=level-15 won=1 deaths=1 time=13.32 frames=1040
+final-native.log
+PLAYTEST level=15 key=airlock won=1 deaths=1 time=8.98 frames=1075
+PLAYTEST level=19 key=level-5 won=1 deaths=1 time=14.90 frames=1736
+PLAYTEST level=27 key=braided-current won=1 deaths=0 time=7.98 frames=850
+PLAYTEST level=33 key=reactor-waltz won=1 deaths=1 time=10.78 frames=1276
+PLAYTEST level=39 key=escape-velocity won=1 deaths=1 time=12.72 frames=1493
+FRAME_TIMING samples=7269 mean_ms=9.299 p95_ms=16.643 max_ms=58.606
+
+Difficulty follow-up: easier early hazard lessons
+PLAYTEST level=10 key=clockwork won=1 deaths=0 time=5.27 frames=583
+PLAYTEST level=15 key=airlock won=1 deaths=0 time=5.88 frames=666
+PLAYTEST level=18 key=heartbeat won=1 deaths=0 time=6.03 frames=685
+
+Magnetic Subspace correction: 1500 ms decision delay
+PLAYTEST level=22 key=level-6b won=1 deaths=0 time=22.63 frames=2444

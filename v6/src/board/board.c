@@ -1,4 +1,6 @@
 #include "board.h"
+#include "investigation/investigation.h"
+#include "scene/scene.h"
 #include "content/content.h"
 #include "flags/flags.h"
 #include "art/artkit.h"
@@ -11,9 +13,9 @@
 #include <stdlib.h>
 #include <math.h>
 
-#define MAX_LINES  10
+#define MAX_LINES  24
 #define MAX_BLANKS 12
-#define MAX_POOLS  4
+#define MAX_POOLS  12
 #define MAX_TOKENS 14
 #define MAX_FROM   4
 
@@ -50,6 +52,12 @@ static int   g_attempts;
 static int   g_last_correct = -1;
 static float g_flash;
 static bool  g_solved;
+static bool  g_readonly;
+static const char *g_hint_msg;
+static char g_hint_buf[256];
+int board_blank_count(void) {return g_nblanks;}
+int board_pool_count(void) {return g_npools;}
+int board_line_count(void) {return g_nlines;}
 static float g_time;
 
 const char *board_id(void) { return g_id; }
@@ -78,7 +86,10 @@ bool board_start(const char *id)
     g_nlines = g_nblanks = g_npools = 0;
     g_title[0] = 0;
     g_solved_kind[0] = g_solved_id[0] = 0;
-    g_sel = -1;
+    g_sel = 0;
+    g_hint_msg = NULL;
+    g_flash = 0;
+    g_readonly = board_is_solved(id);
     g_attempts = 0;
     g_last_correct = -1;
     g_solved = false;
@@ -127,6 +138,22 @@ bool board_start(const char *id)
             word(&p, g_solved_id, sizeof g_solved_id);
         }
     }
+    /* Validate the interpreted board, not merely the source grammar. */
+    for(int i=0;i<g_nblanks;i++) {
+        Blank *bl=&g_blank[i];Pool *pl=pool_by_name(bl->pool);
+        if(!pl)return false;
+        int answer=-1;for(int t=0;t<pl->n;t++)if(eq(pl->tok[t],bl->answer))answer=t;
+        if(answer<0)return false;
+        bool visible=false;char marker[24];snprintf(marker,sizeof marker,"{%s}",bl->name);
+        for(int l=0;l<g_nlines;l++)if(strstr(g_lines[l],marker))visible=true;
+        if(!visible)return false;
+        char key[48];snprintf(key,sizeof key,"draft.%.24s.%.10s",g_id,bl->name);
+        int value=flag_get(key)-1;
+        if(value>=0 && value<pl->n)bl->filled=value;
+        snprintf(key,sizeof key,"bhint.%.24s.%.10s",g_id,bl->name);
+        bl->hint_tier=flag_get(key);
+        if(bl->hint_tier>=3 || g_readonly){bl->filled=answer;bl->locked=true;}
+    }
     music_mood(MOOD_BOARD);
     return g_nblanks > 0;
 }
@@ -154,12 +181,49 @@ static int filled_count(void)
     return n;
 }
 
+bool board_place(const char *name,const char *token)
+{
+    if(g_readonly || g_solved)return false;
+    for(int b=0;b<g_nblanks;b++) {
+        Blank *bl=&g_blank[b];if(!eq(name,bl->name)||bl->locked)continue;
+        Pool *pl=pool_by_name(bl->pool);if(!pl)return false;
+        for(int t=0;t<pl->n;t++)if(eq(token,pl->tok[t])) {
+            /* A revealed token stays attached to its revealed blank. */
+            for(int i=0;i<g_nblanks;i++)if(i!=b && eq(g_blank[i].pool,bl->pool) && g_blank[i].filled==t && g_blank[i].locked)return false;
+            for(int i=0;i<g_nblanks;i++)if(i!=b && eq(g_blank[i].pool,bl->pool) && g_blank[i].filled==t)g_blank[i].filled=-1;
+            bl->filled=t;
+            for(int i=0;i<g_nblanks;i++){char key[48];snprintf(key,sizeof key,"draft.%.24s.%.10s",g_id,g_blank[i].name);flag_set(key,g_blank[i].filled+1);}
+            g_sel=b;
+            for(int step=1;step<=g_nblanks;step++){int next=(b+step)%g_nblanks;if(g_blank[next].filled<0){g_sel=next;break;}}
+            g_last_correct=-1;g_hint_msg=NULL;return true;
+        }
+    }
+    return false;
+}
+int board_deduce(void)
+{
+    if(g_readonly || g_solved || filled_count()!=g_nblanks || !investigation_ready(g_id))return -1;
+    int right=0;for(int i=0;i<g_nblanks;i++)right+=blank_correct(&g_blank[i]);
+    g_attempts++;g_last_correct=right;
+    if(right==g_nblanks) {
+        g_solved=true;g_flash=1.4f;
+        char key[48];snprintf(key,sizeof key,"board.%s",g_id);flag_set(key,1);
+        flag_add("boards_solved",1);sfx_play(SFX_DEDUCE);
+    }else{g_flash=.6f;sfx_play(SFX_CLUNK);}
+    return right;
+}
+
 /* ------------------------------------------------------------------ layout
  * Blanks live inline in the sentence, so the board reads like a sentence
  * with holes in it rather than a form. Layout is recomputed each frame and
  * the hit rectangles fall out of it. */
 static Rectangle g_blank_rect[MAX_BLANKS];
 static Rectangle g_tok_rect[MAX_POOLS][MAX_TOKENS];
+bool board_layout_fits(void) {
+    for(int i=0;i<g_nblanks;i++){Rectangle r=g_blank_rect[i];if(r.width<=0 || r.x<70 || r.x+r.width>740 || r.y<128 || r.y+r.height>565)return false;}
+    for(int p=0;p<g_npools;p++)for(int t=0;t<g_pool[p].n;t++){Rectangle r=g_tok_rect[p][t];if(r.width>0 && (r.x<800 || r.x+r.width>1210 || r.y+r.height>365))return false;}
+    return true;
+}
 
 static int blank_by_name(const char *n)
 {
@@ -196,7 +260,7 @@ static float layout_and_draw_text(Rectangle area, bool draw, float size)
 
                 int bi = blank_by_name(nm);
                 const char *lab = (bi >= 0) ? blank_label(&g_blank[bi]) : NULL;
-                float w = fmaxf(150.0f, lab ? art_text_w(lab, size) + 22 : 0);
+                float w = fmaxf(125.0f, lab ? art_text_w(lab, size) + 22 : 0);
                 if (x + w > area.x + area.width) { x = area.x; y += lh; }
                 Rectangle r = { x, y - 4, w, size * text_scale() + 12 };
                 if (bi >= 0) g_blank_rect[bi] = r;
@@ -216,8 +280,8 @@ static float layout_and_draw_text(Rectangle area, bool draw, float size)
                     }
                 }
                 x += w + 8;
-                if (tail[0] && draw) {
-                    art_text(tail, x - 6, y, size, col_ink());
+                if (tail[0]) {
+                    if(draw) art_text(tail, x - 6, y, size, col_ink());
                     x += art_text_w(tail, size);
                 }
             } else {
@@ -240,6 +304,10 @@ static float layout_pools(Rectangle pools, float size, bool draw)
     float row = size * text_scale() + 16.0f;
     float y = pools.y + 56;
     for (int p = 0; p < g_npools; p++) {
+        if(g_sel<0 || !eq(g_pool[p].name,g_blank[g_sel].pool)) {
+            for(int t=0;t<g_pool[p].n;t++)g_tok_rect[p][t]=(Rectangle){0};
+            continue;
+        }
         if (draw) art_text(g_pool[p].name, pools.x + 22, y, size - 1, col_ink_soft());
         y += size * text_scale() + 8.0f;
         float x = pools.x + 22;
@@ -272,9 +340,6 @@ static float layout_pools(Rectangle pools, float size, bool draw)
 }
 
 /* --------------------------------------------------------------- hints */
-static const char *g_hint_msg;
-static char g_hint_buf[256];
-
 static void spend_hint(int bi)
 {
     Blank *bl = &g_blank[bi];
@@ -282,6 +347,7 @@ static void spend_hint(int bi)
     if (flag_get("feathers") <= 0) { g_hint_msg = ui_str("hint.nofeathers"); return; }
     flag_add("feathers", -1);
     bl->hint_tier++;
+    char key[48];snprintf(key,sizeof key,"bhint.%.24s.%.10s",g_id,bl->name);flag_set(key,bl->hint_tier);
     sfx_play(SFX_SPARKLE);
 
     if (bl->hint_tier == 1) {
@@ -300,6 +366,7 @@ static void spend_hint(int bi)
         snprintf(g_hint_buf, sizeof g_hint_buf, "%s", ui_str("hint.tier3"));
     }
     g_hint_msg = g_hint_buf;
+    save_autosave(scene_current());
 }
 
 /* --------------------------------------------------------------- update */
@@ -323,14 +390,16 @@ board_status board_update(float dt)
         return BOARD_EXITED;
     }
 
+    if(g_readonly)return BOARD_RUNNING;
+
     /* pick a blank */
     for (int i = 0; i < g_nblanks; i++) {
         if (!CheckCollisionPointRec(m, g_blank_rect[i])) continue;
         if (click) {
             sfx_play(SFX_TICK);
             if (g_blank[i].locked) { g_sel = i; break; }
-            if (g_sel == i && g_blank[i].filled >= 0) g_blank[i].filled = -1;
-            else g_sel = i;
+            g_sel = i;
+            g_hint_msg = NULL;
         }
         break;
     }
@@ -349,41 +418,17 @@ board_status board_update(float dt)
             }
             if (target < 0) { sfx_play(SFX_CLUNK); break; }
             if (g_blank[target].locked) { sfx_play(SFX_CLUNK); break; }
-            /* a token can only sit in one blank at a time */
-            for (int i = 0; i < g_nblanks; i++)
-                if (i != target && eq(g_blank[i].pool, g_pool[p].name) &&
-                    g_blank[i].filled == t) g_blank[i].filled = -1;
-            g_blank[target].filled = t;
-            g_sel = -1;
-            g_last_correct = -1;
-            sfx_play(SFX_TICK);
-            break;
+            if(board_place(g_blank[target].name,g_pool[p].tok[t])) {
+                sfx_play(SFX_TICK);save_autosave(scene_current());
+            } else sfx_play(SFX_CLUNK);
+            return BOARD_RUNNING;
         }
     }
 
     if (click && g_sel >= 0 && CheckCollisionPointRec(m, g_hint_rect))
         spend_hint(g_sel);
 
-    /* Deduce! — only when every blank is committed (anti-brute-force, §3.3) */
-    bool ready = filled_count() == g_nblanks;
-    if (click && ready && CheckCollisionPointRec(m, g_deduce_rect)) {
-        g_attempts++;
-        int right = 0;
-        for (int i = 0; i < g_nblanks; i++) if (blank_correct(&g_blank[i])) right++;
-        g_last_correct = right;
-        if (right == g_nblanks) {
-            g_solved = true;
-            g_flash = 1.4f;
-            char key[FLAG_MAX_KEY];
-            snprintf(key, sizeof key, "board.%s", g_id);
-            flag_set(key, 1);
-            flag_add("boards_solved", 1);
-            sfx_play(SFX_DEDUCE);
-        } else {
-            g_flash = 0.6f;
-            sfx_play(SFX_CLUNK);
-        }
-    }
+    if (click && CheckCollisionPointRec(m,g_deduce_rect)) board_deduce();
     return BOARD_RUNNING;
 }
 
@@ -414,29 +459,41 @@ void board_draw(void)
      * the chips step their type down until the whole set fits the panel. */
     Rectangle pools = { 786, 60, 442, 520 };
     paper_panel(pools, 4.0f, 8183);
-    art_text("Evidence", pools.x + 22, pools.y + 18,
-             art_text_size_for("Evidence", pools.width - 44, 20), col_ink());
+    art_text(g_readonly?"Case closed":"Choose a word", pools.x + 22, pools.y + 18,
+             art_text_size_for("Choose a word", pools.width - 44, 20), col_ink());
 
     float chip = 16.0f;
     while (chip > 10.0f && layout_pools(pools, chip, false) > pools.height - 70)
         chip -= 1.0f;
     layout_pools(pools, chip, true);
+    if(g_sel>=0) {
+        Blank *bl=&g_blank[g_sel];
+        ink_line(810,366,1204,366,1.5f,0,8185,col_paper_dark());
+        art_text("Your supporting observations",810,382,18,col_ink());
+        float y=416;
+        for(int i=0;i<bl->nfrom;i++) {
+            art_text_fit(clue_has(bl->from[i])?ui_str(bl->from[i]):"An observation still to find",(Rectangle){810,y,394,42},17,col_ink_soft());y+=48;
+        }
+    }
+
 
     /* --- controls --- */
-    bool ready = filled_count() == g_nblanks;
+    bool ready = !g_readonly && filled_count() == g_nblanks && investigation_ready(g_id);
     g_deduce_rect = (Rectangle){ 52, 606, 240, 60 };
     g_hint_rect   = (Rectangle){ 312, 606, 210, 60 };
     g_leave_rect  = (Rectangle){ 1060, 606, 168, 60 };
 
-    pz_button(g_deduce_rect, ui_str("board.deduce"), ready, 8190);
+    pz_button(g_deduce_rect, g_readonly?"Case closed":ui_str("board.deduce"), ready, 8190);
     char hb[64];
     snprintf(hb, sizeof hb, "%s (%d)", ui_str("board.hint"), flag_get("feathers"));
-    pz_button(g_hint_rect, hb, g_sel >= 0 && flag_get("feathers") > 0, 8192);
+    pz_button(g_hint_rect, hb, !g_readonly && g_sel >= 0 && g_blank[g_sel].hint_tier<3 && flag_get("feathers") > 0, 8192);
     pz_button(g_leave_rect, ui_str("board.leave"), true, 8194);
 
     /* --- feedback: enough to keep momentum, not enough to guess through --- */
     char msg[192];
-    if (g_solved) {
+    if (g_readonly) {
+        snprintf(msg,sizeof msg,"A solved case, kept for your notes.");
+    } else if (g_solved) {
         snprintf(msg, sizeof msg, "%s", ui_str("board.solved"));
     } else if (g_last_correct >= 0) {
         snprintf(msg, sizeof msg, "%d of %d are correct.", g_last_correct, g_nblanks);

@@ -1,7 +1,7 @@
 {
   "id": 7,
   "name": "Building Speed",
-  "parTime": 228,
+  "parTime": 24,
   "lavaSpeed": 33,
   "lavaAcceleration": 0,
   "checkpoints": [

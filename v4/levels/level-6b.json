@@ -1,14 +1,29 @@
 {
   "id": 14,
   "name": "Magnetic Subspace",
-  "parTime": 180,
-  "lavaSpeed": 60,
-  "lavaAcceleration": 2,
+  "parTime": 50,
+  "lavaSpeed": 34,
+  "lavaAcceleration": 0,
   "checkpoints": [
     {
       "id": "cp1",
-      "y": 3096.7953873915826,
+      "y": 4235,
+      "respawnPlatformId": "m35"
+    },
+    {
+      "id": "cp2",
+      "y": 3615,
+      "respawnPlatformId": "m10"
+    },
+    {
+      "id": "cp3",
+      "y": 3075,
       "respawnPlatformId": "m21"
+    },
+    {
+      "id": "cp4",
+      "y": 2295,
+      "respawnPlatformId": "m28"
     }
   ],
   "magnets": [
@@ -17,12 +32,6 @@
       "x": 280,
       "y": 4540,
       "color": "blue"
-    },
-    {
-      "id": "m2",
-      "x": 340,
-      "y": 3540,
-      "color": "yellow"
     },
     {
       "id": "m3",
@@ -233,100 +242,37 @@
     {
       "id": "obs1",
       "type": "pulse_ring",
-      "x": 220,
-      "y": 4240,
-      "interval": 2000
+      "x": 410,
+      "y": 4320,
+      "speed": 24
     },
     {
       "id": "obs2",
       "type": "pulse_ring",
-      "x": 283.97857774258364,
-      "y": 3963.7475265949206,
-      "interval": 2000
+      "x": 55,
+      "y": 3960,
+      "speed": 24
     },
     {
       "id": "obs3",
       "type": "pulse_ring",
-      "x": 100,
-      "y": 3820,
-      "interval": 2000
+      "x": 450,
+      "y": 3040,
+      "speed": 24
     },
     {
       "id": "obs4",
       "type": "pulse_ring",
-      "x": 220,
-      "y": 3620,
-      "interval": 2000
+      "x": 420,
+      "y": 2240,
+      "speed": 24
     },
     {
       "id": "obs5",
       "type": "pulse_ring",
-      "x": 320,
-      "y": 3380,
-      "interval": 2000
-    },
-    {
-      "id": "obs6",
-      "type": "pulse_ring",
-      "x": 320,
-      "y": 3120,
-      "interval": 2000
-    },
-    {
-      "id": "obs7",
-      "type": "pulse_ring",
-      "x": 120,
-      "y": 3300,
-      "interval": 2000
-    },
-    {
-      "id": "obs8",
-      "type": "pulse_ring",
-      "x": 120,
-      "y": 2560,
-      "interval": 2000
-    },
-    {
-      "id": "obs9",
-      "type": "pulse_ring",
-      "x": 360,
-      "y": 2420,
-      "interval": 2000
-    },
-    {
-      "id": "obs10",
-      "type": "pulse_ring",
-      "x": 160,
-      "y": 2340,
-      "interval": 2000
-    },
-    {
-      "id": "obs11",
-      "type": "pulse_ring",
-      "x": 80,
-      "y": 3000,
-      "interval": 2000
-    },
-    {
-      "id": "obs12",
-      "type": "pulse_ring",
-      "x": 222.4483510771895,
-      "y": 2800.607260793073,
-      "interval": 2000
-    },
-    {
-      "id": "obs13",
-      "type": "pulse_ring",
-      "x": 420,
-      "y": 2640,
-      "interval": 2000
-    },
-    {
-      "id": "obs14",
-      "type": "pulse_ring",
-      "x": 200,
-      "y": 1800,
-      "interval": 2000
+      "x": 95,
+      "y": 1980,
+      "speed": 24
     }
   ],
   "background": {

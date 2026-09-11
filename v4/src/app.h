@@ -84,9 +84,6 @@ typedef struct {
 
     /* momentum / motion feel */
     float speed_norm;    /* 0..1 eased speed; stays near 0 until you commit */
-    float speed_burst;   /* 0..1 spike on acceleration, decays fast */
-    float prev_speed;    /* previous frame's speed, for accel detection */
-    float fov_extra;     /* smoothed FOV kick with speed */
 
     /* generated textures */
     Texture2D tex_glow;    /* soft radial glow sprite */
@@ -101,6 +98,13 @@ typedef struct {
     float accum;        /* fixed-timestep accumulator */
     float complete_t;   /* timer on complete screen */
     int muted;
+    int demo;
+    int pending_color;
+    float previous_x, previous_y;
+    float render_x, render_y;
+    float frame_dt;
+    int new_best;
+
 } App;
 
 /* Color table for magnet colors (main / glow). */
@@ -126,6 +130,11 @@ void audio_music_intensity(App *a, float v);   /* 0..1 tension */
 void audio_music_volume(App *a, float v);
 
 /* ui.c */
+void ui_init(void);
+void ui_shutdown(void);
+void ui_text(const char *text, int x, int y, int size, Color color);
+int ui_text_width(const char *text, int size);
+Rectangle ui_level_cell(int index);
 void ui_hud(App *a);
 void ui_title(App *a);
 void ui_select(App *a);

@@ -22,5 +22,12 @@ const char *board_id(void);
 
 /* the journal shows past boards read-only */
 bool board_is_solved(const char *id);
+/* Shared by mouse input and campaign regression tests. No drawing required. */
+bool board_place(const char *blank, const char *token);
+int board_deduce(void); /* -1 incomplete/not enough evidence; otherwise correct count */
+int board_blank_count(void);
+int board_pool_count(void);
+int board_line_count(void);
+bool board_layout_fits(void); /* valid after drawing; capture regression check */
 
 #endif

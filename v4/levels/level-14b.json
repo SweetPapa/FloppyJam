@@ -1,7 +1,7 @@
 {
   "id": 23,
-  "name": "New Level",
-  "parTime": 180,
+  "name": "Magnetic Lockdown",
+  "parTime": 14,
   "lavaSpeed": 25,
   "lavaAcceleration": 0,
   "checkpoints": [

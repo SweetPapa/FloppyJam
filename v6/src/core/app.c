@@ -10,6 +10,7 @@
 #include "cut/cut.h"
 #include "puzzle/puzzle.h"
 #include "journal/journal.h"
+#include "investigation/investigation.h"
 
 #include <string.h>
 #include <stdio.h>
@@ -19,7 +20,7 @@
 
 typedef enum {
     A_TITLE = 0, A_NAME, A_RECAP, A_TOWN, A_DLG, A_PUZZLE, A_BOARD, A_CUT,
-    A_JOURNAL, A_SETTINGS, A_QUIT
+    A_JOURNAL, A_CASEBOOK, A_SETTINGS, A_QUIT
 } AppState;
 
 static AppState g_state = A_TITLE;
@@ -27,6 +28,10 @@ static AppState g_after_cut = A_TOWN;
 static AppState g_after_puzzle = A_TOWN;
 static AppState g_settings_back = A_TITLE;
 static bool     g_resume_dlg;
+static bool     g_replay_puzzle;
+static int g_notice_count;
+static float g_notice_time;
+static char g_notice[256];
 static float    g_time;
 static char     g_recap[512];
 static char     g_name[24];
@@ -75,6 +80,7 @@ static void start_cut(const char *id, AppState back)
 static void begin_new_game(void)
 {
     flags_reset();
+    g_notice_count=0;g_notice_time=0;g_replay_puzzle=false;
     palette_set_stage(0);
     flag_set("save_seed", (int)(hash_str(g_name[0] ? g_name : "Quill") & 0x7fffffff));
     flag_set("feathers", 2);           /* two on the house: generosity, §5.2 */
@@ -298,7 +304,7 @@ static void settings_screen_update(void)
 static void hud_draw(void)
 {
     art_text(scene_title(), 26, 20,
-             art_text_size_for(scene_title(), 950, 20), col_ink());
+             art_text_size_for(scene_title(), 710, 22), col_ink());
 
     char fb[32];
     snprintf(fb, sizeof fb, "%d", flag_get("feathers"));
@@ -323,52 +329,21 @@ static void hud_draw(void)
         ink_rect(r, 1.4f, 0.5f, 16020 + i, col_ink_soft());
     }
 
-    static const char *need[6][7] = {
-        { "clue.town_gray", "clue.prism_missing", "clue.iris_missing",
-          "clue.door_locked", "clue.magpie_blamed", NULL },
-        { "clue.otto_alibi", "clue.tansy_saw", "clue.ferry_log",
-          "clue.fish_pail", "clue.midnight_figure", "clue.pip_hungry", NULL },
-        { "clue.no_forced_lock", "clue.greta_gossip", "clue.felix_letters",
-          "clue.iris_letter", "clue.shiny_thefts", "clue.bruno_order", NULL },
-        { "clue.cogg_ledger", "clue.repair_braces", "clue.prism_dimming",
-          "clue.picks_borrowed", "clue.iris_secret", NULL },
-        { "clue.three_years", "clue.bees_remember", "clue.mayor_dodges",
-          "clue.town_lowspirits", "clue.garden_gray", "clue.lanterns_stored", NULL },
-        { "clue.budget_cut", "clue.nona_key", "clue.stair_rotten",
-          "clue.spare_key", "clue.mayor_shame", "clue.nona_grief",
-          "clue.pip_trusts" }
-    };
-    static const char *question[6] = {
-        "What happened this morning?", "Who was at the tower at midnight?",
-        "How was the tower opened?", "What was wrong with the Prism?",
-        "Why did the festival stop?", "Where is Iris now?"
-    };
-    char lead[180];
-    bool urgent = false;
-    if (stage >= 6) {
-        snprintf(lead, sizeof lead, "%s", ui_str("hud.closed"));
-    } else if (stage == 5 && flag_get("board.ch5_where")) {
-        snprintf(lead, sizeof lead, "%s", ui_str("hud.climb"));
-        urgent = true;
-    } else {
-        int have = 0, total = 0;
-        for (int i = 0; i < 7 && need[stage][i]; i++) {
-            total++;
-            if (clue_has(need[stage][i])) have++;
-        }
-        urgent = have == total;
-        if (urgent)
-            snprintf(lead, sizeof lead, "%s  %s", question[stage], ui_str("hud.ready"));
-        else
-            snprintf(lead, sizeof lead, "%s  Evidence %d/%d", question[stage], have, total);
-    }
-    art_text_fit(lead, (Rectangle){ 248, 48, 690, 30 }, 15,
-                 urgent ? col_accent_b() : col_ink_soft());
+    char lead[220];
+    investigation_summary(lead, sizeof lead);
+    if(scene_inspecting()) return;
+    paper_panel((Rectangle){20,594,1240,96},2,16080);
+    art_text_fit(lead, (Rectangle){42,609,1050,38}, 22, col_ink());
+    art_text("Click to walk or investigate. Double-click to hurry. Hold SPACE to reveal places. M: casebook",42,659,15,col_ink_soft());
+    pz_button((Rectangle){1100,610,138,46},"Casebook [M]",true,16090);
+
 }
 
 static void hud_update(void)
 {
-    if (pz_button_clicked((Rectangle){ VW - 244, 14, 110, 42 }, true) ||
+    if (pz_button_clicked((Rectangle){1100,610,138,46},!scene_inspecting()) || IsKeyPressed(KEY_M)) {
+        casebook_open(0); g_state=A_CASEBOOK;
+    } else if (pz_button_clicked((Rectangle){ VW - 244, 14, 110, 42 }, true) ||
         IsKeyPressed(KEY_J) || IsKeyPressed(KEY_TAB)) {
         journal_open();
         g_state = A_JOURNAL;
@@ -387,6 +362,7 @@ static void handle_scene_request(scene_request req)
     const char *id = scene_request_id();
     switch (req) {
     case SC_TALK:
+        g_replay_puzzle = false;
         g_resume_dlg = false;
         if (dlg_start(id)) g_state = A_DLG;
         break;
@@ -397,6 +373,7 @@ static void handle_scene_request(scene_request req)
         if (board_start(id)) g_state = A_BOARD;
         break;
     case SC_PUZZLE:
+        g_replay_puzzle = false;
         g_after_puzzle = A_TOWN;
         g_resume_dlg = false;
         start_puzzle(id);
@@ -410,6 +387,7 @@ static void handle_scene_request(scene_request req)
 
 static void finish_puzzle(bool solved)
 {
+    if (g_replay_puzzle) { g_replay_puzzle=false; music_mood(scene_district_mood()); journal_open(); g_state=A_JOURNAL; return; }
     if (solved) {
         const char *cl = puzzle_clue();
         if (cl && cl[0]) clue_grant(cl);
@@ -417,6 +395,7 @@ static void finish_puzzle(bool solved)
         snprintf(key, sizeof key, "pzdone.%s", puzzle_current_id());
         flag_set(key, 1);
         if (puzzle_was_skipped()) flag_set("skipped_any", 1);
+        save_autosave(scene_current());
     }
     /* Walking out of a puzzle unsolved never pays out the conversation that
      * asked for it — the payoff lines are on the other side of solving it.
@@ -479,6 +458,7 @@ void app_init(void)
     art_init();
     audio_init();
     flags_reset();
+    g_notice_count=0;g_notice_time=0;g_replay_puzzle=false;
     palette_set_stage(0);
     g_state = A_TITLE;
     music_mood(MOOD_SAD);
@@ -498,13 +478,22 @@ bool app_debug_goto(const char *spec)
     kind[n] = 0;
     const char *id = colon ? colon + 1 : "";
 
+    flags_reset();palette_set_stage(0);g_after_puzzle=A_TOWN;
     flag_set("save_seed", 1234);
     flag_set("feathers", 6);
     snprintf(settings()->detective, sizeof settings()->detective, "%s", "Quill");
 
+    g_resume_dlg=false;g_replay_puzzle=false;g_notice_time=0;g_notice_count=0;
+    if(eq(kind,"dialogue")){if(!dlg_start(id))return false;g_state=A_DLG;return true;}
     if (eq(kind, "title")) { g_state = A_TITLE; return true; }
     if (eq(kind, "settings")) { g_state = A_SETTINGS; return true; }
     if (eq(kind, "name")) { g_state = A_NAME; return true; }
+    if (eq(kind,"casebook") || eq(kind,"map") || eq(kind,"mysteries")) {
+        for(int i=0;i<town_place_count();i++) if(town_place(i)->gate[0])flag_set(town_place(i)->gate,1);
+        palette_set_stage(4); scene_load("p_square");
+        if(eq(kind,"mysteries")){small_case_observe(0,0);small_case_observe(0,1);}
+        casebook_open(eq(kind,"map")?1:eq(kind,"mysteries")?2:0);g_state=A_CASEBOOK;return true;
+    }
     if (eq(kind, "journal")) {
         for (int i = 0; i < npc_count(); i++) {
             char k[FLAG_MAX_KEY];
@@ -535,10 +524,16 @@ bool app_debug_goto(const char *spec)
         return true;
     }
     if (eq(kind, "scene")) {
+        char key[48];
+        snprintf(key,sizeof key,"seen.%s",id);flag_set(key,1);
+        snprintf(key,sizeof key,"seencut.%s",id);flag_set(key,1);
         if (!scene_load(id)) return false;
         /* light the town up to whichever chapter this screen belongs to */
         int stage = (id[0] == 'c' && id[1] == 'h') ? id[2] - '0' - 1 : 0;
         palette_set_stage(stage < 0 ? 0 : stage);
+        static const char *previous[]={"board.p_morning","board.ch1_midnight","board.ch2_opened","board.ch3_prism","board.ch4_festival","board.ch5_where"};
+        int chapter=(id[0]=='c'&&id[1]=='h')?id[2]-'0':0;
+        for(int i=0;i<chapter&&i<6;i++)flag_set(previous[i],1);
         g_state = A_TOWN;
         return true;
     }
@@ -620,6 +615,14 @@ void app_frame(float dt)
         recap_update();
         break;
 
+    case A_CASEBOOK: {
+        scene_draw(); casebook_draw();
+        int action=casebook_update();
+        if(action==1)g_state=A_TOWN;
+        else if(action==2)enter_scene(casebook_destination());
+        else if(action==3 && board_start(investigation_board()))g_state=A_BOARD;
+        break;
+    }
     case A_SETTINGS:
         if (scene_current()[0]) scene_draw();
         else                    title_draw();
@@ -680,12 +683,14 @@ void app_frame(float dt)
         if (journal_update(dt)) {
             const char *rp = journal_replay_request();
             if (rp[0]) {
+                g_replay_puzzle = true;
                 g_after_puzzle = A_TOWN;
                 g_resume_dlg = false;
                 char id[48];
                 snprintf(id, sizeof id, "%s", rp);
                 journal_clear_replay();
-                start_puzzle(id);
+                if(!strncmp(id,"board:",6)){g_replay_puzzle=false;if(board_start(id+6))g_state=A_BOARD;}
+                else start_puzzle(id);
             } else {
                 g_state = A_TOWN;
             }
@@ -697,5 +702,17 @@ void app_frame(float dt)
         break;
     }
 
+    int clues=clue_count();
+    if(clues>g_notice_count && (g_state==A_TOWN||g_state==A_DLG)) {
+        snprintf(g_notice,sizeof g_notice,"Evidence recorded: %s",ui_str(clue_at(clues-1)));
+        g_notice_time=4.0f;
+    }
+    g_notice_count=clues;
+    if(g_notice_time>0 && (g_state==A_TOWN||g_state==A_DLG)) {
+        g_notice_time-=dt;
+        paper_panel((Rectangle){754,98,484,88},2,19900);
+        doodle(D_BOOK,780,124,15,0,col_ink());
+        art_text_fit(g_notice,(Rectangle){808,111,413,62},19,col_ink());
+    }
     art_end_frame();
 }

@@ -1,0 +1,9 @@
+.build/
+**/build/
+**/.gradle/
+**/.cxx/
+**/local.properties
+**/xcuserdata/
+*.xcuserstate
+
+**/__pycache__/

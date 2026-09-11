@@ -1,7 +1,7 @@
 {
   "id": 18,
   "name": "The Race",
-  "parTime": 190,
+  "parTime": 24,
   "lavaSpeed": 39,
   "lavaAcceleration": 0,
   "checkpoints": [

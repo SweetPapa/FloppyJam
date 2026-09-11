@@ -102,16 +102,14 @@
 #define MINE_FORCE_RADIUS  120.0f
 #define MINE_FORCE_STRENGTH 180.0f
 
-/* Anomaly level ids (campaign 1..25) */
-#define LEVEL_FLASHLIGHT  12
-#define LEVEL_AIRACER     18
-#define LEVEL_ROTCAM      25
+/* Anomalies belong to level metadata, independent of campaign order. */
+typedef enum { ANOM_NONE, ANOM_FLASHLIGHT, ANOM_RACE, ANOM_ROLL } Anomaly;
 #define AIRACER_SPEED     160.0f
 #define ROTCAM_SPEED      12.0f   /* deg/sec */
 #define ROTCAM_MAX        35.0f   /* deg */
 #define FLASHLIGHT_RADIUS 260.0f  /* clear radius in game-space px */
 
-#define LEVEL_COUNT 25
+#define LEVEL_COUNT 40
 
 /* ------------------------------------------------------------------ */
 /* Colors                                                              */
@@ -143,6 +141,10 @@ typedef struct {
 
 typedef struct {
     const char *name;
+    const char *key;
+    const char *hint;
+    int legacy_id;
+    Anomaly anomaly;
     float par_time;   /* seconds */
     float lava_speed; /* px/sec */
     float lava_accel;
@@ -186,7 +188,7 @@ typedef struct {
 } AIRacer;
 
 typedef struct {
-    int level_id;              /* campaign 1..25 */
+    int level_id;              /* campaign 1..40 */
     const LevelDef *lv;
 
     /* player */
@@ -239,7 +241,7 @@ typedef struct {
     AIRacer ai;
     int race_lost;
     float race_lost_timer;
-    float rot_cam;             /* current rotation deg (level 25) */
+    float rot_cam;             /* current rotation for roll anomaly */
     int rot_dir;
 
     /* event flags for one frame (consumed by audio/fx layer) */
@@ -259,14 +261,21 @@ void  sim_init(GameSim *g, int level_id);
 void  sim_update(GameSim *g, float dt, int color_pressed);
 float sim_height(const GameSim *g); /* climbed height for HUD */
 int   sim_stars(const GameSim *g);  /* 1..3 once complete */
-/* Nearest magnet of color within detection range excluding a magnet index.
+/* Nearest forward magnet of color, falling back to any direction, excluding a magnet index.
  * Returns index or -1. Exposed for the target reticle / AI. */
 int   sim_find_magnet(const GameSim *g, float x, float y, MagColor c, int exclude);
 
 /* Save data (save.c) — pure stdio. */
-typedef struct { unsigned char stars[LEVEL_COUNT]; int unlocked; } SaveData;
+typedef struct {
+    unsigned char stars[LEVEL_COUNT];
+    float best_time[LEVEL_COUNT];
+    int best_score[LEVEL_COUNT];
+    int unlocked;
+    int reduced_motion, muted;
+} SaveData;
 void save_load(SaveData *s);
 void save_store(const SaveData *s);
 void save_record(SaveData *s, int level_id, int stars);
+void save_result(SaveData *s, const GameSim *g);
 
 #endif /* MAGLAVA_H */

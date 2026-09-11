@@ -1,7 +1,7 @@
 {
   "id": 12,
   "name": "Cave of Shadows",
-  "parTime": 220,
+  "parTime": 26,
   "lavaSpeed": 34,
   "lavaAcceleration": 0,
   "checkpoints": [

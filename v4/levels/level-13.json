@@ -1,7 +1,7 @@
 {
   "id": 21,
   "name": "Heat Wave",
-  "parTime": 155,
+  "parTime": 22,
   "lavaSpeed": 48,
   "lavaAcceleration": 0.2,
   "checkpoints": [

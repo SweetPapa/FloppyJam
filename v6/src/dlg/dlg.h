@@ -21,6 +21,9 @@ void        dlg_draw(void);
 void        dlg_resume(void);
 const char *dlg_request(void);      /* id that came with WANT_* */
 bool        dlg_active(void);
+int dlg_choice_count(void);
+bool dlg_choose(int index);
+void dlg_advance_beat(void);
 /* the last speaker, so the town can react (portraits, ducking, blips) */
 int         dlg_speaker(void);
 

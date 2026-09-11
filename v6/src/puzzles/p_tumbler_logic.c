@@ -47,19 +47,11 @@ static void init(pz_ctx *ctx)
     L.sel = 0;
 
     static const char *NAME[NPIN] = { "first", "second", "third", "fourth", "fifth" };
-    int k = 0;
-    for (int i = 0; i < NPIN && k < NPIN; i++) {
-        int j = (i + 1) % NPIN;
-        if (L.answer[i] > L.answer[j])
-            snprintf(g_clue[k++], 96, "The %s pin stands higher than the %s.",
-                     NAME[i], NAME[j]);
-        else
-            snprintf(g_clue[k++], 96, "The %s pin sits lower than the %s.",
-                     NAME[i], NAME[j]);
-    }
-    /* one anchor, so the ring of comparisons has a unique reading */
-    snprintf(g_clue[NPIN - 1], 96, "The %s pin is at height %d.",
-             NAME[0], L.answer[0]);
+    int order[NPIN];
+    for(int i=0;i<NPIN;i++)order[L.answer[i]-1]=i;
+    for(int i=0;i<NPIN-1;i++)
+        snprintf(g_clue[i],96,"The %s pin sits lower than the %s.",NAME[order[i]],NAME[order[i+1]]);
+    snprintf(g_clue[NPIN-1],96,"Use heights 1 to 5 exactly once each.");
 }
 
 static Rectangle pin_rect(pz_ctx *ctx, int i)
@@ -130,8 +122,8 @@ static const char *hint(pz_ctx *ctx, int tier)
     switch (tier) {
     case 1: return "The five pins use every height from 1 to 5 exactly once. "
                    "No two pins share a height.";
-    case 2: return "Start from the statement that gives an actual number, then "
-                   "walk the comparisons outward from it.";
+    case 2: return "Find the pin that is never higher than another. That is 1. "
+                   "Follow the comparisons upward to place 2, 3, 4 and 5.";
     default:
         snprintf(buf, sizeof buf, "The heights, in order: %d %d %d %d %d.",
                  L.answer[0], L.answer[1], L.answer[2], L.answer[3], L.answer[4]);
@@ -142,8 +134,14 @@ static const char *hint(pz_ctx *ctx, int tier)
 static bool solve_replay(pz_ctx *ctx)
 {
     init(ctx);
-    for (int i = 0; i < NPIN; i++) L.pin[i] = L.answer[i];
-    return solved();
+    int solutions=0;
+    for(int a=1;a<=5;a++)for(int b=1;b<=5;b++)for(int c=1;c<=5;c++)for(int d=1;d<=5;d++)for(int e=1;e<=5;e++) {
+        int p[5]={a,b,c,d,e};bool valid=true;
+        for(int i=0;i<5;i++)for(int j=i+1;j<5;j++)if(p[i]==p[j])valid=false;
+        for(int i=0;i<5;i++)for(int j=0;j<5;j++)if(L.answer[i]+1==L.answer[j] && p[i]>=p[j])valid=false;
+        if(valid){solutions++;memcpy(L.pin,p,sizeof p);if(!solved())return false;}
+    }
+    return solutions==1 && solved();
 }
 
 static const pz_def def = {

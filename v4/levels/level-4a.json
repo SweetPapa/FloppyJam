@@ -1,7 +1,7 @@
 {
   "id": 9,
   "name": "First Obstacles",
-  "parTime": 212,
+  "parTime": 24,
   "lavaSpeed": 36,
   "lavaAcceleration": 0,
   "checkpoints": [

@@ -1,0 +1,16 @@
+{
+  "seconds": 300.0052000000238,
+  "frames": 17972,
+  "meanFps": 59.905628302438004,
+  "p95FrameMs": 16.79999999998836,
+  "p99FrameMs": 16.800000000017462,
+  "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4 Pro, Unspecified Version)",
+  "scene": {
+    "drawCalls": 1,
+    "triangles": 1
+  },
+  "viewport": [
+    1920,
+    1080
+  ]
+}
