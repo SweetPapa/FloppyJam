@@ -22,7 +22,7 @@ class SmokeRunner : Instrumentation() {
             fun onActivity(action:()->Unit) {
                 var failure:Throwable?=null
                 runOnMainSync { try {
-                    check(!activity.isDestroyed) { "TEST_ACTIVITY_RECREATED: Android replaced the activity during native integration" }
+                    check(!activity.isDestroyed) { "TEST_ACTIVITY_RECREATED changes=${Integer.toHexString(activity.changingConfigurations)}: Android replaced the activity during native integration" }
                     action()
                 } catch(error:Throwable) { failure=error } }
                 failure?.let { throw it }
