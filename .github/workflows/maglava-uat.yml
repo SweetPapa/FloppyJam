@@ -1,0 +1,286 @@
+name: MagLava UAT
+on:
+  push:
+    branches: [uat]
+    paths: ['mobile/**', 'v4/**', '.github/workflows/maglava-*.yml', 'scripts/sign-*.sh']
+  workflow_dispatch:
+concurrency:
+  group: maglava-uat
+  cancel-in-progress: false
+permissions:
+  contents: read
+jobs:
+  verify:
+    name: Verify release source
+    if: github.ref == 'refs/heads/uat'
+    runs-on: ubuntu-24.04
+    outputs:
+      build: ${{ steps.version.outputs.build }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - id: version
+        run: echo "build=$((1000 + GITHUB_RUN_NUMBER))" >> "$GITHUB_OUTPUT"
+      - run: |
+          cmake -S mobile -B mobile/.build/check -DCMAKE_BUILD_TYPE=Debug
+          cmake --build mobile/.build/check --parallel 4
+          ctest --test-dir mobile/.build/check --output-on-failure
+          python3 mobile/ci/check.py
+
+  android:
+    name: Android build and captures
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    env:
+      BUILD: ${{ needs.verify.outputs.build }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+      - run: |
+          sdkmanager 'platforms;android-36' 'build-tools;36.1.0' 'ndk;27.0.12077973' 'cmake;3.22.1'
+          python3 mobile/ci/version.py --build "$BUILD"
+      - name: Build release and test APKs
+        working-directory: mobile/android
+        run: ./gradlew :app:assembleRelease :app:bundleRelease :app:assembleDebug :app:assembleDebugAndroidTest :app:lintDebug
+      - name: Enable hardware acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Native gameplay and current screenshots
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_7_pro
+          disable-animations: false
+          script: python3 mobile/ci/capture-android.py
+      - name: Collect unsigned release for local signing or publisher job
+        run: |
+          mkdir -p mobile/.build/uat/android
+          cp mobile/android/app/build/outputs/bundle/release/app-release.aab mobile/.build/uat/android/MagLava-Android-unsigned.aab
+          cp mobile/android/app/build/outputs/apk/release/app-release-unsigned.apk mobile/.build/uat/android/MagLava-Android-unsigned.apk
+          cp mobile/android/app/build/reports/lint-results-debug.html mobile/.build/uat/android/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: maglava-android
+          path: |
+            mobile/.build/uat/android/
+            mobile/.build/uat/version.json
+            mobile/.build/uat/captures/android/
+          if-no-files-found: error
+          retention-days: 30
+
+  apple:
+    name: iOS, macOS and native captures
+    needs: verify
+    runs-on: macos-26
+    timeout-minutes: 60
+    env:
+      BUILD: ${{ needs.verify.outputs.build }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - name: Verify current SDK and assign version
+        run: |
+          xcodebuild -version
+          python3 -c 'import subprocess; assert int(subprocess.check_output(["xcrun","--sdk","iphoneos","--show-sdk-version"]).split(b".")[0]) >= 26'
+          python3 mobile/ci/version.py --build "$BUILD"
+      - name: Archive iOS and universal Mac Catalyst
+        run: |
+          mkdir -p mobile/.build/uat/apple
+          xcodebuild -project mobile/ios/Maglava.xcodeproj -scheme Maglava -configuration Release -destination 'generic/platform=iOS' -archivePath mobile/.build/uat/apple/Maglava-iOS.xcarchive CODE_SIGNING_ALLOWED=NO archive
+          xcodebuild -project mobile/ios/Maglava.xcodeproj -scheme Maglava -configuration Release -destination 'generic/platform=macOS,variant=Mac Catalyst' -archivePath mobile/.build/uat/apple/Maglava-macOS.xcarchive ARCHS='arm64 x86_64' ONLY_ACTIVE_ARCH=NO CODE_SIGNING_ALLOWED=NO archive
+          ditto -c -k --sequesterRsrc --keepParent mobile/.build/uat/apple/Maglava-iOS.xcarchive mobile/.build/uat/apple/Maglava-iOS-unsigned.zip
+          lipo -verify_arch arm64 x86_64 mobile/.build/uat/apple/Maglava-macOS.xcarchive/Products/Applications/Maglava.app/Contents/MacOS/Maglava
+      - name: Capture current iPhone and iPad gameplay
+        run: python3 mobile/ci/capture-apple.py
+      - name: Import existing macOS signing identity
+        env:
+          APPLE_CERT_P12: ${{ secrets.APPLE_CERT_P12 }}
+          APPLE_CERT_PASSWORD: ${{ secrets.APPLE_CERT_PASSWORD }}
+        run: bash mobile/ci/import-apple.sh
+      - name: Sign and notarize desktop download
+        env:
+          ASC_KEY_B64: ${{ secrets.ASC_KEY_P8 }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          VERSION="1.0.$BUILD" bash scripts/sign-macos.sh mobile/.build/uat/apple/Maglava-macOS.xcarchive/Products/Applications/Maglava.app --dmg
+          mkdir -p mobile/.build/uat/desktop
+          cp mobile/.build/uat/apple/Maglava-macOS.xcarchive/Products/Applications/Maglava.dmg mobile/.build/uat/desktop/MagLava-macOS.dmg
+          ditto -c -k --keepParent mobile/.build/uat/apple/Maglava-macOS.xcarchive/Products/Applications/Maglava.app mobile/.build/uat/desktop/MagLava-macOS.zip
+      - name: Remove temporary signing keychain
+        if: always()
+        run: |
+          if [ -n "${MAGLAVA_SIGNING_KEYCHAIN:-}" ]; then security delete-keychain "$MAGLAVA_SIGNING_KEYCHAIN"; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: maglava-apple
+          path: |
+            mobile/.build/uat/apple/Maglava-iOS-unsigned.zip
+            mobile/.build/uat/desktop/
+            mobile/.build/uat/captures/apple/
+            mobile/.build/uat/version.json
+          if-no-files-found: error
+          retention-days: 30
+
+  desktop:
+    name: Desktop C (${{ matrix.os }})
+    needs: verify
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2022]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Linux build dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev libx11-dev libxrandr-dev libxi-dev libgl1-mesa-dev libxcursor-dev libxinerama-dev libwayland-dev libxkbcommon-dev
+      - name: Build full raylib (fonts and audio enabled)
+        shell: bash
+        run: |
+          git clone --depth 1 --branch 5.5 https://github.com/raysan5/raylib.git mobile/.build/raylib-src
+          cmake -S mobile/.build/raylib-src -B mobile/.build/raylib-build -DCMAKE_BUILD_TYPE=Release -DBUILD_EXAMPLES=OFF -DBUILD_SHARED_LIBS=OFF -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/mobile/.build/raylib"
+          cmake --build mobile/.build/raylib-build --config Release --parallel 4
+          cmake --install mobile/.build/raylib-build --config Release
+      - name: Build and test MagLava desktop
+        shell: bash
+        run: |
+          cmake -S v4 -B mobile/.build/desktop -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="$GITHUB_WORKSPACE/mobile/.build/raylib"
+          cmake --build mobile/.build/desktop --config Release --parallel 4
+          ctest --test-dir mobile/.build/desktop -C Release --output-on-failure
+      - name: Azure login for existing Windows signer
+        if: runner.os == 'Windows'
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.AZURE_CLIENT_ID }}
+          tenant-id: ${{ vars.AZURE_TENANT_ID }}
+          subscription-id: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+      - name: Sign Windows executable
+        if: runner.os == 'Windows'
+        shell: bash
+        env:
+          SIGN_DESCRIPTION: MagLava
+          SIGN_DESCRIPTION_URL: https://maglava.io
+        run: bash scripts/sign-windows.sh mobile/.build/desktop/Release/maglava.exe
+      - name: Package desktop downloads
+        run: python3 mobile/ci/package-desktop.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: maglava-desktop-${{ runner.os }}
+          path: mobile/.build/uat/desktop/
+          if-no-files-found: error
+
+  media:
+    name: Current store artwork and demo video
+    needs: [android, apple]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: {pattern: 'maglava-*', path: 'mobile/.build/uat/incoming', merge-multiple: true}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22', cache: npm, cache-dependency-path: mobile/media/package-lock.json}
+      - run: sudo apt-get update && sudo apt-get install -y ffmpeg libnss3 libatk-bridge2.0-0 libgbm1 libasound2t64
+      - run: |
+          npm ci --prefix mobile/media
+          python3 mobile/media/prepare.py --captures mobile/.build/uat/incoming/captures
+          npm run check --prefix mobile/media
+          python3 mobile/media/render-stores.py
+          npm run render --prefix mobile/media
+          cd mobile/media
+          npx remotion render src/index.tsx AppPreview out/MagLava-AppPreview.mp4 --codec h264 --crf 18
+      - uses: actions/upload-artifact@v4
+        with:
+          name: maglava-media
+          path: mobile/media/out/
+          if-no-files-found: error
+          retention-days: 30
+
+  mobile-publish:
+    name: Sign and deliver mobile betas
+    environment: maglava-uat
+    needs: [verify, android, apple, media]
+    runs-on: macos-26
+    timeout-minutes: 35
+    env:
+      BUILD: ${{ needs.verify.outputs.build }}
+      HAVE_MOBILE_KEYS: ${{ secrets.MAGLAVA_IOS_CERT_P12 != '' && secrets.MAGLAVA_ANDROID_KEYSTORE != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: {pattern: 'maglava-*', path: 'mobile/.build/uat/incoming', merge-multiple: true}
+      - uses: actions/setup-java@v4
+        with: {distribution: temurin, java-version: '17'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - uses: android-actions/setup-android@v3
+      - run: sdkmanager 'build-tools;36.1.0'
+      - name: Signing credentials required for unattended delivery
+        if: env.HAVE_MOBILE_KEYS != 'true'
+        run: |
+          echo '::error::Mobile signing secrets are not configured. Unsigned artifacts are ready for the documented local signing/upload command.'
+          exit 1
+      - name: Import mobile signing identity
+        env:
+          APPLE_CERT_P12: ${{ secrets.MAGLAVA_IOS_CERT_P12 }}
+          APPLE_CERT_PASSWORD: ${{ secrets.MAGLAVA_IOS_CERT_PASSWORD }}
+        run: bash mobile/ci/import-apple.sh
+      - name: Deliver to TestFlight and Google Play closed testing
+        env:
+          MAGLAVA_IOS_PROFILE: ${{ secrets.MAGLAVA_IOS_PROFILE }}
+          MAGLAVA_ANDROID_KEYSTORE: ${{ secrets.MAGLAVA_ANDROID_KEYSTORE }}
+          MAGLAVA_STORE_PASSWORD: ${{ secrets.MAGLAVA_STORE_PASSWORD }}
+          MAGLAVA_KEY_PASSWORD: ${{ secrets.MAGLAVA_KEY_PASSWORD }}
+          MAGLAVA_PLAY_CREDENTIALS: ${{ secrets.MAGLAVA_PLAY_CREDENTIALS }}
+          MAGLAVA_ASC_KEY_P8: ${{ secrets.MAGLAVA_ASC_KEY_P8 }}
+          ASC_KEY_ID: ${{ secrets.MAGLAVA_ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.MAGLAVA_ASC_ISSUER_ID }}
+          MAGLAVA_REVIEW_PHONE: ${{ secrets.MAGLAVA_REVIEW_PHONE }}
+        run: python3 mobile/ci/deliver.py --incoming mobile/.build/uat/incoming --build "$BUILD" --ci
+      - name: Remove temporary signing keychain
+        if: always()
+        run: |
+          if [ -n "${MAGLAVA_SIGNING_KEYCHAIN:-}" ]; then security delete-keychain "$MAGLAVA_SIGNING_KEYCHAIN"; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: maglava-mobile-delivery
+          path: mobile/.build/uat/receipts/
+
+  downloads:
+    name: Publish desktop prerelease downloads
+    needs: [verify, apple, desktop, media]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      BUILD: ${{ needs.verify.outputs.build }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: {pattern: 'maglava-*', path: 'mobile/.build/uat/incoming', merge-multiple: true}
+      - run: python3 mobile/ci/publish-downloads.py --build "$BUILD"

@@ -1,0 +1,25 @@
+name: MagLava checks
+on:
+  push:
+    branches: ['feat/maglava-*']
+  pull_request:
+    branches: [uat]
+    paths: ['mobile/**', 'v4/**', '.github/workflows/maglava-*.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    name: Shared game and release checks
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22'}
+      - run: |
+          cmake -S mobile -B mobile/.build/check -DCMAKE_BUILD_TYPE=Debug
+          cmake --build mobile/.build/check --parallel 4
+          ctest --test-dir mobile/.build/check --output-on-failure
+          python3 mobile/ci/check.py

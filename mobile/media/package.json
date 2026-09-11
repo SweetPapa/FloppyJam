@@ -1,0 +1,22 @@
+{
+  "name": "maglava-release-media",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "studio": "remotion studio src/index.tsx",
+    "render": "remotion render src/index.tsx MagLavaTrailer out/MagLava-Trailer.mp4 --codec h264 --crf 18",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.419",
+    "@remotion/media": "4.0.419",
+    "@remotion/transitions": "4.0.419",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "remotion": "4.0.419"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.7",
+    "typescript": "5.9.3"
+  }
+}

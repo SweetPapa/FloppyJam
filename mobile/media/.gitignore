@@ -1,0 +1,6 @@
+node_modules/
+out/
+public/captures/
+public/narration.wav
+public/music.m4a
+public/fonts/
