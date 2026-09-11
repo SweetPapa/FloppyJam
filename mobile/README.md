@@ -8,7 +8,9 @@ in `v4`.
 - **iOS 16+**: Swift, UIKit controls and menus, Metal 3D rendering, AVAudioPlayer,
   native haptics and UserDefaults. iPhone portrait; iPad also supports landscape.
 - **macOS 13+**: Mac Catalyst using the same Swift/Metal game and sandboxed
-  storage. Mouse controls and R/B/Y/G (or W/S/A/D); Escape pauses.
+  storage. Mouse controls, arrow keys, W/S/A/D or R/B/Y/G; Escape pauses.
+  Up/W selects red, Down/S blue, Left/A yellow, and Right/D green,
+  matching the Windows/Linux desktop controls.
 - **Android 8+ / API 26+**: Kotlin, native Views, OpenGL ES 2.0 3D rendering,
   Choreographer frame pacing, MediaPlayer/SoundPool, haptics and SharedPreferences.
   Targets API 36; builds ARM64 and x86-64 libraries with 16 KB page alignment.
