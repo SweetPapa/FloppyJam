@@ -73,8 +73,9 @@ permission; direct store API verification was used instead.
 
 Ignored `mobile/.build/uat/` contains signed files, per-store receipts, native test
 logs, recordings and upload logs. `mobile/.build/uat/local-1010/media/` contains
-the final narrated 36-second trailer, 28-second App Preview, smaller web copy,
-poster and store cards.
+the original build 1010 media, including the 28-second App Preview and store cards.
+The approved Charon rerender is in `mobile/media/out/`, with publication receipts
+in `.build/uat/approved-voice-release/`.
 Narration now uses the user-approved AssetForge Gemini 3.1 Flash TTS / Charon
 take, committed losslessly with request/audio hashes. Original game music is AAC: the complete four-song
 playlist is **7,792,904 bytes**, identical in both native apps.
@@ -88,16 +89,29 @@ and Mac Catalyst share the mobile 3D presentation and original playlist.
 
 [Desktop release 1010](https://github.com/SweetPapa/FloppyJam/releases/tag/maglava-uat-1010)
 contains the signed macOS and Windows packages, Linux, trailer and App Preview.
-All six public asset SHA-256 digests match the retained hosted artifacts.
+App packages and App Preview retain their verified hosted digests. The trailer
+was rerendered with approved Charon narration over the same verified 1010 footage;
+`SHA256SUMS.txt` now records its revised digest.
 
 [maglava.io](https://maglava.io) now links to those downloads, both beta programs
-and the actual gameplay trailer. SweetPapa/magLava PR **1** is merged and the
-existing Firebase `maglava` site was deployed. The Node 22 production build and
-desktop/phone browser checks cover layout, links, actual video playback, Escape,
-audio shutdown and focus restoration. Original local website/game edits were
-preserved by using an isolated checkout.
+and the approved Charon gameplay trailer. SweetPapa/magLava PRs **1 and 2** are
+merged; the existing Firebase `maglava` site is deployed. PR 2 repairs five denied
+artwork URLs using optimized bundled images, the YouTube handle, tester-group
+landing page, locale routes, cross-page anchors and tablet navigation. Production
+and live browser checks pass across all 14 localized routes and desktop/tablet/phone
+layouts, including images, canonical/alternate links, downloads, trailer playback,
+Escape, audio shutdown and focus restoration. The live 4.28 MB trailer SHA-256 is
+`b2b149d5772026b8fdf7ef21dd50501296c18a728a9932cf154b731ad357cb78`.
+Original local website/game edits were preserved by using an isolated checkout.
 
 AssetForge billing was restored to the user-selected Side Projects account.
 The user approved the complete 31.44-second Gemini 3.1 Flash TTS / Charon take;
 it now replaces the earlier WARLOCK narration in release media sources.
 The App Preview contains music and gameplay captions, with no TTS.
+
+Build 1011 was cancelled before publication after visual review found two blank
+iPhone launch-screen captures despite passing native tests. PR **19**, merged
+into UAT, waits for visible scene content and rejects blank captures. The compiled
+validator accepts all 14 visible screenshots from builds 1010/1011 and rejects
+both blank ones. Follow-up run **34616899286** tests this capture safeguard;
+its artifacts have not replaced the verified 1010 store builds or website media.
