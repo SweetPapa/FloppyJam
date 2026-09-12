@@ -4,19 +4,26 @@
 #include <math.h>
 #include "fonts_gen.h"
 
-static Font medium_font, bold_font;
+static Font medium_font, bold_font, japanese_font, chinese_font;
+static Font text_font(int size) { int lang=ml_language_index();return lang==5?japanese_font:lang==6?chinese_font:size>=24?bold_font:medium_font; }
 void ui_init(void) {
-    medium_font = LoadFontFromMemory(".ttf",font_medium,sizeof font_medium,48,0,0);
-    bold_font = LoadFontFromMemory(".ttf",font_bold,sizeof font_bold,96,0,0);
+    int count=0;int *codes=LoadCodepoints(ml_locale_characters(),&count);
+    medium_font = LoadFontFromMemory(".ttf",font_medium,sizeof font_medium,48,codes,count);
+    bold_font = LoadFontFromMemory(".ttf",font_bold,sizeof font_bold,96,codes,count);
+    japanese_font=LoadFontFromMemory(".otf",font_japanese,sizeof font_japanese,48,codes,count);
+    chinese_font=LoadFontFromMemory(".otf",font_chinese,sizeof font_chinese,48,codes,count);
+    UnloadCodepoints(codes);
+    SetTextureFilter(japanese_font.texture,TEXTURE_FILTER_BILINEAR);
+    SetTextureFilter(chinese_font.texture,TEXTURE_FILTER_BILINEAR);
     SetTextureFilter(medium_font.texture,TEXTURE_FILTER_BILINEAR);
     SetTextureFilter(bold_font.texture,TEXTURE_FILTER_BILINEAR);
 }
-void ui_shutdown(void) { UnloadFont(medium_font); UnloadFont(bold_font); }
+void ui_shutdown(void) { UnloadFont(medium_font); UnloadFont(bold_font); UnloadFont(japanese_font); UnloadFont(chinese_font); }
 void ui_text(const char *text, int x, int y, int size, Color color) {
-    DrawTextEx(size>=24?bold_font:medium_font,text,(Vector2){(float)x,(float)y},size,.6f,color);
+    DrawTextEx(text_font(size),ml_text(text),(Vector2){(float)x,(float)y},size,.6f,color);
 }
 int ui_text_width(const char *text,int size) {
-    return (int)ceilf(MeasureTextEx(size>=24?bold_font:medium_font,text,size,.6f).x);
+    return (int)ceilf(MeasureTextEx(text_font(size),ml_text(text),size,.6f).x);
 }
 
 static const Color INK = {229,238,244,255};
@@ -25,6 +32,8 @@ static const Color AMBER = {255,155,83,255};
 static const Color TEAL = {116,224,211,255};
 
 static void centered(const char *s, int x, int y, int size, Color c) {
+    int limit=GetScreenWidth()-64;
+    while(size>10 && ui_text_width(s,size)>limit)size--;
     ui_text(s,x-ui_text_width(s,size)/2,y,size,c);
 }
 static void panel(Rectangle r) {
@@ -72,19 +81,19 @@ static void menu_background(void) {
 void ui_hud(App *a) {
     GameSim *g=&a->sim; int w=GetScreenWidth(),h=GetScreenHeight(); char b[160];
     panel((Rectangle){20,18,330,76});
-    snprintf(b,sizeof b,"%s / 40    %s",LEVEL_LABELS[g->level_id-1],g->lv->name);
+    snprintf(b,sizeof b,ml_text("%s / 40    %s"),LEVEL_LABELS[g->level_id-1],ml_text(g->lv->name));
     ui_text(b,34,30,18,INK);
-    snprintf(b,sizeof b,"%06d",(int)(a->score_shown+.5f));
+    snprintf(b,sizeof b,ml_text("%06d"),(int)(a->score_shown+.5f));
     ui_text(b,34,57,24,AMBER);
     if (g->combo>1) {
         int combo=g->combo>COMBO_MAX?COMBO_MAX:g->combo;
-        snprintf(b,sizeof b,"x%d FLOW",combo); ui_text(b,170,60,18,TEAL);
+        snprintf(b,sizeof b,ml_text("x%d FLOW"),combo); ui_text(b,170,60,18,TEAL);
         DrawRectangle(170,83,150,2,(Color){41,61,72,255});
         DrawRectangle(170,83,(int)(150*fmaxf(0,g->combo_timer)/COMBO_TIMEOUT),2,TEAL);
     }
     panel((Rectangle){w-204,18,184,76});
-    snprintf(b,sizeof b,"%05.1f",g->elapsed); ui_text(b,w-188,30,26,INK);
-    snprintf(b,sizeof b,"PAR %.0fs   %d RETRIES",g->lv->par_time,g->deaths);
+    snprintf(b,sizeof b,ml_text("%05.1f"),g->elapsed); ui_text(b,w-188,30,26,INK);
+    snprintf(b,sizeof b,ml_text("PAR %.0fs   %d RETRIES"),g->lv->par_time,g->deaths);
     ui_text(b,w-188,68,12,DIM);
     float start=g->lv->mag[0].y,top=g->lv->mag[g->n_mag-1].y,span=fmaxf(1,start-top);
     float prog=g->won?1:fminf(1,fmaxf(0,(start-g->py)/span));
@@ -98,7 +107,7 @@ void ui_hud(App *a) {
     DrawRectangle(railx,py,3,rbottom-py,TEAL); DrawCircle(railx+1,py,4,INK);
     float lava=fminf(1,fmaxf(0,(start-g->lava_y)/span));
     DrawCircle(railx+1,rbottom-(int)(lava*(rbottom-rtop)),4,AMBER);
-    snprintf(b,sizeof b,"%.0f%%",prog*100); ui_text(b,w-51,rtop-22,14,DIM);
+    snprintf(b,sizeof b,ml_text("%.0f%%"),prog*100); ui_text(b,w-51,rtop-22,14,DIM);
 
     /* Preserve the physical WASD / arrow-key layout: W above A S D. */
     panel((Rectangle){w/2-70,h-100,140,84});
@@ -123,25 +132,40 @@ void ui_hud(App *a) {
     }
 }
 
+Rectangle ui_menu_button(int index) {
+    return (Rectangle){GetScreenWidth()/2-190,GetScreenHeight()*.53f+index*62,380,50};
+}
+Rectangle ui_settings_row(int index) {
+    return (Rectangle){GetScreenWidth()/2-310,150+index*70,620,56};
+}
 void ui_title(App *a) {
-    menu_background();
-    int w=GetScreenWidth(),h=GetScreenHeight(),x=w/2;
-    centered("S W E E T   P A P A   T E C H N O L O G I E S",x,65,14,DIM);
-    /* A magnetic climb drawn as a restrained title emblem. */
-    Vector2 points[4]={{x-125,h*.29f+25},{x-40,h*.29f-26},{x+46,h*.29f+15},{x+128,h*.29f-48}};
-    for(int i=0;i<3;i++) DrawLineEx(points[i],points[i+1],2,(Color){72,104,121,255});
-    for(int i=0;i<4;i++) {
-        Color c=mag_color((MagColor)i,0);
-        DrawCircleV(points[i],13,(Color){17,30,42,255});
-        DrawCircleLinesV(points[i],13,c); DrawCircleV(points[i],5,c);
+    menu_background();int w=GetScreenWidth(),h=GetScreenHeight(),x=w/2;
+    centered("SWEET PAPA TECHNOLOGIES",x,42,14,DIM);
+    Vector2 points[4]={{x-125,h*.18f+25},{x-40,h*.18f-26},{x+46,h*.18f+15},{x+128,h*.18f-48}};
+    for(int i=0;i<3;i++)DrawLineEx(points[i],points[i+1],2,(Color){72,104,121,255});
+    for(int i=0;i<4;i++) {DrawCircleV(points[i],13,(Color){17,30,42,255});DrawCircleLinesV(points[i],13,mag_color((MagColor)i,0));DrawCircleV(points[i],5,mag_color((MagColor)i,0));}
+    centered("MAGLAVA",x,h*.28f,72,INK);
+    centered("Swing. Climb. Survive.",x,h*.28f+88,20,AMBER);
+    const char *titles[]={a->save.unlocked>1?"Continue":"Play","Settings","Exit"};
+    for(int i=0;i<3;i++) {Rectangle r=ui_menu_button(i);panel(r);centered(titles[i],x,r.y+14,20,i?INK:TEAL);}
+    centered("W red    S blue    A yellow    D green",x,h-63,16,DIM);
+    centered("Arrows also work. Escape pauses.",x,h-35,14,DIM);
+}
+void ui_settings(App *a) {
+    menu_background();int x=GetScreenWidth()/2;char rate[32];snprintf(rate,sizeof rate,"%.3gx",a->save.lava_rate);
+    centered("Settings",x,48,38,INK);
+    const char *names[]={"Lava rise rate","Language","Sound","Reduced motion","Back"};
+    const char *values[]={rate,*a->save.language?ml_language_name(ml_language_index()):ml_text("System language"),ml_text(a->muted?"OFF":"ON"),ml_text(a->save.reduced_motion?"ON":"OFF"),"ESC"};
+    for(int i=0;i<5;i++) {
+        Rectangle r=ui_settings_row(i);panel(r);
+        if(i==a->settings_cursor)DrawRectangleRoundedLinesEx(r,.12f,6,2,TEAL);
+        ui_text(names[i],r.x+18,r.y+18,17,INK);
+        int size=17;while(size>12 && ui_text_width(values[i],size)>280)size--;
+        ui_text(values[i],r.x+r.width-24-ui_text_width(values[i],size),r.y+18,size,TEAL);
     }
-    centered("MAGLAVA",x,(int)(h*.40f),86,INK);
-    centered("R I S E   O R   B U R N",x,(int)(h*.40f)+92,22,AMBER);
-    centered("One tether. Four colors. Nowhere to go but up.",x,(int)(h*.40f)+140,18,DIM);
-    Rectangle button={x-180,h*.70f,360,54}; panel(button);
-    centered(a->save.unlocked>1?"ENTER  /  CONTINUE CLIMBING":"ENTER  /  BEGIN THE CLIMB",x,(int)button.y+18,20,TEAL);
-    centered("W red    S blue    A yellow    D green",x,(int)button.y+75,16,DIM);
-    centered("40 handcrafted stages   /   Magnetic momentum   /   An ever-changing soundtrack",x,h-42,14,DIM);
+    centered("Multiplies each level's lava speed. 1x is the original rate; default is 1.5x.",x,GetScreenHeight()-101,14,DIM);
+    centered("Changes apply immediately and are saved.",x,GetScreenHeight()-68,14,DIM);
+    centered("Choose a row; Left/Right or click to change.",x,GetScreenHeight()-35,14,DIM);
 }
 
 Rectangle ui_level_cell(int index) {
@@ -155,7 +179,7 @@ void ui_select(App *a) {
     menu_background(); int w=GetScreenWidth(),h=GetScreenHeight(); char b[160];
     ui_text("THE ASCENT",48,34,38,INK);
     int total=0;for(int i=0;i<LEVEL_COUNT;i++)total+=a->save.stars[i];
-    snprintf(b,sizeof b,"%d / 120 STARS",total);ui_text(b,w-225,48,18,AMBER);
+    snprintf(b,sizeof b,ml_text("%d / 120 STARS"),total);ui_text(b,w-225,48,18,AMBER);
     ui_text("Arrows / WASD to choose   Enter or click to play   PgUp / PgDn to change page",48,89,16,DIM);
     int first=(a->select_cursor/20)*20;
     for(int i=first;i<first+20&&i<LEVEL_COUNT;i++) {
@@ -165,45 +189,46 @@ void ui_select(App *a) {
         if(!LEVELS[i].legacy_id) DrawRectangle((int)(r.x+r.width)-39,(int)r.y+12,27,3,TEAL);
         Color c=unlocked?INK:DIM;
         ui_text(LEVEL_LABELS[i],r.x+13,r.y+12,22,c);
-        int size=14;while(size>10&&ui_text_width(LEVELS[i].name,size)>r.width-24)size--;
-        ui_text(LEVELS[i].name,r.x+12,r.y+40,size,c);
+        int size=14;while(size>10&&ui_text_width(ml_text(LEVELS[i].name),size)>r.width-24)size--;
+        ui_text(ml_text(LEVELS[i].name),r.x+12,r.y+40,size,c);
         if(unlocked) stars(r.x+r.width/2,r.y+r.height-16,a->save.stars[i],7);
         else centered("LOCKED",r.x+r.width/2,r.y+r.height-24,12,DIM);
     }
     int i=a->select_cursor; const LevelDef *lv=&LEVELS[i];
-    centered(lv->name,w/2,h-119,24,INK);
+    centered(ml_text(lv->name),w/2,h-119,24,INK);
     if(a->save.best_time[i]>0)
-        snprintf(b,sizeof b,"BEST %.2fs   /   PAR %.0fs   /   HIGH SCORE %d",a->save.best_time[i],lv->par_time,a->save.best_score[i]);
-    else snprintf(b,sizeof b,"PAR %.0fs   /   %s",lv->par_time,lv->legacy_id?"ORIGINAL STAGE":"NEW STAGE");
+        snprintf(b,sizeof b,ml_text("BEST %.2fs   /   PAR %.0fs   /   HIGH SCORE %d"),a->save.best_time[i],lv->par_time,a->save.best_score[i]);
+    else snprintf(b,sizeof b,ml_text("PAR %.0fs   /   %s"),lv->par_time,ml_text(lv->legacy_id?"ORIGINAL STAGE":"NEW STAGE"));
     centered(b,w/2,h-84,16,TEAL);
     centered(lv->hint,w/2,h-58,14,DIM);
-    snprintf(b,sizeof b,"PAGE %d / 2",first/20+1); ui_text(b,w-140,h-29,14,DIM);
+    snprintf(b,sizeof b,ml_text("PAGE %d / 2"),first/20+1); ui_text(b,w-140,h-29,14,DIM);
     ui_text("ESC back",48,h-29,14,DIM);
 }
 void ui_pause(App *a) {
     int w=GetScreenWidth(),h=GetScreenHeight();
     DrawRectangle(0,0,w,h,(Color){4,10,17,195});
-    panel((Rectangle){w/2-255,h/2-191,510,382});
-    centered("TAKE A BREATH",w/2,h/2-157,34,INK);
-    centered("The climb will wait.",w/2,h/2-109,18,DIM);
-    centered("ESC   Resume",w/2,h/2-51,22,TEAL);
-    centered("R   Restart level",w/2,h/2-9,20,INK);
-    centered(a->muted?"M   Sound off":"M   Sound on",w/2,h/2+28,18,DIM);
-    centered(a->save.reduced_motion?"V   Reduced motion on":"V   Reduced motion off",w/2,h/2+61,18,DIM);
-    centered("F11   Fullscreen",w/2,h/2+94,18,DIM);
-    centered("Q   Level select",w/2,h/2+139,18,DIM);
+    panel((Rectangle){w/2-310,72,620,440});
+    centered("TAKE A BREATH",w/2,92,34,INK);
+    centered("The climb will wait.",w/2,138,18,DIM);
+    centered("ESC   Resume",w/2,178,22,TEAL);
+    centered("R   Restart level",w/2,215,20,INK);
+    centered(a->muted?"M   Sound off":"M   Sound on",w/2,250,18,DIM);
+    centered(a->save.reduced_motion?"V   Reduced motion on":"V   Reduced motion off",w/2,285,18,DIM);
+    centered("F11   Fullscreen",w/2,320,18,DIM);
+    centered("Q   Level select",w/2,355,18,DIM);
+    Rectangle settings=ui_settings_row(4);settings.y=150+4*70;panel(settings);centered("F2   Settings",w/2,settings.y+18,18,TEAL);
 }
 void ui_complete(App *a) {
     GameSim *g=&a->sim;int w=GetScreenWidth(),h=GetScreenHeight(); char b[96];
     DrawRectangle(0,0,w,h,(Color){4,10,17,205});
     panel((Rectangle){w/2-340,h/2-230,680,460});
     centered(g->level_id==LEVEL_COUNT?"YOU ROSE ABOVE IT ALL":"ASCENT COMPLETE",w/2,h/2-193,36,INK);
-    centered(g->lv->name,w/2,h/2-145,20,DIM);
+    centered(ml_text(g->lv->name),w/2,h/2-145,20,DIM);
     int shown=(int)(a->complete_t/.28f); if(shown>sim_stars(g))shown=sim_stars(g);
     stars(w/2,h/2-83,shown,24);
-    snprintf(b,sizeof b,"%.2fs  /  PAR %.0fs",g->elapsed,g->lv->par_time);
+    snprintf(b,sizeof b,ml_text("%.2fs  /  PAR %.0fs"),g->elapsed,g->lv->par_time);
     centered(b,w/2,h/2-26,28,INK);
-    snprintf(b,sizeof b,"%d POINTS     %d RETRIES",g->score,g->deaths);
+    snprintf(b,sizeof b,ml_text("%d POINTS     %d RETRIES"),g->score,g->deaths);
     centered(b,w/2,h/2+18,20,AMBER);
     if(a->new_best) centered("PERSONAL BEST",w/2,h/2+56,16,TEAL);
     centered("1 star: finish   /   2: beat par   /   3: no deaths",w/2,h/2+98,14,DIM);

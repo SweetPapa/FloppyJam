@@ -18,6 +18,23 @@ static void rate(int hz,float *out) {
     snapshot(g,out); ml_destroy(g);
 }
 int main(void) {
+    /* The user rate survives restart/level changes and only scales lava. */
+    MLGame *slow=ml_create(),*fast=ml_create();
+    assert(ml_lava_rate(fast)==1.5f);ml_set_lava_rate(slow,1);ml_set_lava_rate(fast,2);
+    for(int n=1;n<=40;n++) {
+        float start[ML_SNAPSHOT_SIZE],one[ML_SNAPSHOT_SIZE],two[ML_SNAPSHOT_SIZE];
+        ml_start(slow,n);ml_start(fast,n);assert(ml_lava_rate(fast)==2);snapshot(slow,start);
+        for(int f=0;f<30;f++){ml_advance(slow,1.0/60);ml_advance(fast,1.0/60);}
+        snapshot(slow,one);snapshot(fast,two);
+        assert(fabsf((start[2]-two[2])-2*(start[2]-one[2]))<.025f);
+        assert(one[9]==two[9] && one[0]==two[0] && one[1]==two[1]);
+        ml_pause(fast,1);snapshot(fast,one);ml_set_lava_rate(fast,3);ml_advance(fast,.1);snapshot(fast,two);assert(one[2]==two[2]);
+        ml_set_lava_rate(fast,2);
+    }
+    ml_set_lava_rate(fast,NAN);assert(ml_lava_rate(fast)==1.5f);
+    ml_set_lava_rate(fast,100);assert(ml_lava_rate(fast)==3);
+    ml_set_lava_rate(fast,-1);assert(ml_lava_rate(fast)==.5f);
+    ml_destroy(slow);ml_destroy(fast);
     assert(ml_level_count()==40);
     assert(strstr(ml_level_hint(1),"Tap the color") != NULL); /* Private mobile-generated header, not desktop fallback. */
     assert(!strcmp(ml_level_key(0),""));

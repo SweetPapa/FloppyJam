@@ -38,6 +38,9 @@ class MainActivity : Activity() {
     private lateinit var audioManager: AudioManager
     private lateinit var focus: AudioFocusRequest
     private var hasFocus=false
+    private fun t(text:String)=Native.text(text)
+    private val language get()=prefs.getString("language","") ?: ""
+    private fun applyLanguage() { Native.language(language.ifEmpty { resources.configuration.locales[0].toLanguageTag() }) }
     private fun dp(n:Int)=(n*resources.displayMetrics.density).toInt()
     private fun key(n:Int)=Native.metadata(n,0)
     private fun stars(n:Int)=prefs.getInt("stars.${key(n)}",0).coerceIn(0,3)
@@ -47,9 +50,10 @@ class MainActivity : Activity() {
     private val haptics get()=prefs.getBoolean("haptics",true)
     override fun onCreate(savedInstanceState:Bundle?) {
         super.onCreate(savedInstanceState)
+        applyLanguage()
         if(!prefs.contains("musicMuted"))prefs.edit().putBoolean("musicMuted",muted).apply()
         requestedOrientation=if(resources.configuration.smallestScreenWidthDp>=600) android.content.pm.ActivityInfo.SCREEN_ORIENTATION_FULL_SENSOR else android.content.pm.ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
-        core=Native.create(); check(core!=0L)
+        core=Native.create(); Native.lavaRate(core,prefs.getFloat("lavaRate",1.5f)); check(core!=0L)
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         val display=windowManager.defaultDisplay
         val mode=display.mode
@@ -76,7 +80,7 @@ class MainActivity : Activity() {
         val header=LinearLayout(this); header.orientation=LinearLayout.VERTICAL; header.setPadding(dp(20),dp(10),dp(20),dp(10)); layout.addView(header)
         val row=LinearLayout(this); row.gravity=Gravity.CENTER_VERTICAL
         hud=label("",21,Color.WHITE); hud.maxLines=1; row.addView(hud,LinearLayout.LayoutParams(0,-2,1f))
-        val pause=button("Ⅱ") { pauseGame() }; pause.contentDescription="Pause game"; row.addView(pause,LinearLayout.LayoutParams(dp(48),dp(48)))
+        val pause=button("Ⅱ") { pauseGame() }; pause.contentDescription=t("Pause game"); pause.tag="game.pause"; row.addView(pause,LinearLayout.LayoutParams(dp(48),dp(48)))
         header.addView(row); subhud=label("",12); subhud.maxLines=2; subhud.typeface=Typeface.createFromAsset(assets,"Barlow-Medium.ttf"); subhud.gravity=Gravity.CENTER_VERTICAL; header.addView(subhud,LinearLayout.LayoutParams(-1,dp(34)).apply { topMargin=dp(7) })
         progressBar=ProgressBar(this,null,android.R.attr.progressBarStyleHorizontal); progressBar.max=1000
         progressBar.progressTintList=android.content.res.ColorStateList.valueOf(rgb(0x65E0B1)); header.addView(progressBar,LinearLayout.LayoutParams(-1,dp(3)).apply { topMargin=dp(7) })
@@ -84,8 +88,9 @@ class MainActivity : Activity() {
         val controls=ColorControls(this); layout.addView(controls,LinearLayout.LayoutParams(-1,dp(144)).apply { topMargin=dp(10); bottomMargin=dp(14) })
         for(i in 0..3) {
             val names=arrayOf("RED","BLUE","YELLOW","GREEN")
-            val b=button("${"RBYG"[i]}\n${names[i]}",alpha(magnetColors[i],0.18f)) { if(playing) Native.input(core,i) }
-            b.setTextColor(magnetColors[i]); b.textSize=14f; b.contentDescription="Tether to ${names[i].lowercase()} magnet"
+            val b=button("${"RBYG"[i]}\n${t(names[i])}",alpha(magnetColors[i],0.18f)) { if(playing) Native.input(core,i) }
+            b.setAutoSizeTextTypeUniformWithConfiguration(10,14,1,android.util.TypedValue.COMPLEX_UNIT_SP)
+            b.setTextColor(magnetColors[i]); b.textSize=14f; b.contentDescription=t("Tether to ${names[i].lowercase(java.util.Locale.ROOT)} magnet")
             // Fire on touch-down for low latency; performClick remains available to accessibility.
             b.setOnTouchListener { v,event ->
                 when(event.actionMasked) {
@@ -114,9 +119,9 @@ class MainActivity : Activity() {
         showMenu()
         if(applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE!=0 && intent.hasExtra("level")) start(intent.getIntExtra("level",1).coerceIn(1,Native.count()))
     }
-    private fun label(text:String,size:Int=17,color:Int=rgb(0xA0B4C7))=TextView(this).apply { this.text=text; textSize=size.toFloat(); setTextColor(color); typeface=font; setLineSpacing(dp(3).toFloat(),1f) }
+    private fun label(text:String,size:Int=17,color:Int=rgb(0xA0B4C7))=TextView(this).apply { this.text=t(text); textSize=size.toFloat(); setTextColor(color); typeface=font; setLineSpacing(dp(3).toFloat(),1f) }
     private fun button(text:String,color:Int=rgb(0x263D52),action:()->Unit)=Button(this).apply {
-        this.text=text; isAllCaps=false; typeface=font; textSize=17f; setTextColor(Color.WHITE)
+        this.text=t(text); isAllCaps=false; typeface=font; textSize=17f; setTextColor(Color.WHITE)
         background=GradientDrawable().apply { setColor(color); cornerRadius=dp(14).toFloat() }
         setPadding(dp(16),dp(14),dp(16),dp(14)); minHeight=dp(52); setOnClickListener { action() }
     }
@@ -138,7 +143,7 @@ class MainActivity : Activity() {
         }
         root.addView(shell,FrameLayout.LayoutParams(-1,-1)); overlay=shell
         if(eyebrow.isNotEmpty())add(stack,label(eyebrow,12,rgb(0x65E0B1))); add(stack,label(title,if(title=="MAGLAVA")48 else 44,if(title=="MAGLAVA")rgb(0xFF8756) else Color.WHITE)); if(detail.isNotEmpty())add(stack,label(detail))
-        cover.announceForAccessibility(title); return stack
+        cover.announceForAccessibility(t(title)); return stack
     }
     private fun showMenu() {
         panelMode="menu"
@@ -158,15 +163,16 @@ class MainActivity : Activity() {
         add(stack,button("Level Select") { showLevels() })
         add(stack,button("How to Play") { howToPlay(false) })
         add(stack,button("Settings") { settings(false) })
+        add(stack,button("Exit") { stopAudio(); finishAndRemoveTask() })
     }
     private fun returnToMenu(fromPause:Boolean) { if(fromPause)showPause() else showMenu() }
     private fun showLevels(fromPause:Boolean=false) {
         panelMode=if(fromPause)"levelsPause" else "levels"
         val stack=panel("","Level Select","") { returnToMenu(fromPause) }
         for(i in 1..Native.count()) {
-            if((i-1)%4==0)add(stack,label("%02d  /  %s".format((i-1)/4+1,Native.chapterName(i)),12,rgb(Native.accentColor(i))))
+            if((i-1)%4==0)add(stack,label("%02d  /  %s".format((i-1)/4+1,t(Native.chapterName(i))),12,rgb(Native.accentColor(i))))
             val open=unlocked(i); val rating=stars(i); val time=best(i)
-            val detail=if(open) "★".repeat(rating)+"☆".repeat(3-rating)+(if(time>0)"   %.1fs".format(time) else "") else "Locked"
+            val detail=if(open) "★".repeat(rating)+"☆".repeat(3-rating)+(if(time>0)"   %.1fs".format(time) else "") else t("Locked")
             val b=button("%02d   %s\n%s".format(i,Native.metadata(i,1),detail),rgb(if(open)0x182A3B else 0x111B27)) { start(i) }
             b.tag="level.$i"
             b.gravity=Gravity.START or Gravity.CENTER_VERTICAL; b.textSize=16f; b.isEnabled=open; add(stack,b)
@@ -218,11 +224,34 @@ class MainActivity : Activity() {
         panelMode=if(fromPause)"settingsPause" else "settings"
         val stack=panel("","Settings","") { returnToMenu(fromPause) }
         fun toggle(title:String,key:String,value:Boolean,invert:Boolean=false) {
-            val control=Switch(this); control.text=title; control.textSize=17f; control.setTextColor(Color.WHITE); control.isChecked=value; control.minHeight=dp(56)
+            val control=Switch(this); control.text=t(title); control.textSize=17f; control.setTextColor(Color.WHITE); control.isChecked=value; control.minHeight=dp(56)
             control.setOnCheckedChangeListener { _,v -> prefs.edit().putBoolean(key,if(invert)!v else v).apply(); game.reducedMotion=prefs.getBoolean("reduced",false) || !android.animation.ValueAnimator.areAnimatorsEnabled(); startAudio() }
             add(stack,control)
         }
         toggle("Music","musicMuted",!musicMuted,true); toggle("Sound effects","muted",!muted,true); toggle("Haptics","haptics",haptics); toggle("Reduced motion","reduced",prefs.getBoolean("reduced",false))
+        fun choose(title:String,values:List<String>,selected:Int,onChoose:(Int)->Unit) {
+            add(stack,label(title,17,Color.WHITE))
+            add(stack,button(values[selected]) {
+                android.app.AlertDialog.Builder(this).setTitle(t(title)).setSingleChoiceItems(values.toTypedArray(),selected) { dialog,index ->
+                    dialog.dismiss(); onChoose(index); settings(fromPause)
+                }.setNegativeButton(t("Back"),null).show()
+            }.apply { tag=if(title=="Language")"settings.language" else "settings.lavaRate" })
+        }
+        val rates=listOf(0.5f,0.75f,1f,1.25f,1.5f,2f,3f)
+        choose("Lava rise rate",rates.map { "${it}x" },rates.indexOf(prefs.getFloat("lavaRate",1.5f)).let { if(it<0)4 else it }) {
+            prefs.edit().putFloat("lavaRate",rates[it]).apply(); Native.lavaRate(core,rates[it])
+        }
+        add(stack,label("Multiplies each level's lava speed. 1x is the original rate; default is 1.5x.",14))
+        choose("Language",listOf(t("System language"))+(0..6).map { Native.languageName(it) },if(language.isEmpty())0 else Native.languageIndex()+1) {
+            prefs.edit().putString("language",if(it==0)"" else Native.languageCode(it-1)).apply(); applyLanguage()
+            colors.forEachIndexed { i,b ->
+                b.text="${"RBYG"[i]}\n${t(arrayOf("RED","BLUE","YELLOW","GREEN")[i])}"
+                b.contentDescription=t("Tether to ${arrayOf("red","blue","yellow","green")[i]} magnet")
+            }
+            root.findViewWithTag<Button>("game.pause")?.contentDescription=t("Pause game")
+            hud.text="%02d  %s".format(level,Native.metadata(level,1)); hudTick=-1f
+        }
+        add(stack,label("Changes apply immediately and are saved.",14))
         add(stack,label("Barlow typeface by Jeremy Tribby · SIL Open Font License. See the bundled OFL.txt.",12))
     }
     private fun howToPlay(fromPause:Boolean) {
@@ -230,7 +259,7 @@ class MainActivity : Activity() {
         val stack=panel("","How to Play","Reach the top before the lava catches you.") { returnToMenu(fromPause) }
         val guide=ColorControls(this)
         for(i in 0..3) {
-            val badge=label("${"RBYG"[i]}\n${arrayOf("RED","BLUE","YELLOW","GREEN")[i]}",16,magnetColors[i])
+            val badge=label("${"RBYG"[i]}\n${t(arrayOf("RED","BLUE","YELLOW","GREEN")[i])}",16,magnetColors[i])
             badge.gravity=Gravity.CENTER; badge.background=GradientDrawable().apply { setColor(alpha(magnetColors[i],0.18f)); cornerRadius=dp(14).toFloat() }
             guide.addView(badge,FrameLayout.LayoutParams(dp(68),dp(68)))
         }
@@ -254,9 +283,9 @@ class MainActivity : Activity() {
         }
         if(s[9]-hudTick>0.1f || hudTick<0) {
             hudTick=s[9]; progressBar.progress=(s[26]*1000).toInt()
-            subhud.text=if(s[4]==3f) { if(s[21]>0)"Rival wins. Try again." else "Respawning…" } else if(s[9]<7) Native.metadata(level,2) else "%.1fs / %.0fs   ·   %d pts   ·   %d retries".format(s[9],s[27],s[6].toInt(),s[8].toInt())
+            subhud.text=if(s[4]==3f) { if(s[21]>0)t("Rival wins. Try again.") else t("Respawning…") } else if(s[9]<7) Native.metadata(level,2) else t("%.1fs / %.0fs   ·   %d pts   ·   %d retries").format(s[9],s[27],s[6].toInt(),s[8].toInt())
             subhud.setTextColor(rgb(if(s[29]<200)0xFFAF75 else 0xA0B4C7))
-            for(i in 0..3) { colors[i].alpha=if(s[30+i]>=0)1f else 0.65f; if(android.os.Build.VERSION.SDK_INT>=30) colors[i].stateDescription=if(s[30+i]>=0)"Target in range" else "No target in range" }
+            for(i in 0..3) { colors[i].alpha=if(s[30+i]>=0)1f else 0.65f; if(android.os.Build.VERSION.SDK_INT>=30) colors[i].stateDescription=if(s[30+i]>=0)t("Target in range") else t("No target in range") }
         }
         val events=s[22].toInt()
         val effect=when { events and 16!=0 -> "complete"; events and 8!=0 -> "death"; events and 2!=0 -> "checkpoint"; events and 1!=0 -> "attach"; events and 4!=0 -> "swing"; else -> null }
@@ -273,7 +302,7 @@ class MainActivity : Activity() {
             // One atomic preferences edit stores completion and unlocks the next stage by stable key.
             editor.apply()
             panelMode="complete"
-            val stack=panel("LEVEL COMPLETE","★".repeat(s[16].toInt())+"☆".repeat(3-s[16].toInt()),"%.1f seconds · %d points · %d retries\nPersonal best: %.1fs".format(s[9],s[6].toInt(),s[8].toInt(),best(level)))
+            val stack=panel("LEVEL COMPLETE","★".repeat(s[16].toInt())+"☆".repeat(3-s[16].toInt()),t("%.1f seconds · %d points · %d retries\nPersonal best: %.1fs").format(s[9],s[6].toInt(),s[8].toInt(),best(level)))
             if(level<Native.count())add(stack,button("Next Level",rgb(0x346858)) { start(level+1) })
             else add(stack,label("All 40 levels complete!",17,Color.WHITE))
             add(stack,button("Play Again") { start(level) }); add(stack,button("Home") { showMenu() })

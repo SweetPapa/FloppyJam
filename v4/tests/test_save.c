@@ -13,11 +13,18 @@ int main(int argc,char **argv) {
     setenv("MAGLAVA_SAVE_PATH",argv[1],1);
 #endif
     remove(argv[1]);
-    SaveData s,t;save_load(&s);CHECK(s.unlocked==1);
+    SaveData s,t;save_load(&s);CHECK(s.unlocked==1 && s.lava_rate==1.5f && !*s.language);
+    s.lava_rate=2.0f;snprintf(s.language,sizeof s.language,"zh-CN");
     s.best_time[3]=12.25f;s.best_score[3]=2200;s.reduced_motion=1;s.muted=1;
     save_record(&s,4,3);save_load(&t);
     CHECK(t.unlocked==5&&t.stars[3]==3&&t.best_time[3]==12.25f&&t.best_score[3]==2200);
-    CHECK(t.reduced_motion&&t.muted);
+    CHECK(t.reduced_motion&&t.muted && t.lava_rate==2.0f && !strcmp(t.language,"zh-CN"));
+    /* Exact version-2 layout remains readable; new preferences get defaults. */
+    FILE *oldfile=fopen(argv[1],"rb");CHECK(oldfile);
+    unsigned char bytes[8192];size_t length=fread(bytes,1,sizeof bytes,oldfile);fclose(oldfile);
+    CHECK(length>20);uint32_t v2=2;memcpy(bytes+4,&v2,4);
+    oldfile=fopen(argv[1],"wb");CHECK(oldfile);CHECK(fwrite(bytes,1,length-20,oldfile)==length-20);fclose(oldfile);
+    save_load(&t);CHECK(t.stars[3]==3 && t.best_time[3]==12.25f && t.lava_rate==1.5f && !*t.language);
     save_record(&s,4,1);save_load(&t);CHECK(t.stars[3]==3);
     /* The exact old binary layout: 25 star bytes followed by a 32-bit unlock. */
     FILE *f=fopen(argv[1],"wb");CHECK(f);
@@ -31,7 +38,7 @@ int main(int argc,char **argv) {
         if(id){CHECK(t.stars[i]==old[id-1]);if(id<=18)mapped=i+1;}
         else CHECK(t.stars[i]==0);
     }
-    CHECK(t.unlocked==mapped);
+    CHECK(t.unlocked==mapped && t.lava_rate==1.5f && !*t.language);
     save_store(&t);save_load(&s);CHECK(!memcmp(&s,&t,sizeof s));
     /* A truncated file must not partially load stars or unlocks. */
     f=fopen(argv[1],"wb");CHECK(f);ver=2;

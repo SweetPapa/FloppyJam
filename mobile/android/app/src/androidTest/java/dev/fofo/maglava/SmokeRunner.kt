@@ -105,6 +105,20 @@ class SmokeRunner : Instrumentation() {
             click("How to Play"); capture("maglava-help.png"); click("Back")
             click("Settings")
             onActivity { check(descendants(activity.window.decorView).filterIsInstance<android.widget.Switch>().count()==4) }
+            fun choose(tag:String,value:String) {
+                onActivity { descendants(activity.window.decorView).filterIsInstance<Button>().first { it.tag==tag }.performClick() }
+                waitForIdleSync()
+                val node=uiAutomation.rootInActiveWindow.findAccessibilityNodeInfosByText(value).first { it.text?.toString()==value }
+                check(node.performAction(android.view.accessibility.AccessibilityNodeInfo.ACTION_CLICK));waitForIdleSync()
+            }
+            choose("settings.lavaRate","2.0x")
+            check(prefs.getFloat("lavaRate",0f)==2f)
+            choose("settings.language","日本語")
+            check(prefs.getString("language","")=="ja")
+            onActivity {check(descendants(activity.window.decorView).filterIsInstance<android.widget.TextView>().any { it.text.toString()=="設定" })}
+            capture("maglava-settings-ja.png")
+            choose("settings.language","English")
+            choose("settings.lavaRate","1.5x")
             click("Back")
             onActivity {check(activity.debugMusicName==song && activity.debugMusicPosition>musicBefore)}
             for(n in 1..4) {

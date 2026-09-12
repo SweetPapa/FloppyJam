@@ -1,0 +1,3298 @@
+{
+  "languages": [
+    "en",
+    "es-419",
+    "pt-BR",
+    "de",
+    "tr",
+    "ja",
+    "zh-CN"
+  ],
+  "names": [
+    "English",
+    "Español (Latinoamérica)",
+    "Português (Brasil)",
+    "Deutsch",
+    "Türkçe",
+    "日本語",
+    "简体中文"
+  ],
+  "strings": {
+    "BACK": [
+      "BACK",
+      "VOLVER",
+      "VOLTAR",
+      "ZURÜCK",
+      "GERİ",
+      "戻る",
+      "返回"
+    ],
+    "Back": [
+      "Back",
+      "Volver",
+      "Voltar",
+      "Zurück",
+      "Geri̇",
+      "戻る",
+      "返回"
+    ],
+    "On": [
+      "On",
+      "Activado",
+      "Ligado",
+      "An",
+      "Açik",
+      "オン",
+      "开启"
+    ],
+    "ON": [
+      "ON",
+      "ACTIVADO",
+      "LIGADO",
+      "AN",
+      "AÇIK",
+      "オン",
+      "开启"
+    ],
+    "Off": [
+      "Off",
+      "Desactivado",
+      "Desligado",
+      "Aus",
+      "Kapali",
+      "オフ",
+      "关闭"
+    ],
+    "OFF": [
+      "OFF",
+      "DESACTIVADO",
+      "DESLIGADO",
+      "AUS",
+      "KAPALI",
+      "オフ",
+      "关闭"
+    ],
+    "Swing. climb. survive.": [
+      "Swing. climb. survive.",
+      "Balancea. Escala. Sobrevive.",
+      "Balance. Escale. Sobreviva.",
+      "Schwinge. Klettere. Überlebe.",
+      "Sallan. Tırman. Hayatta Kal.",
+      "スイング。登る。生き残れ。",
+      "摆荡。攀爬。生存。"
+    ],
+    "Swing. Climb. Survive.": [
+      "Swing. Climb. Survive.",
+      "Balancea. Escala. Sobrevive.",
+      "Balance. Escale. Sobreviva.",
+      "Schwinge. Klettere. Überlebe.",
+      "Sallan. Tırman. Hayatta Kal.",
+      "スイング。登る。生き残れ。",
+      "摆荡。攀爬。生存。"
+    ],
+    "PLAY": [
+      "PLAY",
+      "JUGAR",
+      "JOGAR",
+      "SPIELEN",
+      "OYNA",
+      "プレイ",
+      "开始游戏"
+    ],
+    "Play": [
+      "Play",
+      "Jugar",
+      "Jogar",
+      "Spielen",
+      "Oyna",
+      "プレイ",
+      "开始游戏"
+    ],
+    "How To Play": [
+      "How To Play",
+      "Cómo jugar",
+      "Como jogar",
+      "Spielanleitung",
+      "Nasil oynanir",
+      "遊び方",
+      "游戏教程"
+    ],
+    "How to play": [
+      "How to play",
+      "Cómo jugar",
+      "Como jogar",
+      "Spielanleitung",
+      "Nasil oynanir",
+      "遊び方",
+      "游戏教程"
+    ],
+    "HOW TO PLAY": [
+      "HOW TO PLAY",
+      "CÓMO JUGAR",
+      "COMO JOGAR",
+      "SPIELANLEITUNG",
+      "NASIL OYNANIR",
+      "遊び方",
+      "游戏教程"
+    ],
+    "Endless mode": [
+      "Endless mode",
+      "Modo infinito",
+      "Modo infinito",
+      "Endlos-modus",
+      "Sonsuz mod",
+      "エンドレスモード",
+      "无尽模式"
+    ],
+    "ENDLESS MODE": [
+      "ENDLESS MODE",
+      "MODO INFINITO",
+      "MODO INFINITO",
+      "ENDLOS-MODUS",
+      "SONSUZ MOD",
+      "エンドレスモード",
+      "无尽模式"
+    ],
+    "Endless Mode": [
+      "Endless Mode",
+      "Modo infinito",
+      "Modo infinito",
+      "Endlos-modus",
+      "Sonsuz mod",
+      "エンドレスモード",
+      "无尽模式"
+    ],
+    "SETTINGS": [
+      "SETTINGS",
+      "CONFIGURACIÓN",
+      "CONFIGURAÇÕES",
+      "EINSTELLUNGEN",
+      "AYARLAR",
+      "設定",
+      "设置"
+    ],
+    "Settings": [
+      "Settings",
+      "Configuración",
+      "Configurações",
+      "Einstellungen",
+      "Ayarlar",
+      "設定",
+      "设置"
+    ],
+    "Level Editor": [
+      "Level Editor",
+      "Editor de niveles",
+      "Editor de níveis",
+      "Level-editor",
+      "Bölüm edi̇törü",
+      "レベルエディター",
+      "关卡编辑器"
+    ],
+    "LEVEL EDITOR": [
+      "LEVEL EDITOR",
+      "EDITOR DE NIVELES",
+      "EDITOR DE NÍVEIS",
+      "LEVEL-EDITOR",
+      "BÖLÜM EDİTÖRÜ",
+      "レベルエディター",
+      "关卡编辑器"
+    ],
+    "Level editor": [
+      "Level editor",
+      "Editor de niveles",
+      "Editor de níveis",
+      "Level-editor",
+      "Bölüm edi̇törü",
+      "レベルエディター",
+      "关卡编辑器"
+    ],
+    "Complete 4 Levels To Unlock": [
+      "Complete 4 Levels To Unlock",
+      "Completa 4 niveles para desbloquear",
+      "Complete 4 níveis para desbloquear",
+      "Schließe 4 Level ab zum Freischalten",
+      "Kilidi açmak için 4 bölümü tamamla",
+      "4ステージクリアでアンロック",
+      "完成4个关卡解锁"
+    ],
+    "Complete 4 levels to unlock": [
+      "Complete 4 levels to unlock",
+      "Completa 4 niveles para desbloquear",
+      "Complete 4 níveis para desbloquear",
+      "Schließe 4 Level ab zum Freischalten",
+      "Kilidi açmak için 4 bölümü tamamla",
+      "4ステージクリアでアンロック",
+      "完成4个关卡解锁"
+    ],
+    "Alpha 2 - Conceptual Demo | By Sweet Papa Technologies LLC ♡": [
+      "Alpha 2 - Conceptual Demo | By Sweet Papa Technologies LLC ♡",
+      "Alpha 2 - Demo Conceptual | Por Sweet Papa Technologies LLC ♡",
+      "Alpha 2 - Demonstração Conceitual | Por Sweet Papa Technologies LLC ♡",
+      "Alpha 2 - Konzeptdemo | Von Sweet Papa Technologies LLC ♡",
+      "Alpha 2 - Konsept Demo | Sweet Papa Technologies LLC ♡",
+      "Alpha 2 - コンセプトデモ | Sweet Papa Technologies LLC ♡",
+      "Alpha 2 - 概念演示 | Sweet Papa Technologies LLC ♡"
+    ],
+    "Alpha 2 - conceptual demo | by sweet papa technologies llc ♡": [
+      "Alpha 2 - conceptual demo | by sweet papa technologies llc ♡",
+      "Alpha 2 - Demo Conceptual | Por Sweet Papa Technologies LLC ♡",
+      "Alpha 2 - Demonstração Conceitual | Por Sweet Papa Technologies LLC ♡",
+      "Alpha 2 - Konzeptdemo | Von Sweet Papa Technologies LLC ♡",
+      "Alpha 2 - Konsept Demo | Sweet Papa Technologies LLC ♡",
+      "Alpha 2 - コンセプトデモ | Sweet Papa Technologies LLC ♡",
+      "Alpha 2 - 概念演示 | Sweet Papa Technologies LLC ♡"
+    ],
+    "Alpha 2 - Conceptual Demo | By Sweet Papa Technologies Llc ♡": [
+      "Alpha 2 - Conceptual Demo | By Sweet Papa Technologies Llc ♡",
+      "Alpha 2 - Demo Conceptual | Por Sweet Papa Technologies LLC ♡",
+      "Alpha 2 - Demonstração Conceitual | Por Sweet Papa Technologies LLC ♡",
+      "Alpha 2 - Konzeptdemo | Von Sweet Papa Technologies LLC ♡",
+      "Alpha 2 - Konsept Demo | Sweet Papa Technologies LLC ♡",
+      "Alpha 2 - コンセプトデモ | Sweet Papa Technologies LLC ♡",
+      "Alpha 2 - 概念演示 | Sweet Papa Technologies LLC ♡"
+    ],
+    "Audio": [
+      "Audio",
+      "Audio",
+      "Áudio",
+      "Audio",
+      "Ses",
+      "オーディオ",
+      "音频"
+    ],
+    "Background music": [
+      "Background music",
+      "Música de Fondo",
+      "Música de Fundo",
+      "Hintergrundmusik",
+      "Arka Plan Müziği",
+      "BGM",
+      "背景音乐"
+    ],
+    "Background Music": [
+      "Background Music",
+      "Música de Fondo",
+      "Música de Fundo",
+      "Hintergrundmusik",
+      "Arka Plan Müziği",
+      "BGM",
+      "背景音乐"
+    ],
+    "Music volume": [
+      "Music volume",
+      "Volumen de Música",
+      "Volume da Música",
+      "Musiklautstärke",
+      "Müzik Seviyesi",
+      "音楽の音量",
+      "音乐音量"
+    ],
+    "Music Volume": [
+      "Music Volume",
+      "Volumen de Música",
+      "Volume da Música",
+      "Musiklautstärke",
+      "Müzik Seviyesi",
+      "音楽の音量",
+      "音乐音量"
+    ],
+    "SFX Volume": [
+      "SFX Volume",
+      "Volumen de Efectos",
+      "Volume dos Efeitos",
+      "Effektlautstärke",
+      "Efekt Seviyesi",
+      "効果音の音量",
+      "音效音量"
+    ],
+    "Sfx volume": [
+      "Sfx volume",
+      "Volumen de Efectos",
+      "Volume dos Efeitos",
+      "Effektlautstärke",
+      "Efekt Seviyesi",
+      "効果音の音量",
+      "音效音量"
+    ],
+    "Sfx Volume": [
+      "Sfx Volume",
+      "Volumen de Efectos",
+      "Volume dos Efeitos",
+      "Effektlautstärke",
+      "Efekt Seviyesi",
+      "効果音の音量",
+      "音效音量"
+    ],
+    "Gameplay": [
+      "Gameplay",
+      "Jugabilidad",
+      "Jogabilidade",
+      "Gameplay",
+      "Oynanış",
+      "ゲームプレイ",
+      "游戏"
+    ],
+    "Screen shake": [
+      "Screen shake",
+      "Vibración de Pantalla",
+      "Tremor de Tela",
+      "Bildschirmwackeln",
+      "Ekran Sarsıntısı",
+      "画面揺れ",
+      "屏幕震动"
+    ],
+    "Screen Shake": [
+      "Screen Shake",
+      "Vibración de Pantalla",
+      "Tremor de Tela",
+      "Bildschirmwackeln",
+      "Ekran Sarsıntısı",
+      "画面揺れ",
+      "屏幕震动"
+    ],
+    "Accessibility": [
+      "Accessibility",
+      "Accesibilidad",
+      "Acessibilidade",
+      "Barrierefreiheit",
+      "Erişilebilirlik",
+      "アクセシビリティ",
+      "辅助功能"
+    ],
+    "Color blind mode": [
+      "Color blind mode",
+      "Modo Daltónico",
+      "Modo Daltônico",
+      "Farbblindmodus",
+      "Renk Körlüğü Modu",
+      "色覚異常モード",
+      "色盲模式"
+    ],
+    "Color Blind Mode": [
+      "Color Blind Mode",
+      "Modo Daltónico",
+      "Modo Daltônico",
+      "Farbblindmodus",
+      "Renk Körlüğü Modu",
+      "色覚異常モード",
+      "色盲模式"
+    ],
+    "Language": [
+      "Language",
+      "Idioma",
+      "Idioma",
+      "Sprache",
+      "Dil",
+      "言語",
+      "语言"
+    ],
+    "Select language": [
+      "Select language",
+      "Seleccionar Idioma",
+      "Selecionar Idioma",
+      "Sprache wählen",
+      "Dil Seç",
+      "言語を選択",
+      "选择语言"
+    ],
+    "Select Language": [
+      "Select Language",
+      "Seleccionar Idioma",
+      "Selecionar Idioma",
+      "Sprache wählen",
+      "Dil Seç",
+      "言語を選択",
+      "选择语言"
+    ],
+    "Game Modifiers": [
+      "Game Modifiers",
+      "Modificadores de Juego",
+      "Modificadores de Jogo",
+      "Spiel-Modifikatoren",
+      "Oyun Değiştiricileri",
+      "ゲーム調整",
+      "游戏调节器"
+    ],
+    "Game modifiers": [
+      "Game modifiers",
+      "Modificadores de Juego",
+      "Modificadores de Jogo",
+      "Spiel-Modifikatoren",
+      "Oyun Değiştiricileri",
+      "ゲーム調整",
+      "游戏调节器"
+    ],
+    "Shuffle controls on swing": [
+      "Shuffle controls on swing",
+      "Mezclar Controles al Balancear",
+      "Embaralhar Controles ao Balançar",
+      "Steuerung beim Schwingen mischen",
+      "Sallanırken Kontrolleri Karıştır",
+      "スイング時に操作をシャッフル",
+      "摆荡时打乱控制"
+    ],
+    "Shuffle Controls On Swing": [
+      "Shuffle Controls On Swing",
+      "Mezclar Controles al Balancear",
+      "Embaralhar Controles ao Balançar",
+      "Steuerung beim Schwingen mischen",
+      "Sallanırken Kontrolleri Karıştır",
+      "スイング時に操作をシャッフル",
+      "摆荡时打乱控制"
+    ],
+    "Shuffle Controls on Swing": [
+      "Shuffle Controls on Swing",
+      "Mezclar Controles al Balancear",
+      "Embaralhar Controles ao Balançar",
+      "Steuerung beim Schwingen mischen",
+      "Sallanırken Kontrolleri Karıştır",
+      "スイング時に操作をシャッフル",
+      "摆荡时打乱控制"
+    ],
+    "Randomly Reassign Color Keys Every 3-5 Swings": [
+      "Randomly Reassign Color Keys Every 3-5 Swings",
+      "Reasignar aleatoriamente las teclas de color cada 3-5 balanceos",
+      "Reatribuir aleatoriamente as teclas de cor a cada 3-5 balanços",
+      "Farbtasten alle 3-5 Schwünge zufällig neu zuweisen",
+      "Her 3-5 sallanışta renk tuşlarını rastgele yeniden ata",
+      "3-5回スイングごとに色キーをランダムに再割り当て",
+      "每3-5次摆荡随机重新分配颜色按键"
+    ],
+    "Randomly reassign color keys every 3-5 swings": [
+      "Randomly reassign color keys every 3-5 swings",
+      "Reasignar aleatoriamente las teclas de color cada 3-5 balanceos",
+      "Reatribuir aleatoriamente as teclas de cor a cada 3-5 balanços",
+      "Farbtasten alle 3-5 Schwünge zufällig neu zuweisen",
+      "Her 3-5 sallanışta renk tuşlarını rastgele yeniden ata",
+      "3-5回スイングごとに色キーをランダムに再割り当て",
+      "每3-5次摆荡随机重新分配颜色按键"
+    ],
+    "Shuffle controls on respawn": [
+      "Shuffle controls on respawn",
+      "Mezclar Controles al Reaparecer",
+      "Embaralhar Controles ao Renascer",
+      "Steuerung beim Respawn mischen",
+      "Yeniden Doğarken Kontrolleri Karıştır",
+      "リスポーン時に操作をシャッフル",
+      "重生时打乱控制"
+    ],
+    "Shuffle Controls on Respawn": [
+      "Shuffle Controls on Respawn",
+      "Mezclar Controles al Reaparecer",
+      "Embaralhar Controles ao Renascer",
+      "Steuerung beim Respawn mischen",
+      "Yeniden Doğarken Kontrolleri Karıştır",
+      "リスポーン時に操作をシャッフル",
+      "重生时打乱控制"
+    ],
+    "Shuffle Controls On Respawn": [
+      "Shuffle Controls On Respawn",
+      "Mezclar Controles al Reaparecer",
+      "Embaralhar Controles ao Renascer",
+      "Steuerung beim Respawn mischen",
+      "Yeniden Doğarken Kontrolleri Karıştır",
+      "リスポーン時に操作をシャッフル",
+      "重生时打乱控制"
+    ],
+    "Randomly reassign color keys when you respawn": [
+      "Randomly reassign color keys when you respawn",
+      "Reasignar aleatoriamente las teclas de color cuando reaparezcas",
+      "Reatribuir aleatoriamente as teclas de cor quando você renascer",
+      "Farbtasten beim Respawn zufällig neu zuweisen",
+      "Yeniden doğduğunuzda renk tuşlarını rastgele yeniden ata",
+      "リスポーン時に色キーをランダムに再割り当て",
+      "重生时随机重新分配颜色按键"
+    ],
+    "Randomly Reassign Color Keys When You Respawn": [
+      "Randomly Reassign Color Keys When You Respawn",
+      "Reasignar aleatoriamente las teclas de color cuando reaparezcas",
+      "Reatribuir aleatoriamente as teclas de cor quando você renascer",
+      "Farbtasten beim Respawn zufällig neu zuweisen",
+      "Yeniden doğduğunuzda renk tuşlarını rastgele yeniden ata",
+      "リスポーン時に色キーをランダムに再割り当て",
+      "重生时随机重新分配颜色按键"
+    ],
+    "Lava Speed on Backtrack": [
+      "Lava Speed on Backtrack",
+      "Lava Acelera al Retroceder",
+      "Lava Acelera ao Retroceder",
+      "Lava-Beschleunigung beim Zurückgehen",
+      "Geri Giderken Lav Hızlanır",
+      "後退時にラヴァ加速",
+      "后退时熔岩加速"
+    ],
+    "Lava Speed On Backtrack": [
+      "Lava Speed On Backtrack",
+      "Lava Acelera al Retroceder",
+      "Lava Acelera ao Retroceder",
+      "Lava-Beschleunigung beim Zurückgehen",
+      "Geri Giderken Lav Hızlanır",
+      "後退時にラヴァ加速",
+      "后退时熔岩加速"
+    ],
+    "Lava speed on backtrack": [
+      "Lava speed on backtrack",
+      "Lava Acelera al Retroceder",
+      "Lava Acelera ao Retroceder",
+      "Lava-Beschleunigung beim Zurückgehen",
+      "Geri Giderken Lav Hızlanır",
+      "後退時にラヴァ加速",
+      "后退时熔岩加速"
+    ],
+    "Going Backward Temporarily Speeds Up The Lava": [
+      "Going Backward Temporarily Speeds Up The Lava",
+      "Moverse hacia atrás acelera temporalmente la lava",
+      "Mover para trás acelera temporariamente a lava",
+      "Rückwärtsbewegung beschleunigt vorübergehend die Lava",
+      "Geriye doğru hareket lavı geçici olarak hızlandırır",
+      "後方移動で一時的にラヴァの速度が上がる",
+      "向后移动会暂时加快熔岩速度"
+    ],
+    "Going backward temporarily speeds up the lava": [
+      "Going backward temporarily speeds up the lava",
+      "Moverse hacia atrás acelera temporalmente la lava",
+      "Mover para trás acelera temporariamente a lava",
+      "Rückwärtsbewegung beschleunigt vorübergehend die Lava",
+      "Geriye doğru hareket lavı geçici olarak hızlandırır",
+      "後方移動で一時的にラヴァの速度が上がる",
+      "向后移动会暂时加快熔岩速度"
+    ],
+    "Game mode": [
+      "Game mode",
+      "Modo de Juego",
+      "Modo de Jogo",
+      "Spielmodus",
+      "Oyun Modu",
+      "ゲームモード",
+      "游戏模式"
+    ],
+    "Game Mode": [
+      "Game Mode",
+      "Modo de Juego",
+      "Modo de Jogo",
+      "Spielmodus",
+      "Oyun Modu",
+      "ゲームモード",
+      "游戏模式"
+    ],
+    "Swing physics": [
+      "Swing physics",
+      "Física de Balanceo",
+      "Física de Balanço",
+      "Schwung-Physik",
+      "Sallanış Fiziği",
+      "スイング物理",
+      "摆荡物理"
+    ],
+    "Swing Physics": [
+      "Swing Physics",
+      "Física de Balanceo",
+      "Física de Balanço",
+      "Schwung-Physik",
+      "Sallanış Fiziği",
+      "スイング物理",
+      "摆荡物理"
+    ],
+    "Arcade: Smooth Arcing Swings With Momentum. Classic: Direct Pull Toward Magnets.": [
+      "Arcade: Smooth Arcing Swings With Momentum. Classic: Direct Pull Toward Magnets.",
+      "Arcade: balanceos suaves en arco con momentum. Clásico: tirón directo hacia los imanes.",
+      "Arcade: balanços suaves em arco com momento. Clássico: puxão direto para os ímãs.",
+      "Arcade: fließende Schwünge mit Momentum. Klassisch: direkter Zug zu Magneten.",
+      "Arcade: momentumlu yumuşak yay sallanışları. Klasik: mıknatıslara doğrudan çekim.",
+      "アーケード：慣性を保つ滑らかな弧。クラシック：磁石への直接引力。",
+      "街机：平滑弧线摆荡带动量。经典：直接拉向磁铁。"
+    ],
+    "Arcade: smooth arcing swings with momentum. Classic: direct pull toward magnets.": [
+      "Arcade: smooth arcing swings with momentum. Classic: direct pull toward magnets.",
+      "Arcade: balanceos suaves en arco con momentum. Clásico: tirón directo hacia los imanes.",
+      "Arcade: balanços suaves em arco com momento. Clássico: puxão direto para os ímãs.",
+      "Arcade: fließende Schwünge mit Momentum. Klassisch: direkter Zug zu Magneten.",
+      "Arcade: momentumlu yumuşak yay sallanışları. Klasik: mıknatıslara doğrudan çekim.",
+      "アーケード：慣性を保つ滑らかな弧。クラシック：磁石への直接引力。",
+      "街机：平滑弧线摆荡带动量。经典：直接拉向磁铁。"
+    ],
+    "Arcade: smooth arcing swings with momentum. classic: direct pull toward magnets.": [
+      "Arcade: smooth arcing swings with momentum. classic: direct pull toward magnets.",
+      "Arcade: balanceos suaves en arco con momentum. Clásico: tirón directo hacia los imanes.",
+      "Arcade: balanços suaves em arco com momento. Clássico: puxão direto para os ímãs.",
+      "Arcade: fließende Schwünge mit Momentum. Klassisch: direkter Zug zu Magneten.",
+      "Arcade: momentumlu yumuşak yay sallanışları. Klasik: mıknatıslara doğrudan çekim.",
+      "アーケード：慣性を保つ滑らかな弧。クラシック：磁石への直接引力。",
+      "街机：平滑弧线摆荡带动量。经典：直接拉向磁铁。"
+    ],
+    "ARCADE": [
+      "ARCADE",
+      "ARCADE",
+      "ARCADE",
+      "ARCADE",
+      "ARCADE",
+      "アーケード",
+      "街机"
+    ],
+    "Arcade": [
+      "Arcade",
+      "Arcade",
+      "Arcade",
+      "Arcade",
+      "Arcade",
+      "アーケード",
+      "街机"
+    ],
+    "Classic": [
+      "Classic",
+      "Clásico",
+      "Clássico",
+      "Klassisch",
+      "Klasi̇k",
+      "クラシック",
+      "经典"
+    ],
+    "CLASSIC": [
+      "CLASSIC",
+      "CLÁSICO",
+      "CLÁSSICO",
+      "KLASSISCH",
+      "KLASİK",
+      "クラシック",
+      "经典"
+    ],
+    "Arcade Intensity": [
+      "Arcade Intensity",
+      "Intensidad Arcade",
+      "Intensidade Arcade",
+      "Arcade-Intensität",
+      "Arcade Yoğunluğu",
+      "アーケード強度",
+      "街机强度"
+    ],
+    "Arcade intensity": [
+      "Arcade intensity",
+      "Intensidad Arcade",
+      "Intensidade Arcade",
+      "Arcade-Intensität",
+      "Arcade Yoğunluğu",
+      "アーケード強度",
+      "街机强度"
+    ],
+    "Higher Intensity = Wilder Swings, More Challenge!": [
+      "Higher Intensity = Wilder Swings, More Challenge!",
+      "Mayor intensidad = balanceos más salvajes, ¡más desafío!",
+      "Maior intensidade = balanços mais loucos, mais desafio!",
+      "Höhere Intensität = wildere Schwünge, mehr Herausforderung!",
+      "Yüksek yoğunluk = daha çılgın sallanışlar, daha fazla zorluk!",
+      "強度が高い = より激しいスイング、より挑戦的！",
+      "强度越高 = 摆荡越狂野，更具挑战性！"
+    ],
+    "Higher intensity = wilder swings, more challenge!": [
+      "Higher intensity = wilder swings, more challenge!",
+      "Mayor intensidad = balanceos más salvajes, ¡más desafío!",
+      "Maior intensidade = balanços mais loucos, mais desafio!",
+      "Höhere Intensität = wildere Schwünge, mehr Herausforderung!",
+      "Yüksek yoğunluk = daha çılgın sallanışlar, daha fazla zorluk!",
+      "強度が高い = より激しいスイング、より挑戦的！",
+      "强度越高 = 摆荡越狂野，更具挑战性！"
+    ],
+    "Easy": [
+      "Easy",
+      "Fácil",
+      "Fácil",
+      "Leicht",
+      "Kolay",
+      "イージー",
+      "简单"
+    ],
+    "EASY": [
+      "EASY",
+      "FÁCIL",
+      "FÁCIL",
+      "LEICHT",
+      "KOLAY",
+      "イージー",
+      "简单"
+    ],
+    "HARD": [
+      "HARD",
+      "DIFÍCIL",
+      "DIFÍCIL",
+      "SCHWER",
+      "ZOR",
+      "ハード",
+      "困难"
+    ],
+    "Hard": [
+      "Hard",
+      "Difícil",
+      "Difícil",
+      "Schwer",
+      "Zor",
+      "ハード",
+      "困难"
+    ],
+    "EXTREME": [
+      "EXTREME",
+      "EXTREMO",
+      "EXTREMO",
+      "EXTREM",
+      "AŞIRI",
+      "エクストリーム",
+      "极限"
+    ],
+    "Extreme": [
+      "Extreme",
+      "Extremo",
+      "Extremo",
+      "Extrem",
+      "Aşiri",
+      "エクストリーム",
+      "极限"
+    ],
+    "Danger zone": [
+      "Danger zone",
+      "Zona de Peligro",
+      "Zona de Perigo",
+      "Gefahrenzone",
+      "Tehlike Bölgesi",
+      "デンジャーゾーン",
+      "危险地带"
+    ],
+    "Danger Zone": [
+      "Danger Zone",
+      "Zona de Peligro",
+      "Zona de Perigo",
+      "Gefahrenzone",
+      "Tehlike Bölgesi",
+      "デンジャーゾーン",
+      "危险地带"
+    ],
+    "Reset all progress": [
+      "Reset all progress",
+      "Reiniciar Todo el Progreso",
+      "Resetar Todo o Progresso",
+      "Gesamten Fortschritt zurücksetzen",
+      "Tüm İlerlemeyi Sıfırla",
+      "全進行状況をリセット",
+      "重置所有进度"
+    ],
+    "Reset All Progress": [
+      "Reset All Progress",
+      "Reiniciar Todo el Progreso",
+      "Resetar Todo o Progresso",
+      "Gesamten Fortschritt zurücksetzen",
+      "Tüm İlerlemeyi Sıfırla",
+      "全進行状況をリセット",
+      "重置所有进度"
+    ],
+    "Are you sure you want to reset all progress? this cannot be undone.": [
+      "Are you sure you want to reset all progress? this cannot be undone.",
+      "¿Estás seguro de que quieres reiniciar todo el progreso? Esto no se puede deshacer.",
+      "Tem certeza de que deseja resetar todo o progresso? Isso não pode ser desfeito.",
+      "Möchten Sie wirklich den gesamten Fortschritt zurücksetzen? Dies kann nicht rückgängig gemacht werden.",
+      "Tüm ilerlemeyi sıfırlamak istediğinizden emin misiniz? Bu geri alınamaz.",
+      "本当に全ての進行状況をリセットしますか？これは元に戻せません。",
+      "您确定要重置所有进度吗？此操作无法撤销。"
+    ],
+    "Are You Sure You Want To Reset All Progress? This Cannot Be Undone.": [
+      "Are You Sure You Want To Reset All Progress? This Cannot Be Undone.",
+      "¿Estás seguro de que quieres reiniciar todo el progreso? Esto no se puede deshacer.",
+      "Tem certeza de que deseja resetar todo o progresso? Isso não pode ser desfeito.",
+      "Möchten Sie wirklich den gesamten Fortschritt zurücksetzen? Dies kann nicht rückgängig gemacht werden.",
+      "Tüm ilerlemeyi sıfırlamak istediğinizden emin misiniz? Bu geri alınamaz.",
+      "本当に全ての進行状況をリセットしますか？これは元に戻せません。",
+      "您确定要重置所有进度吗？此操作无法撤销。"
+    ],
+    "Are you sure you want to reset all progress? This cannot be undone.": [
+      "Are you sure you want to reset all progress? This cannot be undone.",
+      "¿Estás seguro de que quieres reiniciar todo el progreso? Esto no se puede deshacer.",
+      "Tem certeza de que deseja resetar todo o progresso? Isso não pode ser desfeito.",
+      "Möchten Sie wirklich den gesamten Fortschritt zurücksetzen? Dies kann nicht rückgängig gemacht werden.",
+      "Tüm ilerlemeyi sıfırlamak istediğinizden emin misiniz? Bu geri alınamaz.",
+      "本当に全ての進行状況をリセットしますか？これは元に戻せません。",
+      "您确定要重置所有进度吗？此操作无法撤销。"
+    ],
+    "Progress Reset!": [
+      "Progress Reset!",
+      "¡Progreso reiniciado!",
+      "Progresso resetado!",
+      "Fortschritt zurückgesetzt!",
+      "İlerleme sıfırlandı!",
+      "進行状況をリセットしました！",
+      "进度已重置！"
+    ],
+    "Progress reset!": [
+      "Progress reset!",
+      "¡Progreso reiniciado!",
+      "Progresso resetado!",
+      "Fortschritt zurückgesetzt!",
+      "İlerleme sıfırlandı!",
+      "進行状況をリセットしました！",
+      "进度已重置！"
+    ],
+    "Objective": [
+      "Objective",
+      "Objetivo",
+      "Objetivo",
+      "Ziel",
+      "Amaç",
+      "目的",
+      "目标"
+    ],
+    "Escape the rising lava by swinging between magnetic anchors! reach the goal at the top of each level before the lava catches you.": [
+      "Escape the rising lava by swinging between magnetic anchors! reach the goal at the top of each level before the lava catches you.",
+      "¡Escapa de la lava creciente balanceándote entre anclas magnéticas! Alcanza la meta en la cima de cada nivel antes de que la lava te alcance.",
+      "Escape da lava crescente balançando entre âncoras magnéticas! Alcance o objetivo no topo de cada nível antes que a lava te alcance.",
+      "Entkommen Sie der steigenden Lava, indem Sie zwischen magnetischen Ankern schwingen! Erreichen Sie das Ziel an der Spitze jedes Levels, bevor die Lava Sie einholt.",
+      "Manyetik bağlantılar arasında sallanarak yükselen lavdan kaçın! Lav sizi yakalamadan her bölümün tepesindeki hedefe ulaşın.",
+      "磁気アンカー間をスイングして上昇するラヴァから逃げろ！ラヴァに追いつかれる前に各レベルの頂上にあるゴールに到達しよう。",
+      "通过在磁性锚点之间摆荡来逃离上升的熔岩！在熔岩追上你之前到达每个关卡顶部的目标。"
+    ],
+    "Escape The Rising Lava By Swinging Between Magnetic Anchors! Reach The Goal At The Top Of Each Level Before The Lava Catches You.": [
+      "Escape The Rising Lava By Swinging Between Magnetic Anchors! Reach The Goal At The Top Of Each Level Before The Lava Catches You.",
+      "¡Escapa de la lava creciente balanceándote entre anclas magnéticas! Alcanza la meta en la cima de cada nivel antes de que la lava te alcance.",
+      "Escape da lava crescente balançando entre âncoras magnéticas! Alcance o objetivo no topo de cada nível antes que a lava te alcance.",
+      "Entkommen Sie der steigenden Lava, indem Sie zwischen magnetischen Ankern schwingen! Erreichen Sie das Ziel an der Spitze jedes Levels, bevor die Lava Sie einholt.",
+      "Manyetik bağlantılar arasında sallanarak yükselen lavdan kaçın! Lav sizi yakalamadan her bölümün tepesindeki hedefe ulaşın.",
+      "磁気アンカー間をスイングして上昇するラヴァから逃げろ！ラヴァに追いつかれる前に各レベルの頂上にあるゴールに到達しよう。",
+      "通过在磁性锚点之间摆荡来逃离上升的熔岩！在熔岩追上你之前到达每个关卡顶部的目标。"
+    ],
+    "Escape the rising lava by swinging between magnetic anchors! Reach the goal at the top of each level before the lava catches you.": [
+      "Escape the rising lava by swinging between magnetic anchors! Reach the goal at the top of each level before the lava catches you.",
+      "¡Escapa de la lava creciente balanceándote entre anclas magnéticas! Alcanza la meta en la cima de cada nivel antes de que la lava te alcance.",
+      "Escape da lava crescente balançando entre âncoras magnéticas! Alcance o objetivo no topo de cada nível antes que a lava te alcance.",
+      "Entkommen Sie der steigenden Lava, indem Sie zwischen magnetischen Ankern schwingen! Erreichen Sie das Ziel an der Spitze jedes Levels, bevor die Lava Sie einholt.",
+      "Manyetik bağlantılar arasında sallanarak yükselen lavdan kaçın! Lav sizi yakalamadan her bölümün tepesindeki hedefe ulaşın.",
+      "磁気アンカー間をスイングして上昇するラヴァから逃げろ！ラヴァに追いつかれる前に各レベルの頂上にあるゴールに到達しよう。",
+      "通过在磁性锚点之间摆荡来逃离上升的熔岩！在熔岩追上你之前到达每个关卡顶部的目标。"
+    ],
+    "Controls": [
+      "Controls",
+      "Controles",
+      "Controles",
+      "Steuerung",
+      "Kontroller",
+      "操作",
+      "控制"
+    ],
+    "Each Magnet Has A Color. Press The Matching Key To Attach And Swing.": [
+      "Each Magnet Has A Color. Press The Matching Key To Attach And Swing.",
+      "Cada imán tiene un color. Presiona la tecla correspondiente para engancharte y balancearte.",
+      "Cada ímã tem uma cor. Pressione a tecla correspondente para se prender e balançar.",
+      "Jeder Magnet hat eine Farbe. Drücken Sie die passende Taste zum Anheften und Schwingen.",
+      "Her mıknatısın bir rengi vardır. Tutunmak ve sallanmak için eşleşen tuşa basın.",
+      "各磁石には色があります。対応するキーを押してくっついてスイングしましょう。",
+      "每个磁铁都有颜色。按下匹配的按键来附着和摆荡。"
+    ],
+    "Each magnet has a color. Press the matching key to attach and swing.": [
+      "Each magnet has a color. Press the matching key to attach and swing.",
+      "Cada imán tiene un color. Presiona la tecla correspondiente para engancharte y balancearte.",
+      "Cada ímã tem uma cor. Pressione a tecla correspondente para se prender e balançar.",
+      "Jeder Magnet hat eine Farbe. Drücken Sie die passende Taste zum Anheften und Schwingen.",
+      "Her mıknatısın bir rengi vardır. Tutunmak ve sallanmak için eşleşen tuşa basın.",
+      "各磁石には色があります。対応するキーを押してくっついてスイングしましょう。",
+      "每个磁铁都有颜色。按下匹配的按键来附着和摆荡。"
+    ],
+    "Each magnet has a color. press the matching key to attach and swing.": [
+      "Each magnet has a color. press the matching key to attach and swing.",
+      "Cada imán tiene un color. Presiona la tecla correspondiente para engancharte y balancearte.",
+      "Cada ímã tem uma cor. Pressione a tecla correspondente para se prender e balançar.",
+      "Jeder Magnet hat eine Farbe. Drücken Sie die passende Taste zum Anheften und Schwingen.",
+      "Her mıknatısın bir rengi vardır. Tutunmak ve sallanmak için eşleşen tuşa basın.",
+      "各磁石には色があります。対応するキーを押してくっついてスイングしましょう。",
+      "每个磁铁都有颜色。按下匹配的按键来附着和摆荡。"
+    ],
+    "Red": [
+      "Red",
+      "Rojo",
+      "Vermelho",
+      "Rot",
+      "Kirmizi",
+      "赤",
+      "红色"
+    ],
+    "RED": [
+      "RED",
+      "ROJO",
+      "VERMELHO",
+      "ROT",
+      "KIRMIZI",
+      "赤",
+      "红色"
+    ],
+    "BLUE": [
+      "BLUE",
+      "AZUL",
+      "AZUL",
+      "BLAU",
+      "MAVİ",
+      "青",
+      "蓝色"
+    ],
+    "Blue": [
+      "Blue",
+      "Azul",
+      "Azul",
+      "Blau",
+      "Mavi̇",
+      "青",
+      "蓝色"
+    ],
+    "Yellow": [
+      "Yellow",
+      "Amarillo",
+      "Amarelo",
+      "Gelb",
+      "Sari",
+      "黄",
+      "黄色"
+    ],
+    "YELLOW": [
+      "YELLOW",
+      "AMARILLO",
+      "AMARELO",
+      "GELB",
+      "SARI",
+      "黄",
+      "黄色"
+    ],
+    "Green": [
+      "Green",
+      "Verde",
+      "Verde",
+      "Grün",
+      "Yeşi̇l",
+      "緑",
+      "绿色"
+    ],
+    "GREEN": [
+      "GREEN",
+      "VERDE",
+      "VERDE",
+      "GRÜN",
+      "YEŞİL",
+      "緑",
+      "绿色"
+    ],
+    "How it works": [
+      "How it works",
+      "Cómo Funciona",
+      "Como Funciona",
+      "So funktioniert's",
+      "Nasıl Çalışır",
+      "仕組み",
+      "如何运作"
+    ],
+    "How It Works": [
+      "How It Works",
+      "Cómo Funciona",
+      "Como Funciona",
+      "So funktioniert's",
+      "Nasıl Çalışır",
+      "仕組み",
+      "如何运作"
+    ],
+    "Match Colors": [
+      "Match Colors",
+      "Combina Colores",
+      "Combine Cores",
+      "Farben zuordnen",
+      "Renkleri Eşleştir",
+      "色を合わせる",
+      "匹配颜色"
+    ],
+    "Match colors": [
+      "Match colors",
+      "Combina Colores",
+      "Combine Cores",
+      "Farben zuordnen",
+      "Renkleri Eşleştir",
+      "色を合わせる",
+      "匹配颜色"
+    ],
+    "Press the key that matches a nearby magnet's color to attach to it.": [
+      "Press the key that matches a nearby magnet's color to attach to it.",
+      "Presiona la tecla que coincida con el color de un imán cercano para engancharte a él.",
+      "Pressione a tecla que corresponde à cor de um ímã próximo para se prender a ele.",
+      "Drücken Sie die Taste, die der Farbe eines nahen Magneten entspricht, um sich anzuheften.",
+      "Yakındaki bir mıknatısın rengiyle eşleşen tuşa basarak ona tutunun.",
+      "近くの磁石の色に合ったキーを押してくっつこう。",
+      "按下与附近磁铁颜色匹配的按键来附着。"
+    ],
+    "Press The Key That Matches A Nearby Magnet'S Color To Attach To It.": [
+      "Press The Key That Matches A Nearby Magnet'S Color To Attach To It.",
+      "Presiona la tecla que coincida con el color de un imán cercano para engancharte a él.",
+      "Pressione a tecla que corresponde à cor de um ímã próximo para se prender a ele.",
+      "Drücken Sie die Taste, die der Farbe eines nahen Magneten entspricht, um sich anzuheften.",
+      "Yakındaki bir mıknatısın rengiyle eşleşen tuşa basarak ona tutunun.",
+      "近くの磁石の色に合ったキーを押してくっつこう。",
+      "按下与附近磁铁颜色匹配的按键来附着。"
+    ],
+    "Build Momentum": [
+      "Build Momentum",
+      "Gana Impulso",
+      "Ganhe Impulso",
+      "Schwung aufbauen",
+      "Momentum Kazan",
+      "勢いをつける",
+      "建立动量"
+    ],
+    "Build momentum": [
+      "Build momentum",
+      "Gana Impulso",
+      "Ganhe Impulso",
+      "Schwung aufbauen",
+      "Momentum Kazan",
+      "勢いをつける",
+      "建立动量"
+    ],
+    "While attached, you swing around the magnet. Use your momentum to launch yourself upward.": [
+      "While attached, you swing around the magnet. Use your momentum to launch yourself upward.",
+      "Mientras estás enganchado, te balanceas alrededor del imán. Usa tu impulso para lanzarte hacia arriba.",
+      "Enquanto preso, você balança em torno do ímã. Use seu impulso para se lançar para cima.",
+      "Während Sie angeheftet sind, schwingen Sie um den Magneten. Nutzen Sie Ihren Schwung, um sich nach oben zu katapultieren.",
+      "Tutunduğunuzda, mıknatısın etrafında sallanırsınız. Momentumunuzu kullanarak kendinizi yukarı fırlatın.",
+      "くっついている間、磁石の周りをスイングします。勢いを使って上方に飛び出そう。",
+      "附着时，您会围绕磁铁摆荡。利用动量将自己向上发射。"
+    ],
+    "While attached, you swing around the magnet. use your momentum to launch yourself upward.": [
+      "While attached, you swing around the magnet. use your momentum to launch yourself upward.",
+      "Mientras estás enganchado, te balanceas alrededor del imán. Usa tu impulso para lanzarte hacia arriba.",
+      "Enquanto preso, você balança em torno do ímã. Use seu impulso para se lançar para cima.",
+      "Während Sie angeheftet sind, schwingen Sie um den Magneten. Nutzen Sie Ihren Schwung, um sich nach oben zu katapultieren.",
+      "Tutunduğunuzda, mıknatısın etrafında sallanırsınız. Momentumunuzu kullanarak kendinizi yukarı fırlatın.",
+      "くっついている間、磁石の周りをスイングします。勢いを使って上方に飛び出そう。",
+      "附着时，您会围绕磁铁摆荡。利用动量将自己向上发射。"
+    ],
+    "While Attached, You Swing Around The Magnet. Use Your Momentum To Launch Yourself Upward.": [
+      "While Attached, You Swing Around The Magnet. Use Your Momentum To Launch Yourself Upward.",
+      "Mientras estás enganchado, te balanceas alrededor del imán. Usa tu impulso para lanzarte hacia arriba.",
+      "Enquanto preso, você balança em torno do ímã. Use seu impulso para se lançar para cima.",
+      "Während Sie angeheftet sind, schwingen Sie um den Magneten. Nutzen Sie Ihren Schwung, um sich nach oben zu katapultieren.",
+      "Tutunduğunuzda, mıknatısın etrafında sallanırsınız. Momentumunuzu kullanarak kendinizi yukarı fırlatın.",
+      "くっついている間、磁石の周りをスイングします。勢いを使って上方に飛び出そう。",
+      "附着时，您会围绕磁铁摆荡。利用动量将自己向上发射。"
+    ],
+    "Chain swings": [
+      "Chain swings",
+      "Encadena Balanceos",
+      "Encadeie Balanços",
+      "Schwünge verketten",
+      "Sallanışları Zincirleme",
+      "スイングを繋げる",
+      "连锁摆荡"
+    ],
+    "Chain Swings": [
+      "Chain Swings",
+      "Encadena Balanceos",
+      "Encadeie Balanços",
+      "Schwünge verketten",
+      "Sallanışları Zincirleme",
+      "スイングを繋げる",
+      "连锁摆荡"
+    ],
+    "Release and quickly attach to another magnet to keep climbing. timing is everything!": [
+      "Release and quickly attach to another magnet to keep climbing. timing is everything!",
+      "Suelta y rápidamente engánchate a otro imán para seguir escalando. ¡El tiempo lo es todo!",
+      "Solte e rapidamente prenda-se a outro ímã para continuar subindo. O tempo é tudo!",
+      "Loslassen und schnell an einen anderen Magneten anheften, um weiter zu klettern. Timing ist alles!",
+      "Bırakın ve tırmanmaya devam etmek için hızlıca başka bir mıknatısa tutunun. Zamanlama her şeydir!",
+      "離して素早く別の磁石にくっつき、登り続けよう。タイミングがすべて！",
+      "释放后快速附着到另一个磁铁以继续攀爬。时机就是一切！"
+    ],
+    "Release and quickly attach to another magnet to keep climbing. Timing is everything!": [
+      "Release and quickly attach to another magnet to keep climbing. Timing is everything!",
+      "Suelta y rápidamente engánchate a otro imán para seguir escalando. ¡El tiempo lo es todo!",
+      "Solte e rapidamente prenda-se a outro ímã para continuar subindo. O tempo é tudo!",
+      "Loslassen und schnell an einen anderen Magneten anheften, um weiter zu klettern. Timing ist alles!",
+      "Bırakın ve tırmanmaya devam etmek için hızlıca başka bir mıknatısa tutunun. Zamanlama her şeydir!",
+      "離して素早く別の磁石にくっつき、登り続けよう。タイミングがすべて！",
+      "释放后快速附着到另一个磁铁以继续攀爬。时机就是一切！"
+    ],
+    "Release And Quickly Attach To Another Magnet To Keep Climbing. Timing Is Everything!": [
+      "Release And Quickly Attach To Another Magnet To Keep Climbing. Timing Is Everything!",
+      "Suelta y rápidamente engánchate a otro imán para seguir escalando. ¡El tiempo lo es todo!",
+      "Solte e rapidamente prenda-se a outro ímã para continuar subindo. O tempo é tudo!",
+      "Loslassen und schnell an einen anderen Magneten anheften, um weiter zu klettern. Timing ist alles!",
+      "Bırakın ve tırmanmaya devam etmek için hızlıca başka bir mıknatısa tutunun. Zamanlama her şeydir!",
+      "離して素早く別の磁石にくっつき、登り続けよう。タイミングがすべて！",
+      "释放后快速附着到另一个磁铁以继续攀爬。时机就是一切！"
+    ],
+    "Avoid the lava": [
+      "Avoid the lava",
+      "Evita la Lava",
+      "Evite a Lava",
+      "Lava vermeiden",
+      "Lavdan Kaçın",
+      "ラヴァを避ける",
+      "避开熔岩"
+    ],
+    "Avoid the Lava": [
+      "Avoid the Lava",
+      "Evita la Lava",
+      "Evite a Lava",
+      "Lava vermeiden",
+      "Lavdan Kaçın",
+      "ラヴァを避ける",
+      "避开熔岩"
+    ],
+    "Avoid The Lava": [
+      "Avoid The Lava",
+      "Evita la Lava",
+      "Evite a Lava",
+      "Lava vermeiden",
+      "Lavdan Kaçın",
+      "ラヴァを避ける",
+      "避开熔岩"
+    ],
+    "The lava rises constantly. stay above it or you'll be sent back to your last checkpoint!": [
+      "The lava rises constantly. stay above it or you'll be sent back to your last checkpoint!",
+      "La lava sube constantemente. ¡Mantente por encima o serás enviado de vuelta a tu último punto de control!",
+      "A lava sobe constantemente. Fique acima dela ou será enviado de volta ao último checkpoint!",
+      "Die Lava steigt ständig. Bleiben Sie darüber oder Sie werden zum letzten Checkpoint zurückgeschickt!",
+      "Lav sürekli yükselir. Üstünde kalın yoksa son kontrol noktanıza geri gönderilirsiniz!",
+      "ラヴァは常に上昇します。その上に留まるか、最後のチェックポイントに戻されます！",
+      "熔岩不断上升。保持在它上方，否则您会被送回最后的检查点！"
+    ],
+    "The Lava Rises Constantly. Stay Above It Or You'Ll Be Sent Back To Your Last Checkpoint!": [
+      "The Lava Rises Constantly. Stay Above It Or You'Ll Be Sent Back To Your Last Checkpoint!",
+      "La lava sube constantemente. ¡Mantente por encima o serás enviado de vuelta a tu último punto de control!",
+      "A lava sobe constantemente. Fique acima dela ou será enviado de volta ao último checkpoint!",
+      "Die Lava steigt ständig. Bleiben Sie darüber oder Sie werden zum letzten Checkpoint zurückgeschickt!",
+      "Lav sürekli yükselir. Üstünde kalın yoksa son kontrol noktanıza geri gönderilirsiniz!",
+      "ラヴァは常に上昇します。その上に留まるか、最後のチェックポイントに戻されます！",
+      "熔岩不断上升。保持在它上方，否则您会被送回最后的检查点！"
+    ],
+    "The lava rises constantly. Stay above it or you'll be sent back to your last checkpoint!": [
+      "The lava rises constantly. Stay above it or you'll be sent back to your last checkpoint!",
+      "La lava sube constantemente. ¡Mantente por encima o serás enviado de vuelta a tu último punto de control!",
+      "A lava sobe constantemente. Fique acima dela ou será enviado de volta ao último checkpoint!",
+      "Die Lava steigt ständig. Bleiben Sie darüber oder Sie werden zum letzten Checkpoint zurückgeschickt!",
+      "Lav sürekli yükselir. Üstünde kalın yoksa son kontrol noktanıza geri gönderilirsiniz!",
+      "ラヴァは常に上昇します。その上に留まるか、最後のチェックポイントに戻されます！",
+      "熔岩不断上升。保持在它上方，否则您会被送回最后的检查点！"
+    ],
+    "Tips for Success": [
+      "Tips for Success",
+      "Consejos para el Éxito",
+      "Dicas para o Sucesso",
+      "Tipps zum Erfolg",
+      "Başarı İpuçları",
+      "成功のコツ",
+      "成功提示"
+    ],
+    "Tips For Success": [
+      "Tips For Success",
+      "Consejos para el Éxito",
+      "Dicas para o Sucesso",
+      "Tipps zum Erfolg",
+      "Başarı İpuçları",
+      "成功のコツ",
+      "成功提示"
+    ],
+    "Tips for success": [
+      "Tips for success",
+      "Consejos para el Éxito",
+      "Dicas para o Sucesso",
+      "Tipps zum Erfolg",
+      "Başarı İpuçları",
+      "成功のコツ",
+      "成功提示"
+    ],
+    "Look ahead to plan your next swing - don't just react!": [
+      "Look ahead to plan your next swing - don't just react!",
+      "Mira adelante para planear tu próximo balanceo - ¡no solo reacciones!",
+      "Olhe à frente para planejar seu próximo balanço - não apenas reaja!",
+      "Schauen Sie voraus, um Ihren nächsten Schwung zu planen - reagieren Sie nicht nur!",
+      "Bir sonraki sallanışınızı planlamak için ileriye bakın - sadece tepki vermeyin!",
+      "次のスイングを計画するために先を見よう - ただ反応するだけじゃダメ！",
+      "提前规划下一次摆荡 - 不要只是反应！"
+    ],
+    "Look Ahead To Plan Your Next Swing - Don'T Just React!": [
+      "Look Ahead To Plan Your Next Swing - Don'T Just React!",
+      "Mira adelante para planear tu próximo balanceo - ¡no solo reacciones!",
+      "Olhe à frente para planejar seu próximo balanço - não apenas reaja!",
+      "Schauen Sie voraus, um Ihren nächsten Schwung zu planen - reagieren Sie nicht nur!",
+      "Bir sonraki sallanışınızı planlamak için ileriye bakın - sadece tepki vermeyin!",
+      "次のスイングを計画するために先を見よう - ただ反応するだけじゃダメ！",
+      "提前规划下一次摆荡 - 不要只是反应！"
+    ],
+    "Release at the peak of your swing for maximum upward momentum.": [
+      "Release at the peak of your swing for maximum upward momentum.",
+      "Suelta en el pico de tu balanceo para máximo impulso ascendente.",
+      "Solte no pico do balanço para máximo impulso ascendente.",
+      "Lassen Sie am höchsten Punkt Ihres Schwungs los für maximalen Aufwärtsimpuls.",
+      "Maksimum yukarı momentum için sallanışınızın zirvesinde bırakın.",
+      "スイングの頂点で離すと最大の上向きの勢いが得られる。",
+      "在摆荡顶峰释放以获得最大向上动量。"
+    ],
+    "Release At The Peak Of Your Swing For Maximum Upward Momentum.": [
+      "Release At The Peak Of Your Swing For Maximum Upward Momentum.",
+      "Suelta en el pico de tu balanceo para máximo impulso ascendente.",
+      "Solte no pico do balanço para máximo impulso ascendente.",
+      "Lassen Sie am höchsten Punkt Ihres Schwungs los für maximalen Aufwärtsimpuls.",
+      "Maksimum yukarı momentum için sallanışınızın zirvesinde bırakın.",
+      "スイングの頂点で離すと最大の上向きの勢いが得られる。",
+      "在摆荡顶峰释放以获得最大向上动量。"
+    ],
+    "You can only attach to magnets within range - watch for the glow.": [
+      "You can only attach to magnets within range - watch for the glow.",
+      "Solo puedes engancharte a imanes dentro del rango - observa el brillo.",
+      "Você só pode se prender a ímãs dentro do alcance - observe o brilho.",
+      "Sie können sich nur an Magneten in Reichweite anheften - achten Sie auf das Leuchten.",
+      "Sadece menzil içindeki mıknatıslara tutunabilirsiniz - parıltıyı izleyin.",
+      "範囲内の磁石にしかくっつけない - 光を見よう。",
+      "您只能附着到范围内的磁铁 - 注意发光。"
+    ],
+    "You Can Only Attach To Magnets Within Range - Watch For The Glow.": [
+      "You Can Only Attach To Magnets Within Range - Watch For The Glow.",
+      "Solo puedes engancharte a imanes dentro del rango - observa el brillo.",
+      "Você só pode se prender a ímãs dentro do alcance - observe o brilho.",
+      "Sie können sich nur an Magneten in Reichweite anheften - achten Sie auf das Leuchten.",
+      "Sadece menzil içindeki mıknatıslara tutunabilirsiniz - parıltıyı izleyin.",
+      "範囲内の磁石にしかくっつけない - 光を見よう。",
+      "您只能附着到范围内的磁铁 - 注意发光。"
+    ],
+    "Moving backward speeds up the lava - keep climbing!": [
+      "Moving backward speeds up the lava - keep climbing!",
+      "Moverse hacia atrás acelera la lava - ¡sigue escalando!",
+      "Mover para trás acelera a lava - continue subindo!",
+      "Rückwärtsbewegung beschleunigt die Lava - klettern Sie weiter!",
+      "Geriye gitmek lavı hızlandırır - tırmanmaya devam edin!",
+      "後退するとラヴァが速くなる - 登り続けよう！",
+      "向后移动会加快熔岩 - 继续攀爬！"
+    ],
+    "Moving Backward Speeds Up The Lava - Keep Climbing!": [
+      "Moving Backward Speeds Up The Lava - Keep Climbing!",
+      "Moverse hacia atrás acelera la lava - ¡sigue escalando!",
+      "Mover para trás acelera a lava - continue subindo!",
+      "Rückwärtsbewegung beschleunigt die Lava - klettern Sie weiter!",
+      "Geriye gitmek lavı hızlandırır - tırmanmaya devam edin!",
+      "後退するとラヴァが速くなる - 登り続けよう！",
+      "向后移动会加快熔岩 - 继续攀爬！"
+    ],
+    "Checkpoints Save Your Progress, But Don'T Waste Time - The Lava Never Stops.": [
+      "Checkpoints Save Your Progress, But Don'T Waste Time - The Lava Never Stops.",
+      "Los puntos de control guardan tu progreso, pero no pierdas tiempo - la lava nunca se detiene.",
+      "Checkpoints salvam seu progresso, mas não perca tempo - a lava nunca para.",
+      "Checkpoints speichern Ihren Fortschritt, aber verlieren Sie keine Zeit - die Lava hört nie auf.",
+      "Kontrol noktaları ilerlemenizi kaydeder, ama zaman kaybetmeyin - lav asla durmaz.",
+      "チェックポイントは進行状況を保存するが、時間を無駄にするな - ラヴァは止まらない。",
+      "检查点会保存您的进度，但不要浪费时间 - 熔岩永不停止。"
+    ],
+    "Checkpoints save your progress, but don't waste time - the lava never stops.": [
+      "Checkpoints save your progress, but don't waste time - the lava never stops.",
+      "Los puntos de control guardan tu progreso, pero no pierdas tiempo - la lava nunca se detiene.",
+      "Checkpoints salvam seu progresso, mas não perca tempo - a lava nunca para.",
+      "Checkpoints speichern Ihren Fortschritt, aber verlieren Sie keine Zeit - die Lava hört nie auf.",
+      "Kontrol noktaları ilerlemenizi kaydeder, ama zaman kaybetmeyin - lav asla durmaz.",
+      "チェックポイントは進行状況を保存するが、時間を無駄にするな - ラヴァは止まらない。",
+      "检查点会保存您的进度，但不要浪费时间 - 熔岩永不停止。"
+    ],
+    "Practice Makes Perfect - Learn Each Level'S Magnet Patterns.": [
+      "Practice Makes Perfect - Learn Each Level'S Magnet Patterns.",
+      "La práctica hace al maestro - aprende los patrones de imanes de cada nivel.",
+      "A prática leva à perfeição - aprenda os padrões de ímãs de cada nível.",
+      "Übung macht den Meister - lernen Sie die Magnetmuster jedes Levels.",
+      "Pratik mükemmelleştirir - her bölümün mıknatıs desenlerini öğrenin.",
+      "練習あるのみ - 各レベルの磁石パターンを学ぼう。",
+      "熟能生巧 - 学习每个关卡的磁铁模式。"
+    ],
+    "Practice makes perfect - learn each level's magnet patterns.": [
+      "Practice makes perfect - learn each level's magnet patterns.",
+      "La práctica hace al maestro - aprende los patrones de imanes de cada nivel.",
+      "A prática leva à perfeição - aprenda os padrões de ímãs de cada nível.",
+      "Übung macht den Meister - lernen Sie die Magnetmuster jedes Levels.",
+      "Pratik mükemmelleştirir - her bölümün mıknatıs desenlerini öğrenin.",
+      "練習あるのみ - 各レベルの磁石パターンを学ぼう。",
+      "熟能生巧 - 学习每个关卡的磁铁模式。"
+    ],
+    "Ready to climb?": [
+      "Ready to climb?",
+      "¿Listo para escalar?",
+      "Pronto para escalar?",
+      "Bereit zum Klettern?",
+      "Tırmanmaya hazır mısın?",
+      "登る準備はいい？",
+      "准备好攀爬了吗？"
+    ],
+    "Ready To Climb?": [
+      "Ready To Climb?",
+      "¿Listo para escalar?",
+      "Pronto para escalar?",
+      "Bereit zum Klettern?",
+      "Tırmanmaya hazır mısın?",
+      "登る準備はいい？",
+      "准备好攀爬了吗？"
+    ],
+    "Start Playing": [
+      "Start Playing",
+      "Comenzar a jugar",
+      "Começar a jogar",
+      "Spielen starten",
+      "Oynamaya başla",
+      "プレイ開始",
+      "开始游戏"
+    ],
+    "Start playing": [
+      "Start playing",
+      "Comenzar a jugar",
+      "Começar a jogar",
+      "Spielen starten",
+      "Oynamaya başla",
+      "プレイ開始",
+      "开始游戏"
+    ],
+    "START PLAYING": [
+      "START PLAYING",
+      "COMENZAR A JUGAR",
+      "COMEÇAR A JOGAR",
+      "SPIELEN STARTEN",
+      "OYNAMAYA BAŞLA",
+      "プレイ開始",
+      "开始游戏"
+    ],
+    "Select level": [
+      "Select level",
+      "Seleccionar nivel",
+      "Selecionar nível",
+      "Level auswählen",
+      "Bölüm seç",
+      "ステージ選択",
+      "选择关卡"
+    ],
+    "Select Level": [
+      "Select Level",
+      "Seleccionar nivel",
+      "Selecionar nível",
+      "Level auswählen",
+      "Bölüm seç",
+      "ステージ選択",
+      "选择关卡"
+    ],
+    "SELECT LEVEL": [
+      "SELECT LEVEL",
+      "SELECCIONAR NIVEL",
+      "SELECIONAR NÍVEL",
+      "LEVEL AUSWÄHLEN",
+      "BÖLÜM SEÇ",
+      "ステージ選択",
+      "选择关卡"
+    ],
+    "🔒": [
+      "🔒",
+      "🔒",
+      "🔒",
+      "🔒",
+      "🔒",
+      "🔒",
+      "🔒"
+    ],
+    "Getting Started": [
+      "Getting Started",
+      "Primeros Pasos",
+      "Começando",
+      "Erste Schritte",
+      "Başlangıç",
+      "はじめの一歩",
+      "入门"
+    ],
+    "Getting started": [
+      "Getting started",
+      "Primeros Pasos",
+      "Começando",
+      "Erste Schritte",
+      "Başlangıç",
+      "はじめの一歩",
+      "入门"
+    ],
+    "4-color park walk": [
+      "4-color park walk",
+      "Paseo de Colores",
+      "Passeio Colorido",
+      "Farbspaziergang",
+      "4 Renkli Park Yürüyüşü",
+      "4色の散歩道",
+      "四色公园漫步"
+    ],
+    "4-Color Park Walk": [
+      "4-Color Park Walk",
+      "Paseo de Colores",
+      "Passeio Colorido",
+      "Farbspaziergang",
+      "4 Renkli Park Yürüyüşü",
+      "4色の散歩道",
+      "四色公园漫步"
+    ],
+    "New Level": [
+      "New Level",
+      "Nivel Nuevo",
+      "Novo Nível",
+      "Neues Level",
+      "Yeni Bölüm",
+      "新ステージ",
+      "新关卡"
+    ],
+    "New level": [
+      "New level",
+      "Nivel Nuevo",
+      "Novo Nível",
+      "Neues Level",
+      "Yeni Bölüm",
+      "新ステージ",
+      "新关卡"
+    ],
+    "First colors": [
+      "First colors",
+      "Primeros Colores",
+      "Primeiras Cores",
+      "Erste Farben",
+      "İlk Renkler",
+      "最初の色",
+      "首次配色"
+    ],
+    "First Colors": [
+      "First Colors",
+      "Primeros Colores",
+      "Primeiras Cores",
+      "Erste Farben",
+      "İlk Renkler",
+      "最初の色",
+      "首次配色"
+    ],
+    "Careful hands": [
+      "Careful hands",
+      "Manos Cuidadosas",
+      "Mãos Cuidadosas",
+      "Vorsichtige Hände",
+      "Dikkatli Eller",
+      "慎重な手",
+      "小心谨慎"
+    ],
+    "Careful Hands": [
+      "Careful Hands",
+      "Manos Cuidadosas",
+      "Mãos Cuidadosas",
+      "Vorsichtige Hände",
+      "Dikkatli Eller",
+      "慎重な手",
+      "小心谨慎"
+    ],
+    "Building speed": [
+      "Building speed",
+      "Ganando Velocidad",
+      "Ganhando Velocidade",
+      "Tempo aufbauen",
+      "Hız Kazanma",
+      "スピードアップ",
+      "加速前进"
+    ],
+    "Building Speed": [
+      "Building Speed",
+      "Ganando Velocidad",
+      "Ganhando Velocidade",
+      "Tempo aufbauen",
+      "Hız Kazanma",
+      "スピードアップ",
+      "加速前进"
+    ],
+    "Dangerous highway": [
+      "Dangerous highway",
+      "Carretera Peligrosa",
+      "Estrada Perigosa",
+      "Gefährliche Straße",
+      "Tehlikeli Yol",
+      "危険な道",
+      "危险公路"
+    ],
+    "Dangerous Highway": [
+      "Dangerous Highway",
+      "Carretera Peligrosa",
+      "Estrada Perigosa",
+      "Gefährliche Straße",
+      "Tehlikeli Yol",
+      "危険な道",
+      "危险公路"
+    ],
+    "First Obstacles": [
+      "First Obstacles",
+      "Primeros Obstáculos",
+      "Primeiros Obstáculos",
+      "Erste Hindernisse",
+      "İlk Engeller",
+      "最初の障害物",
+      "首次障碍"
+    ],
+    "First obstacles": [
+      "First obstacles",
+      "Primeros Obstáculos",
+      "Primeiros Obstáculos",
+      "Erste Hindernisse",
+      "İlk Engeller",
+      "最初の障害物",
+      "首次障碍"
+    ],
+    "Vertical insanity": [
+      "Vertical insanity",
+      "Locura Vertical",
+      "Insanidade Vertical",
+      "Vertikaler Wahnsinn",
+      "Dikey Çılgınlık",
+      "垂直狂気",
+      "垂直疯狂"
+    ],
+    "Vertical Insanity": [
+      "Vertical Insanity",
+      "Locura Vertical",
+      "Insanidade Vertical",
+      "Vertikaler Wahnsinn",
+      "Dikey Çılgınlık",
+      "垂直狂気",
+      "垂直疯狂"
+    ],
+    "Cave of shadows": [
+      "Cave of shadows",
+      "Cueva de Sombras",
+      "Caverna das Sombras",
+      "Höhle der Schatten",
+      "Gölgeler Mağarası",
+      "影の洞窟",
+      "阴影洞穴"
+    ],
+    "Cave Of Shadows": [
+      "Cave Of Shadows",
+      "Cueva de Sombras",
+      "Caverna das Sombras",
+      "Höhle der Schatten",
+      "Gölgeler Mağarası",
+      "影の洞窟",
+      "阴影洞穴"
+    ],
+    "Cave of Shadows": [
+      "Cave of Shadows",
+      "Cueva de Sombras",
+      "Caverna das Sombras",
+      "Höhle der Schatten",
+      "Gölgeler Mağarası",
+      "影の洞窟",
+      "阴影洞穴"
+    ],
+    "Rising heat": [
+      "Rising heat",
+      "Calor Creciente",
+      "Calor Crescente",
+      "Steigende Hitze",
+      "Yükselen Sıcaklık",
+      "上昇する熱",
+      "热浪上升"
+    ],
+    "Rising Heat": [
+      "Rising Heat",
+      "Calor Creciente",
+      "Calor Crescente",
+      "Steigende Hitze",
+      "Yükselen Sıcaklık",
+      "上昇する熱",
+      "热浪上升"
+    ],
+    "Magnetic subspace": [
+      "Magnetic subspace",
+      "Subespacio Magnético",
+      "Subespaço Magnético",
+      "Magnetischer Subraum",
+      "Manyetik Alt-uzay",
+      "磁気空間",
+      "磁性亚空间"
+    ],
+    "Magnetic Subspace": [
+      "Magnetic Subspace",
+      "Subespacio Magnético",
+      "Subespaço Magnético",
+      "Magnetischer Subraum",
+      "Manyetik Alt-uzay",
+      "磁気空間",
+      "磁性亚空间"
+    ],
+    "Color sprint": [
+      "Color sprint",
+      "Carrera de Colores",
+      "Corrida de Cores",
+      "Farb-Sprint",
+      "Renk Koşusu",
+      "カラースプリント",
+      "颜色冲刺"
+    ],
+    "Color Sprint": [
+      "Color Sprint",
+      "Carrera de Colores",
+      "Corrida de Cores",
+      "Farb-Sprint",
+      "Renk Koşusu",
+      "カラースプリント",
+      "颜色冲刺"
+    ],
+    "Tricky paths": [
+      "Tricky paths",
+      "Caminos Complicados",
+      "Caminhos Complicados",
+      "Knifflige Pfade",
+      "Zorlu Yollar",
+      "トリッキーな道",
+      "棘手路径"
+    ],
+    "Tricky Paths": [
+      "Tricky Paths",
+      "Caminos Complicados",
+      "Caminhos Complicados",
+      "Knifflige Pfade",
+      "Zorlu Yollar",
+      "トリッキーな道",
+      "棘手路径"
+    ],
+    "Swift Ascent": [
+      "Swift Ascent",
+      "Ascenso Rápido",
+      "Ascensão Rápida",
+      "Schneller Aufstieg",
+      "Hızlı Tırmanış",
+      "素早い上昇",
+      "快速攀升"
+    ],
+    "Swift ascent": [
+      "Swift ascent",
+      "Ascenso Rápido",
+      "Ascensão Rápida",
+      "Schneller Aufstieg",
+      "Hızlı Tırmanış",
+      "素早い上昇",
+      "快速攀升"
+    ],
+    "The Race": [
+      "The Race",
+      "La Carrera",
+      "A Corrida",
+      "Das Rennen",
+      "Yarış",
+      "レース",
+      "竞速"
+    ],
+    "The race": [
+      "The race",
+      "La Carrera",
+      "A Corrida",
+      "Das Rennen",
+      "Yarış",
+      "レース",
+      "竞速"
+    ],
+    "Magnet Storm": [
+      "Magnet Storm",
+      "Tormenta Magnética",
+      "Tempestade Magnética",
+      "Magnetsturm",
+      "Manyetik Fırtına",
+      "磁気の嵐",
+      "磁铁风暴"
+    ],
+    "Magnet storm": [
+      "Magnet storm",
+      "Tormenta Magnética",
+      "Tempestade Magnética",
+      "Magnetsturm",
+      "Manyetik Fırtına",
+      "磁気の嵐",
+      "磁铁风暴"
+    ],
+    "Heat wave": [
+      "Heat wave",
+      "Ola de Calor",
+      "Onda de Calor",
+      "Hitzewelle",
+      "Sıcak Dalgası",
+      "熱波",
+      "热浪"
+    ],
+    "Heat Wave": [
+      "Heat Wave",
+      "Ola de Calor",
+      "Onda de Calor",
+      "Hitzewelle",
+      "Sıcak Dalgası",
+      "熱波",
+      "热浪"
+    ],
+    "Gauntlet Run": [
+      "Gauntlet Run",
+      "Carrera de Desafío",
+      "Corrida de Desafio",
+      "Herausforderungslauf",
+      "Eldiven Koşusu",
+      "ガントレットラン",
+      "挑战赛跑"
+    ],
+    "Gauntlet run": [
+      "Gauntlet run",
+      "Carrera de Desafío",
+      "Corrida de Desafio",
+      "Herausforderungslauf",
+      "Eldiven Koşusu",
+      "ガントレットラン",
+      "挑战赛跑"
+    ],
+    "Spinning world": [
+      "Spinning world",
+      "Mundo Giratorio",
+      "Mundo Giratório",
+      "Drehende Welt",
+      "Dönen Dünya",
+      "回転する世界",
+      "旋转世界"
+    ],
+    "Spinning World": [
+      "Spinning World",
+      "Mundo Giratorio",
+      "Mundo Giratório",
+      "Drehende Welt",
+      "Dönen Dünya",
+      "回転する世界",
+      "旋转世界"
+    ],
+    "PAUSED": [
+      "PAUSED",
+      "PAUSADO",
+      "PAUSADO",
+      "PAUSIERT",
+      "DURAKLATILDI",
+      "一時停止",
+      "已暂停"
+    ],
+    "Paused": [
+      "Paused",
+      "Pausado",
+      "Pausado",
+      "Pausiert",
+      "Duraklatildi",
+      "一時停止",
+      "已暂停"
+    ],
+    "Resume": [
+      "Resume",
+      "Continuar",
+      "Continuar",
+      "Fortsetzen",
+      "Devam Et",
+      "再開",
+      "继续"
+    ],
+    "Restart": [
+      "Restart",
+      "Reiniciar",
+      "Reiniciar",
+      "Neustart",
+      "Yeniden Başlat",
+      "リスタート",
+      "重新开始"
+    ],
+    "Main Menu": [
+      "Main Menu",
+      "Menú Principal",
+      "Menu Principal",
+      "Hauptmenü",
+      "Ana Menü",
+      "メインメニュー",
+      "主菜单"
+    ],
+    "Main menu": [
+      "Main menu",
+      "Menú Principal",
+      "Menu Principal",
+      "Hauptmenü",
+      "Ana Menü",
+      "メインメニュー",
+      "主菜单"
+    ],
+    "Level Complete!": [
+      "Level Complete!",
+      "¡nivel completo!",
+      "Nível completo!",
+      "Level abgeschlossen!",
+      "Bölüm tamamlandi!",
+      "ステージクリア！",
+      "关卡完成！"
+    ],
+    "Level complete!": [
+      "Level complete!",
+      "¡nivel completo!",
+      "Nível completo!",
+      "Level abgeschlossen!",
+      "Bölüm tamamlandi!",
+      "ステージクリア！",
+      "关卡完成！"
+    ],
+    "LEVEL COMPLETE!": [
+      "LEVEL COMPLETE!",
+      "¡NIVEL COMPLETO!",
+      "NÍVEL COMPLETO!",
+      "LEVEL ABGESCHLOSSEN!",
+      "BÖLÜM TAMAMLANDI!",
+      "ステージクリア！",
+      "关卡完成！"
+    ],
+    "Next level": [
+      "Next level",
+      "Siguiente Nivel",
+      "Próximo Nível",
+      "Nächstes Level",
+      "Sonraki Bölüm",
+      "次のステージ",
+      "下一关"
+    ],
+    "Next Level": [
+      "Next Level",
+      "Siguiente Nivel",
+      "Próximo Nível",
+      "Nächstes Level",
+      "Sonraki Bölüm",
+      "次のステージ",
+      "下一关"
+    ],
+    "GAME OVER": [
+      "GAME OVER",
+      "FIN DEL JUEGO",
+      "FIM DE JOGO",
+      "SPIEL VORBEI",
+      "OYUN BİTTİ",
+      "ゲームオーバー",
+      "游戏结束"
+    ],
+    "Game over": [
+      "Game over",
+      "Fin del juego",
+      "Fim de jogo",
+      "Spiel vorbei",
+      "Oyun bi̇tti̇",
+      "ゲームオーバー",
+      "游戏结束"
+    ],
+    "Game Over": [
+      "Game Over",
+      "Fin del juego",
+      "Fim de jogo",
+      "Spiel vorbei",
+      "Oyun bi̇tti̇",
+      "ゲームオーバー",
+      "游戏结束"
+    ],
+    "Try again": [
+      "Try again",
+      "Intentar de Nuevo",
+      "Tentar Novamente",
+      "Erneut versuchen",
+      "Tekrar Dene",
+      "再挑戦",
+      "再试一次"
+    ],
+    "Try Again": [
+      "Try Again",
+      "Intentar de Nuevo",
+      "Tentar Novamente",
+      "Erneut versuchen",
+      "Tekrar Dene",
+      "再挑戦",
+      "再试一次"
+    ],
+    "Checkpoint": [
+      "Checkpoint",
+      "Punto de Control",
+      "Checkpoint",
+      "Checkpoint",
+      "Kontrol Noktası",
+      "チェックポイント",
+      "检查点"
+    ],
+    "Goal": [
+      "Goal",
+      "Meta",
+      "Objetivo",
+      "Ziel",
+      "Hedef",
+      "ゴール",
+      "目标"
+    ],
+    "Loading...": [
+      "Loading...",
+      "Cargando...",
+      "Carregando...",
+      "Lädt...",
+      "Yükleniyor...",
+      "ロード中...",
+      "加载中..."
+    ],
+    "CONTROLS SHUFFLED!": [
+      "CONTROLS SHUFFLED!",
+      "¡CONTROLES MEZCLADOS!",
+      "CONTROLES EMBARALHADOS!",
+      "STEUERUNG GEMISCHT!",
+      "KONTROLLER KARIŞTIRILD!",
+      "操作をシャッフル！",
+      "控制键已打乱！"
+    ],
+    "Controls shuffled!": [
+      "Controls shuffled!",
+      "¡controles mezclados!",
+      "Controles embaralhados!",
+      "Steuerung gemischt!",
+      "Kontroller kariştirild!",
+      "操作をシャッフル！",
+      "控制键已打乱！"
+    ],
+    "Controls Shuffled!": [
+      "Controls Shuffled!",
+      "¡controles mezclados!",
+      "Controles embaralhados!",
+      "Steuerung gemischt!",
+      "Kontroller kariştirild!",
+      "操作をシャッフル！",
+      "控制键已打乱！"
+    ],
+    "CPU WINS!\nYou fell behind...": [
+      "CPU WINS!\nYou fell behind...",
+      "¡CPU GANA!\nTe quedaste atrás...",
+      "CPU VENCEU!\nVocê ficou para trás...",
+      "CPU GEWINNT!\nDu bist zurückgefallen...",
+      "CPU KAZANDI!\nGeride kaldın...",
+      "CPU勝利！\n遅れてしまった...",
+      "AI获胜！\n你落后了..."
+    ],
+    "Cpu wins!\nyou fell behind...": [
+      "Cpu wins!\nyou fell behind...",
+      "¡CPU GANA!\nTe quedaste atrás...",
+      "CPU VENCEU!\nVocê ficou para trás...",
+      "CPU GEWINNT!\nDu bist zurückgefallen...",
+      "CPU KAZANDI!\nGeride kaldın...",
+      "CPU勝利！\n遅れてしまった...",
+      "AI获胜！\n你落后了..."
+    ],
+    "Cpu Wins!\nYou Fell Behind...": [
+      "Cpu Wins!\nYou Fell Behind...",
+      "¡CPU GANA!\nTe quedaste atrás...",
+      "CPU VENCEU!\nVocê ficou para trás...",
+      "CPU GEWINNT!\nDu bist zurückgefallen...",
+      "CPU KAZANDI!\nGeride kaldın...",
+      "CPU勝利！\n遅れてしまった...",
+      "AI获胜！\n你落后了..."
+    ],
+    "Continue": [
+      "Continue",
+      "Continuar",
+      "Continuar",
+      "Fortsetzen",
+      "Devam et",
+      "続ける",
+      "继续"
+    ],
+    "Level Select": [
+      "Level Select",
+      "Elegir nivel",
+      "Selecionar fase",
+      "Levelauswahl",
+      "Bölüm seç",
+      "ステージ選択",
+      "选择关卡"
+    ],
+    "How to Play": [
+      "How to Play",
+      "Cómo jugar",
+      "Como jogar",
+      "Spielanleitung",
+      "Nasıl oynanır",
+      "遊び方",
+      "玩法说明"
+    ],
+    "Restart Level": [
+      "Restart Level",
+      "Reiniciar nivel",
+      "Reiniciar fase",
+      "Level neu starten",
+      "Bölümü yeniden başlat",
+      "ステージをやり直す",
+      "重新开始关卡"
+    ],
+    "Home": [
+      "Home",
+      "Inicio",
+      "Início",
+      "Hauptmenü",
+      "Ana menü",
+      "ホーム",
+      "主菜单"
+    ],
+    "Music": [
+      "Music",
+      "Música",
+      "Música",
+      "Musik",
+      "Müzik",
+      "音楽",
+      "音乐"
+    ],
+    "Sound effects": [
+      "Sound effects",
+      "Efectos de sonido",
+      "Efeitos sonoros",
+      "Soundeffekte",
+      "Ses efektleri",
+      "効果音",
+      "音效"
+    ],
+    "Haptics": [
+      "Haptics",
+      "Vibración",
+      "Vibração",
+      "Vibration",
+      "Titreşim",
+      "振動",
+      "振动"
+    ],
+    "Reduced motion": [
+      "Reduced motion",
+      "Reducir movimiento",
+      "Reduzir movimento",
+      "Bewegung reduzieren",
+      "Hareketi azalt",
+      "動きを抑える",
+      "减少动态效果"
+    ],
+    "Exit": [
+      "Exit",
+      "Salir",
+      "Sair",
+      "Beenden",
+      "Çıkış",
+      "終了",
+      "退出"
+    ],
+    "System language": [
+      "System language",
+      "Idioma del sistema",
+      "Idioma do sistema",
+      "Systemsprache",
+      "Sistem dili",
+      "システムの言語",
+      "系统语言"
+    ],
+    "Lava rise rate": [
+      "Lava rise rate",
+      "Velocidad de la lava",
+      "Velocidade da lava",
+      "Lavageschwindigkeit",
+      "Lav yükselme hızı",
+      "溶岩の上昇速度",
+      "熔岩上升速度"
+    ],
+    "Multiplies each level's lava speed. 1x is the original rate; default is 1.5x.": [
+      "Multiplies each level's lava speed. 1x is the original rate; default is 1.5x.",
+      "Multiplica la velocidad de lava de cada nivel. 1x es la original; 1.5x es la predeterminada.",
+      "Multiplica a velocidade da lava de cada fase. 1x é a original; o padrão é 1.5x.",
+      "Multipliziert das Lavatempo jedes Levels. 1x ist das Original; Standard ist 1.5x.",
+      "Her bölümün lav hızını çarpar. 1x özgün hızdır; varsayılan 1.5x.",
+      "各ステージの溶岩速度に適用します。1xは元の速度、初期設定は1.5xです。",
+      "按每关的原始熔岩速度倍增。1x为原速，默认为1.5x。"
+    ],
+    "Changes apply immediately and are saved.": [
+      "Changes apply immediately and are saved.",
+      "Los cambios se aplican y guardan al instante.",
+      "As alterações são aplicadas e salvas na hora.",
+      "Änderungen werden sofort angewendet und gespeichert.",
+      "Değişiklikler hemen uygulanır ve kaydedilir.",
+      "変更はすぐに反映され、保存されます。",
+      "更改立即生效并保存。"
+    ],
+    "Pause game": [
+      "Pause game",
+      "Pausar juego",
+      "Pausar jogo",
+      "Spiel pausieren",
+      "Oyunu duraklat",
+      "一時停止",
+      "暂停游戏"
+    ],
+    "Locked": [
+      "Locked",
+      "Bloqueado",
+      "Bloqueado",
+      "Gesperrt",
+      "Kilitli",
+      "ロック中",
+      "未解锁"
+    ],
+    "Reach the top before the lava catches you.": [
+      "Reach the top before the lava catches you.",
+      "Llega a la cima antes de que te alcance la lava.",
+      "Chegue ao topo antes que a lava alcance você.",
+      "Erreiche den Gipfel, bevor die Lava dich einholt.",
+      "Lav sana yetişmeden zirveye ulaş.",
+      "溶岩に追いつかれる前に頂上へ。",
+      "在熔岩追上你之前到达顶端。"
+    ],
+    "1  Match a color": [
+      "1  Match a color",
+      "1  Elige el color",
+      "1  Combine a cor",
+      "1  Wähle die passende Farbe",
+      "1  Rengi eşleştir",
+      "1  色を合わせよう",
+      "1  匹配颜色"
+    ],
+    "Tap a color to grab a matching magnet. Glowing outlines show which magnets are in reach.": [
+      "Tap a color to grab a matching magnet. Glowing outlines show which magnets are in reach.",
+      "Toca un color para sujetarte a un imán del mismo color. Los contornos brillantes indican los imanes a tu alcance.",
+      "Toque em uma cor para se prender a um ímã da mesma cor. Os contornos brilhantes mostram os ímãs ao alcance.",
+      "Tippe auf eine Farbe, um den passenden Magneten zu greifen. Leuchtende Umrisse zeigen erreichbare Magnete.",
+      "Aynı renkteki mıknatısa tutunmak için bir renge dokun. Parlayan çerçeveler erişilebilir mıknatısları gösterir.",
+      "色をタップすると同じ色の磁石につかまります。光る輪郭は届く磁石を示します。",
+      "点击颜色即可抓住同色磁铁。发光轮廓表示该磁铁在范围内。"
+    ],
+    "2  Keep swinging": [
+      "2  Keep swinging",
+      "2  Sigue balanceándote",
+      "2  Continue balançando",
+      "2  Schwinge weiter",
+      "2  Sallanmaya devam et",
+      "2  スイングをつなごう",
+      "2  连续摆荡"
+    ],
+    "Tap another color while swinging to catch the next magnet and climb higher.": [
+      "Tap another color while swinging to catch the next magnet and climb higher.",
+      "Toca otro color mientras te balanceas para alcanzar el siguiente imán y subir.",
+      "Toque em outra cor durante o balanço para alcançar o próximo ímã e subir.",
+      "Tippe beim Schwingen auf eine andere Farbe, um den nächsten Magneten zu erreichen und höher zu klettern.",
+      "Sallanırken başka bir renge dokunarak sonraki mıknatısa tutun ve yüksel.",
+      "スイング中に別の色をタップして次の磁石をつかみ、上へ進みましょう。",
+      "摆荡时点击另一种颜色，抓住下一个磁铁并继续上升。"
+    ],
+    "3  Stay above the lava": [
+      "3  Stay above the lava",
+      "3  Mantente sobre la lava",
+      "3  Fique acima da lava",
+      "3  Bleib über der Lava",
+      "3  Lavın üstünde kal",
+      "3  溶岩から逃げよう",
+      "3  远离熔岩"
+    ],
+    "Avoid hazards and cross checkpoints. If you fall, you restart at your last checkpoint.": [
+      "Avoid hazards and cross checkpoints. If you fall, you restart at your last checkpoint.",
+      "Esquiva los peligros y cruza los puntos de control. Si caes, reinicias en el último punto de control.",
+      "Evite perigos e passe pelos pontos de controle. Se cair, você recomeça no último ponto de controle.",
+      "Weiche Gefahren aus und erreiche Kontrollpunkte. Nach einem Sturz startest du am letzten Kontrollpunkt.",
+      "Tehlikelerden kaç ve kontrol noktalarını geç. Düşersen son kontrol noktasından başlarsın.",
+      "危険を避けてチェックポイントを通過しましょう。落ちたら最後のチェックポイントから再開します。",
+      "避开危险并通过检查点。跌落后会从最近的检查点重新开始。"
+    ],
+    "Stars: finish the level, beat the target time, and finish without a death.": [
+      "Stars: finish the level, beat the target time, and finish without a death.",
+      "Estrellas: termina el nivel, supera el tiempo objetivo y termina sin morir.",
+      "Estrelas: conclua a fase, supere o tempo-alvo e termine sem morrer.",
+      "Sterne: Level abschließen, Zielzeit unterbieten und ohne Tod abschließen.",
+      "Yıldızlar: bölümü bitir, hedef süreyi geç ve ölmeden tamamla.",
+      "星の条件：クリア、目標タイムを更新、一度も倒れずにクリア。",
+      "星级条件：完成关卡、快于目标时间、零死亡通关。"
+    ],
+    "Rival wins. Try again.": [
+      "Rival wins. Try again.",
+      "Ganó tu rival. Inténtalo de nuevo.",
+      "O rival venceu. Tente de novo.",
+      "Dein Rivale gewinnt. Versuch es erneut.",
+      "Rakip kazandı. Tekrar dene.",
+      "ライバルの勝利。もう一度挑戦しよう。",
+      "对手获胜，再试一次。"
+    ],
+    "Respawning…": [
+      "Respawning…",
+      "Reapareciendo…",
+      "Reaparecendo…",
+      "Neustart…",
+      "Yeniden doğuluyor…",
+      "復帰中…",
+      "正在重生…"
+    ],
+    "Target in range": [
+      "Target in range",
+      "Objetivo al alcance",
+      "Alvo ao alcance",
+      "Ziel in Reichweite",
+      "Hedef menzilde",
+      "ターゲットが範囲内",
+      "目标在范围内"
+    ],
+    "No target in range": [
+      "No target in range",
+      "Sin objetivo al alcance",
+      "Nenhum alvo ao alcance",
+      "Kein Ziel in Reichweite",
+      "Menzilde hedef yok",
+      "範囲内にターゲットなし",
+      "范围内无目标"
+    ],
+    "LEVEL COMPLETE": [
+      "LEVEL COMPLETE",
+      "NIVEL COMPLETADO",
+      "FASE CONCLUÍDA",
+      "LEVEL GESCHAFFT",
+      "BÖLÜM TAMAMLANDI",
+      "ステージクリア",
+      "关卡完成"
+    ],
+    "%.1fs / %.0fs   ·   %d pts   ·   %d retries": [
+      "%.1fs / %.0fs   ·   %d pts   ·   %d retries",
+      "%.1fs / %.0fs   ·   %d pts   ·   %d reintentos",
+      "%.1fs / %.0fs   ·   %d pts   ·   %d tentativas",
+      "%.1fs / %.0fs   ·   %d Punkte   ·   %d Neustarts",
+      "%.1fs / %.0fs   ·   %d puan   ·   %d tekrar",
+      "%.1f秒 / %.0f秒   ·   %d点   ·   %d回復帰",
+      "%.1f秒 / %.0f秒   ·   %d分   ·   %d次重试"
+    ],
+    "%.1f seconds · %d points · %d retries\nPersonal best: %.1fs": [
+      "%.1f seconds · %d points · %d retries\nPersonal best: %.1fs",
+      "%.1f segundos · %d puntos · %d reintentos\nMejor marca: %.1fs",
+      "%.1f segundos · %d pontos · %d tentativas\nRecorde pessoal: %.1fs",
+      "%.1f Sekunden · %d Punkte · %d Neustarts\nBestzeit: %.1fs",
+      "%.1f saniye · %d puan · %d tekrar\nKişisel rekor: %.1fs",
+      "%.1f秒 · %d点 · %d回復帰\n自己ベスト：%.1f秒",
+      "%.1f秒 · %d分 · %d次重试\n个人最佳：%.1f秒"
+    ],
+    "All 40 levels complete!": [
+      "All 40 levels complete!",
+      "¡Completaste los 40 niveles!",
+      "Todas as 40 fases concluídas!",
+      "Alle 40 Level geschafft!",
+      "40 bölümün hepsi tamamlandı!",
+      "全40ステージクリア！",
+      "全部40关已完成！"
+    ],
+    "Play Again": [
+      "Play Again",
+      "Volver a jugar",
+      "Jogar novamente",
+      "Erneut spielen",
+      "Tekrar oyna",
+      "もう一度遊ぶ",
+      "再玩一次"
+    ],
+    "Keyboard: ↑ / W / R = red, ↓ / S / B = blue, ← / A / Y = yellow, → / D / G = green. Escape pauses.": [
+      "Keyboard: ↑ / W / R = red, ↓ / S / B = blue, ← / A / Y = yellow, → / D / G = green. Escape pauses.",
+      "Teclado: ↑ / W / R = rojo, ↓ / S / B = azul, ← / A / Y = amarillo, → / D / G = verde. Escape pausa.",
+      "Teclado: ↑ / W / R = vermelho, ↓ / S / B = azul, ← / A / Y = amarelo, → / D / G = verde. Escape pausa.",
+      "Tastatur: ↑ / W / R = Rot, ↓ / S / B = Blau, ← / A / Y = Gelb, → / D / G = Grün. Escape pausiert.",
+      "Klavye: ↑ / W / R = kırmızı, ↓ / S / B = mavi, ← / A / Y = sarı, → / D / G = yeşil. Escape duraklatır.",
+      "キー：↑ / W / R＝赤、↓ / S / B＝青、← / A / Y＝黄、→ / D / G＝緑。Escapeで一時停止。",
+      "键盘：↑ / W / R＝红，↓ / S / B＝蓝，← / A / Y＝黄，→ / D / G＝绿。Escape暂停。"
+    ],
+    "Tether to red magnet": [
+      "Tether to red magnet",
+      "Sujetarse al imán rojo",
+      "Prender ao ímã vermelho",
+      "Am roten Magneten festhalten",
+      "Kırmızı mıknatısa tutun",
+      "赤い磁石につかまる",
+      "抓住红色磁铁"
+    ],
+    "Tether to blue magnet": [
+      "Tether to blue magnet",
+      "Sujetarse al imán azul",
+      "Prender ao ímã azul",
+      "Am blauen Magneten festhalten",
+      "Mavi mıknatısa tutun",
+      "青い磁石につかまる",
+      "抓住蓝色磁铁"
+    ],
+    "Tether to yellow magnet": [
+      "Tether to yellow magnet",
+      "Sujetarse al imán amarillo",
+      "Prender ao ímã amarelo",
+      "Am gelben Magneten festhalten",
+      "Sarı mıknatısa tutun",
+      "黄色い磁石につかまる",
+      "抓住黄色磁铁"
+    ],
+    "Tether to green magnet": [
+      "Tether to green magnet",
+      "Sujetarse al imán verde",
+      "Prender ao ímã verde",
+      "Am grünen Magneten festhalten",
+      "Yeşil mıknatısa tutun",
+      "緑の磁石につかまる",
+      "抓住绿色磁铁"
+    ],
+    "Stepping Stones": [
+      "Stepping Stones",
+      "Piedras de paso",
+      "Pedras de passagem",
+      "Trittsteine",
+      "Basamak taşları",
+      "飛び石",
+      "踏脚石"
+    ],
+    "Switchback": [
+      "Switchback",
+      "Zigzag",
+      "Zigue-zague",
+      "Serpentinen",
+      "Zikzak",
+      "つづら折り",
+      "折返攀升"
+    ],
+    "Signal Crossing": [
+      "Signal Crossing",
+      "Cruce de señales",
+      "Cruzamento de sinais",
+      "Signalkreuzung",
+      "Sinyal geçidi",
+      "信号の交差点",
+      "信号交叉口"
+    ],
+    "Split Decision": [
+      "Split Decision",
+      "Doble decisión",
+      "Decisão dividida",
+      "Wegentscheidung",
+      "Yol ayrımı",
+      "二つの選択",
+      "分岔抉择"
+    ],
+    "The Long Cut": [
+      "The Long Cut",
+      "El camino largo",
+      "O caminho longo",
+      "Der lange Weg",
+      "Uzun yol",
+      "遠回り",
+      "漫长绕行"
+    ],
+    "Clockwork": [
+      "Clockwork",
+      "Mecanismo",
+      "Mecanismo",
+      "Uhrwerk",
+      "Saat mekanizması",
+      "時計仕掛け",
+      "精密齿轮"
+    ],
+    "Blue Hour": [
+      "Blue Hour",
+      "Hora azul",
+      "Hora azul",
+      "Blaue Stunde",
+      "Mavi saat",
+      "ブルーアワー",
+      "蓝色时刻"
+    ],
+    "Airlock": [
+      "Airlock",
+      "Esclusa",
+      "Eclusa",
+      "Luftschleuse",
+      "Hava kilidi",
+      "エアロック",
+      "气闸"
+    ],
+    "Security Grid": [
+      "Security Grid",
+      "Red de seguridad",
+      "Grade de segurança",
+      "Sicherheitsraster",
+      "Güvenlik ağı",
+      "警備網",
+      "安防网格"
+    ],
+    "Heartbeat": [
+      "Heartbeat",
+      "Latido",
+      "Batimento",
+      "Herzschlag",
+      "Kalp atışı",
+      "鼓動",
+      "心跳"
+    ],
+    "Lantern Walk": [
+      "Lantern Walk",
+      "Paseo de faroles",
+      "Caminho das lanternas",
+      "Laternenpfad",
+      "Fener yolu",
+      "灯りの小道",
+      "灯笼小径"
+    ],
+    "Polarity Garden": [
+      "Polarity Garden",
+      "Jardín de polaridades",
+      "Jardim de polaridades",
+      "Polaritätsgarten",
+      "Kutupluluk bahçesi",
+      "極性の庭",
+      "极性花园"
+    ],
+    "Slingshot Alley": [
+      "Slingshot Alley",
+      "Callejón del impulso",
+      "Beco do impulso",
+      "Schleudergasse",
+      "Sapan sokağı",
+      "スリングショット横丁",
+      "弹弓小巷"
+    ],
+    "Braided Current": [
+      "Braided Current",
+      "Corriente trenzada",
+      "Corrente entrelaçada",
+      "Verflochtener Strom",
+      "Örgülü akım",
+      "絡み合う流れ",
+      "交织电流"
+    ],
+    "Victory Lap": [
+      "Victory Lap",
+      "Vuelta de victoria",
+      "Volta da vitória",
+      "Ehrenrunde",
+      "Zafer turu",
+      "ウイニングラン",
+      "胜利巡游"
+    ],
+    "Reactor Waltz": [
+      "Reactor Waltz",
+      "Vals del reactor",
+      "Valsa do reator",
+      "Reaktorwalzer",
+      "Reaktör valsi",
+      "原子炉のワルツ",
+      "反应堆华尔兹"
+    ],
+    "Eye of the Storm": [
+      "Eye of the Storm",
+      "Ojo de la tormenta",
+      "Olho da tempestade",
+      "Auge des Sturms",
+      "Fırtınanın gözü",
+      "嵐の目",
+      "风暴之眼"
+    ],
+    "Magnetic Lockdown": [
+      "Magnetic Lockdown",
+      "Bloqueo magnético",
+      "Bloqueio magnético",
+      "Magnetische Sperre",
+      "Manyetik kilit",
+      "磁気封鎖",
+      "磁力封锁"
+    ],
+    "Core Breach": [
+      "Core Breach",
+      "Brecha del núcleo",
+      "Ruptura do núcleo",
+      "Kernbruch",
+      "Çekirdek yarılması",
+      "炉心突破",
+      "核心突破"
+    ],
+    "Escape Velocity": [
+      "Escape Velocity",
+      "Velocidad de escape",
+      "Velocidade de escape",
+      "Fluchtgeschwindigkeit",
+      "Kaçış hızı",
+      "脱出速度",
+      "逃逸速度"
+    ],
+    "Press the color of a node above you. W red, S blue, A yellow, D green.": [
+      "Press the color of a node above you. W red, S blue, A yellow, D green.",
+      "Elige el color de un nodo superior. W rojo, S azul, A amarillo, D verde.",
+      "Escolha a cor de um nó acima. W vermelho, S azul, A amarelo, D verde.",
+      "Wähle die Farbe eines Knotens über dir. W Rot, S Blau, A Gelb, D Grün.",
+      "Üstündeki düğümün rengini seç. W kırmızı, S mavi, A sarı, D yeşil.",
+      "上にあるノードの色を選ぼう。Wは赤、Sは青、Aは黄、Dは緑。",
+      "选择上方节点的颜色。W红、S蓝、A黄、D绿。"
+    ],
+    "A steady four-color rhythm. Read the next key before you launch.": [
+      "A steady four-color rhythm. Read the next key before you launch.",
+      "Un ritmo constante de cuatro colores. Elige el próximo color antes de saltar.",
+      "Um ritmo constante de quatro cores. Veja a próxima cor antes de saltar.",
+      "Ein gleichmäßiger Vierfarbenrhythmus. Wähle vor dem Absprung die nächste Farbe.",
+      "Dört renkli sabit bir ritim. Fırlamadan önce sonraki rengi belirle.",
+      "4色のリズムで進もう。飛び出す前に次の色を確認。",
+      "跟随四色节奏，起跳前看清下一个颜色。"
+    ],
+    "Every key matches a color, regardless of which direction the node lies.": [
+      "Every key matches a color, regardless of which direction the node lies.",
+      "Cada tecla corresponde a un color, sin importar la dirección del nodo.",
+      "Cada tecla corresponde a uma cor, independentemente da direção do nó.",
+      "Jede Taste entspricht einer Farbe, unabhängig von der Richtung des Knotens.",
+      "Düğüm hangi yönde olursa olsun her tuş bir renge karşılık gelir.",
+      "ノードの方向に関係なく、キーは色に対応します。",
+      "无论节点在哪个方向，每个按键都对应一种颜色。"
+    ],
+    "Climb the steps, then cut across. Repeated colors still lead upward.": [
+      "Climb the steps, then cut across. Repeated colors still lead upward.",
+      "Sube los escalones y luego cruza. Los colores repetidos también te llevan arriba.",
+      "Suba os degraus e depois cruze. Cores repetidas também levam para cima.",
+      "Erklimme die Stufen und quere dann den Schacht. Auch gleiche Farben führen nach oben.",
+      "Basamakları tırman, sonra karşıya geç. Tekrarlanan renkler de yukarı götürür.",
+      "段を登ってから横切ろう。同じ色も上へ続いている。",
+      "先爬台阶再横穿。同色节点也能带你向上。"
+    ],
+    "Read the key badges, chain your swings, and climb above the lava.": [
+      "Read the key badges, chain your swings, and climb above the lava.",
+      "Observa los colores, encadena tus balanceos y sube por encima de la lava.",
+      "Observe as cores, encadeie os balanços e suba acima da lava.",
+      "Beachte die Farbsymbole, verbinde deine Schwünge und bleib über der Lava.",
+      "Renk işaretlerini izle, salınımlarını birleştir ve lavın üstüne çık.",
+      "色の表示を見てスイングをつなぎ、溶岩より上へ。",
+      "看清颜色标记，连续摆荡，爬到熔岩上方。"
+    ],
+    "Two routes rejoin at each landing. Choose a color and commit.": [
+      "Two routes rejoin at each landing. Choose a color and commit.",
+      "Las dos rutas se unen en cada llegada. Elige un color y lánzate.",
+      "As duas rotas se unem a cada chegada. Escolha uma cor e vá.",
+      "Zwei Wege treffen sich an jedem Landepunkt. Wähle eine Farbe und spring.",
+      "İki rota her inişte birleşir. Bir renk seç ve kararlı ol.",
+      "二つのルートは着地点で合流。色を選んで飛ぼう。",
+      "两条路线在落点交汇。选好颜色，果断出发。"
+    ],
+    "Watch the amber arms. The outside lane gives you room to swing.": [
+      "Watch the amber arms. The outside lane gives you room to swing.",
+      "Vigila los brazos ámbar. El carril exterior te da espacio para balancearte.",
+      "Observe os braços âmbar. A rota externa dá espaço para balançar.",
+      "Achte auf die bernsteinfarbenen Arme. Außen hast du Platz zum Schwingen.",
+      "Kehribar kollara dikkat et. Dış şerit sallanmak için alan sağlar.",
+      "琥珀色のアームに注意。外側のルートは広く振れる。",
+      "留意琥珀色转臂，外侧路线有更多摆荡空间。"
+    ],
+    "A quiet climb. Link the curves and keep your combo alive.": [
+      "A quiet climb. Link the curves and keep your combo alive.",
+      "Una subida tranquila. Une las curvas y mantén tu combo.",
+      "Uma subida tranquila. Conecte as curvas e mantenha o combo.",
+      "Ein ruhiger Aufstieg. Verbinde die Kurven und halte deine Kombo am Leben.",
+      "Sakin bir tırmanış. Kavisleri birleştir ve kombonu sürdür.",
+      "静かな登り道。カーブをつないでコンボを続けよう。",
+      "安静的攀升。连接弧线，保持连击。"
+    ],
+    "Amber gates are charging. Cross in the dark or use the open side.": [
+      "Amber gates are charging. Cross in the dark or use the open side.",
+      "Las puertas ámbar se están cargando. Cruza cuando estén apagadas o usa el lado abierto.",
+      "Os portões âmbar estão carregando. Cruze quando apagarem ou use o lado aberto.",
+      "Bernsteinfarbene Tore laden sich auf. Quere sie im Dunkeln oder nutze die offene Seite.",
+      "Kehribar kapılar yükleniyor. Sönükken geç veya açık tarafı kullan.",
+      "琥珀色のゲートは充電中。消えた時に渡るか、開いた側へ。",
+      "琥珀色闸门正在充能。熄灭时穿过，或走开放的一侧。"
+    ],
+    "Pink rings expand and retreat. Trace the outer lanes.": [
+      "Pink rings expand and retreat. Trace the outer lanes.",
+      "Los anillos rosas se expanden y contraen. Sigue los carriles exteriores.",
+      "Os anéis rosas expandem e recuam. Siga as rotas externas.",
+      "Rosa Ringe dehnen sich aus und ziehen sich zurück. Nutze die Außenbahnen.",
+      "Pembe halkalar genişleyip daralır. Dış şeritleri izle.",
+      "ピンクの輪は広がったり縮んだりする。外側を進もう。",
+      "粉色光环不断扩张和收缩。沿外侧路线前进。"
+    ],
+    "The shaft is dark. Follow the nearest lights upward.": [
+      "The shaft is dark. Follow the nearest lights upward.",
+      "El pozo está oscuro. Sigue las luces cercanas hacia arriba.",
+      "O poço está escuro. Siga as luzes próximas para cima.",
+      "Der Schacht ist dunkel. Folge den nächsten Lichtern nach oben.",
+      "Kuyu karanlık. Yakındaki ışıkları izleyerek yüksel.",
+      "暗い縦穴。近くの光をたどって上へ。",
+      "竖井一片漆黑。沿最近的灯光向上。"
+    ],
+    "Trust the nearby key badges. Each light reveals the next part of the route.": [
+      "Trust the nearby key badges. Each light reveals the next part of the route.",
+      "Confía en los colores cercanos. Cada luz revela el siguiente tramo.",
+      "Confie nas cores próximas. Cada luz revela o próximo trecho.",
+      "Vertraue den nahen Farbsymbolen. Jedes Licht zeigt den nächsten Wegabschnitt.",
+      "Yakındaki renk işaretlerine güven. Her ışık yolun sonraki kısmını gösterir.",
+      "近くの色表示を頼りに。光がルートの先を照らす。",
+      "相信附近的颜色标记。每盏灯都会照亮下一段路。"
+    ],
+    "Settle on a node to read the route. Pulse rings sit beside the safe landings.": [
+      "Settle on a node to read the route. Pulse rings sit beside the safe landings.",
+      "Estabilízate en un nodo para ver la ruta. Los anillos están junto a las zonas seguras.",
+      "Estabilize-se em um nó para ver a rota. Os anéis ficam ao lado dos pontos seguros.",
+      "Beruhige dich an einem Knoten, um den Weg zu erkennen. Pulsringe liegen neben sicheren Landungen.",
+      "Rotayı görmek için bir düğümde dengelen. Darbe halkaları güvenli inişlerin yanındadır.",
+      "ノードで落ち着いてルートを確認。波動リングは安全な着地点の脇にある。",
+      "在节点上稳住，观察路线。脉冲环位于安全落点旁。"
+    ],
+    "Magnetic fields bend your flight. Retarget in midair to correct your arc.": [
+      "Magnetic fields bend your flight. Retarget in midair to correct your arc.",
+      "Los campos magnéticos curvan tu vuelo. Cambia de objetivo en el aire para corregir el arco.",
+      "Os campos magnéticos curvam seu voo. Mude de alvo no ar para corrigir o arco.",
+      "Magnetfelder krümmen deinen Flug. Wähle in der Luft ein neues Ziel, um den Bogen zu korrigieren.",
+      "Manyetik alanlar uçuşunu büker. Kavisini düzeltmek için havada hedef değiştir.",
+      "磁場が飛行を曲げる。空中で狙い直して軌道を修正しよう。",
+      "磁场会改变飞行轨迹。在空中重新瞄准以修正弧线。"
+    ],
+    "Carry momentum across the shaft. There is time to line up each launch.": [
+      "Carry momentum across the shaft. There is time to line up each launch.",
+      "Lleva tu impulso al otro lado. Tienes tiempo para preparar cada salto.",
+      "Leve o impulso para o outro lado. Há tempo para alinhar cada salto.",
+      "Trage deinen Schwung durch den Schacht. Du hast Zeit, jeden Absprung auszurichten.",
+      "Momentumunu kuyunun karşısına taşı. Her fırlatmayı hizalamak için zaman var.",
+      "勢いで縦穴を横切ろう。飛び出す前に狙う時間はある。",
+      "借助惯性横穿竖井。每次起跳前都有时间瞄准。"
+    ],
+    "Twin routes weave around charged gates. Pick the open branch.": [
+      "Twin routes weave around charged gates. Pick the open branch.",
+      "Dos rutas rodean las puertas cargadas. Elige el ramal abierto.",
+      "Duas rotas contornam os portões carregados. Escolha o caminho aberto.",
+      "Zwei Wege winden sich um geladene Tore. Wähle den offenen Abzweig.",
+      "İkiz rotalar yüklü kapıların çevresinden geçer. Açık kolu seç.",
+      "二つのルートが充電ゲートを囲む。開いた分岐を選ぼう。",
+      "双路线绕过充能闸门。选择畅通的分支。"
+    ],
+    "Beat the violet rival to the summit. Keep your swings connected.": [
+      "Beat the violet rival to the summit. Keep your swings connected.",
+      "Llega a la cima antes que el rival violeta. Encadena tus balanceos.",
+      "Chegue ao topo antes do rival violeta. Mantenha os balanços conectados.",
+      "Erreiche den Gipfel vor dem violetten Rivalen. Verbinde deine Schwünge.",
+      "Mor rakipten önce zirveye ulaş. Salınımlarını birbirine bağla.",
+      "紫のライバルより先に頂上へ。スイングをつなごう。",
+      "抢在紫色对手之前到达顶峰。保持连续摆荡。"
+    ],
+    "A fast, clean sprint after the race. Chase your personal best.": [
+      "A fast, clean sprint after the race. Chase your personal best.",
+      "Un sprint rápido y preciso tras la carrera. Busca tu mejor marca.",
+      "Uma arrancada rápida e precisa após a corrida. Busque seu recorde.",
+      "Ein schneller, sauberer Sprint nach dem Rennen. Jage deine Bestzeit.",
+      "Yarıştan sonra hızlı ve temiz bir koşu. Kişisel rekorunu hedefle.",
+      "レース後は素早く正確に。自己ベストを目指そう。",
+      "赛后再来一次干净利落的冲刺，挑战个人最佳。"
+    ],
+    "Three beats: sweep, pulse, gate. Use the landings to read the next hazard.": [
+      "Three beats: sweep, pulse, gate. Use the landings to read the next hazard.",
+      "Tres tiempos: brazo, pulso, puerta. Observa el siguiente peligro al aterrizar.",
+      "Três tempos: braço, pulso, portão. Observe o próximo perigo ao pousar.",
+      "Drei Takte: Arm, Puls, Tor. Erkenne beim Landen die nächste Gefahr.",
+      "Üç vuruş: kol, darbe, kapı. İnişlerde sonraki tehlikeyi incele.",
+      "三拍子：アーム、波動、ゲート。着地点で次の危険を確認。",
+      "三拍节奏：转臂、脉冲、闸门。利用落点观察下一处危险。"
+    ],
+    "Roamers patrol the center. The side lanes are your escape route.": [
+      "Roamers patrol the center. The side lanes are your escape route.",
+      "Los enemigos patrullan el centro. Escapa por los carriles laterales.",
+      "Os inimigos patrulham o centro. Fuja pelas rotas laterais.",
+      "Streifer patrouillieren in der Mitte. Die Seitenbahnen sind dein Fluchtweg.",
+      "Gezginler merkezi devriye gezer. Yan şeritler kaçış yolundur.",
+      "中央を敵が巡回。左右のルートから逃げよう。",
+      "游荡者在中央巡逻。两侧通道是逃生路线。"
+    ],
+    "One last rehearsal: wide arcs, fields, and gates. Keep looking one node ahead.": [
+      "One last rehearsal: wide arcs, fields, and gates. Keep looking one node ahead.",
+      "Un último ensayo: arcos amplios, campos y puertas. Mira siempre el siguiente nodo.",
+      "Um último ensaio: arcos amplos, campos e portões. Olhe sempre para o próximo nó.",
+      "Eine letzte Probe: weite Bögen, Felder und Tore. Behalte den nächsten Knoten im Blick.",
+      "Son prova: geniş kavisler, alanlar ve kapılar. Daima sonraki düğüme bak.",
+      "最後の練習：大きな弧、磁場、ゲート。常に一つ先のノードを見よう。",
+      "最后一次演练：大弧线、磁场和闸门。始终观察下一个节点。"
+    ],
+    "The world rolls; your color keys stay the same. V enables reduced motion.": [
+      "The world rolls; your color keys stay the same. V enables reduced motion.",
+      "El mundo gira; tus colores no cambian. V reduce el movimiento.",
+      "O mundo gira; suas cores não mudam. V reduz o movimento.",
+      "Die Welt dreht sich, deine Farbtasten bleiben gleich. V reduziert Bewegung.",
+      "Dünya döner; renk tuşların aynı kalır. V hareketi azaltır.",
+      "世界が回っても色のキーは同じ。Vで動きを抑えられる。",
+      "世界在旋转，颜色按键不变。按V减少动态效果。"
+    ],
+    "Randomly reassign color buttons every 3-5 swings": [
+      "Randomly reassign color buttons every 3-5 swings",
+      "Reasignar aleatoriamente las teclas de color cada 3-5 balanceos",
+      "Reatribuir aleatoriamente as teclas de cor a cada 3-5 balanços",
+      "Farbtasten alle 3-5 Schwünge zufällig neu zuweisen",
+      "Her 3-5 sallanışta renk tuşlarını rastgele yeniden ata",
+      "3-5回スイングごとに色キーをランダムに再割り当て",
+      "每3-5次摆荡随机重新分配颜色按键"
+    ],
+    "Randomly reassign color buttons when you respawn": [
+      "Randomly reassign color buttons when you respawn",
+      "Reasignar aleatoriamente las teclas de color cuando reaparezcas",
+      "Reatribuir aleatoriamente as teclas de cor quando você renascer",
+      "Farbtasten beim Respawn zufällig neu zuweisen",
+      "Yeniden doğduğunuzda renk tuşlarını rastgele yeniden ata",
+      "リスポーン時に色キーをランダムに再割り当て",
+      "重生时随机重新分配颜色按键"
+    ],
+    "Tap the color of a node above you.": [
+      "Tap the color of a node above you.",
+      "Toca el color de un nodo superior.",
+      "Toque na cor de um nó acima.",
+      "Tippe auf die Farbe eines Knotens über dir.",
+      "Üstündeki düğümün rengine dokun.",
+      "上にあるノードの色をタップしよう。",
+      "点击上方节点的颜色。"
+    ],
+    "A steady four-color rhythm. Read the next color before you launch.": [
+      "A steady four-color rhythm. Read the next color before you launch.",
+      "Un ritmo constante de cuatro colores. Elige el próximo color antes de saltar.",
+      "Um ritmo constante de quatro cores. Veja a próxima cor antes de saltar.",
+      "Ein gleichmäßiger Vierfarbenrhythmus. Wähle vor dem Absprung die nächste Farbe.",
+      "Dört renkli sabit bir ritim. Fırlamadan önce sonraki rengi belirle.",
+      "4色のリズムで進もう。飛び出す前に次の色を確認。",
+      "跟随四色节奏，起跳前看清下一个颜色。"
+    ],
+    "Every button matches a color, regardless of which direction the node lies.": [
+      "Every button matches a color, regardless of which direction the node lies.",
+      "Cada tecla corresponde a un color, sin importar la dirección del nodo.",
+      "Cada tecla corresponde a uma cor, independentemente da direção do nó.",
+      "Jede Taste entspricht einer Farbe, unabhängig von der Richtung des Knotens.",
+      "Düğüm hangi yönde olursa olsun her tuş bir renge karşılık gelir.",
+      "ノードの方向に関係なく、キーは色に対応します。",
+      "无论节点在哪个方向，每个按键都对应一种颜色。"
+    ],
+    "Read the node outlines, chain your swings, and climb above the lava.": [
+      "Read the node outlines, chain your swings, and climb above the lava.",
+      "Observa los colores, encadena tus balanceos y sube por encima de la lava.",
+      "Observe as cores, encadeie os balanços e suba acima da lava.",
+      "Beachte die Farbsymbole, verbinde deine Schwünge und bleib über der Lava.",
+      "Renk işaretlerini izle, salınımlarını birleştir ve lavın üstüne çık.",
+      "色の表示を見てスイングをつなぎ、溶岩より上へ。",
+      "看清颜色标记，连续摆荡，爬到熔岩上方。"
+    ],
+    "Trust the nearby node outlines. Each light reveals the next part of the route.": [
+      "Trust the nearby node outlines. Each light reveals the next part of the route.",
+      "Confía en los colores cercanos. Cada luz revela el siguiente tramo.",
+      "Confie nas cores próximas. Cada luz revela o próximo trecho.",
+      "Vertraue den nahen Farbsymbolen. Jedes Licht zeigt den nächsten Wegabschnitt.",
+      "Yakındaki renk işaretlerine güven. Her ışık yolun sonraki kısmını gösterir.",
+      "近くの色表示を頼りに。光がルートの先を照らす。",
+      "相信附近的颜色标记。每盏灯都会照亮下一段路。"
+    ],
+    "The world rolls; your color buttons stay the same. Reduced motion is available in Settings.": [
+      "The world rolls; your color buttons stay the same. Reduced motion is available in Settings.",
+      "El mundo gira; tus colores no cambian. Puedes reducir el movimiento en Ajustes.",
+      "O mundo gira; suas cores não mudam. Reduza o movimento nas Configurações.",
+      "Die Welt dreht sich, deine Farben bleiben gleich. Bewegung lässt sich in den Einstellungen reduzieren.",
+      "Dünya döner; renk düğmelerin aynı kalır. Ayarlar bölümünden hareketi azaltabilirsin.",
+      "世界が回っても色のボタンは同じ。設定で動きを抑えられます。",
+      "世界在旋转，颜色按钮不变。可在设置中减少动态效果。"
+    ],
+    "IGNITION": [
+      "IGNITION",
+      "IGNICIÓN",
+      "IGNIÇÃO",
+      "ZÜNDUNG",
+      "ATEŞLEME",
+      "点火",
+      "点火"
+    ],
+    "VIOLET CIRCUIT": [
+      "VIOLET CIRCUIT",
+      "CIRCUITO VIOLETA",
+      "CIRCUITO VIOLETA",
+      "VIOLETTER SCHALTKREIS",
+      "MOR DEVRE",
+      "紫の回路",
+      "紫色回路"
+    ],
+    "MOLTEN FOUNDRY": [
+      "MOLTEN FOUNDRY",
+      "FUNDICIÓN ARDIENTE",
+      "FUNDIÇÃO ARDENTE",
+      "GLÜHENDE GIESSEREI",
+      "ERİMİŞ DÖKÜMHANE",
+      "灼熱の鋳造所",
+      "熔融铸造厂"
+    ],
+    "ION GARDEN": [
+      "ION GARDEN",
+      "JARDÍN IÓNICO",
+      "JARDIM IÔNICO",
+      "IONENGARTEN",
+      "İYON BAHÇESİ",
+      "イオンの庭",
+      "离子花园"
+    ],
+    "AFTERBURN": [
+      "AFTERBURN",
+      "POSCOMBUSTIÓN",
+      "PÓS-COMBUSTÃO",
+      "NACHBRENNER",
+      "ART YANMA",
+      "アフターバーン",
+      "余焰"
+    ],
+    "BLUE SHIFT": [
+      "BLUE SHIFT",
+      "CORRIMIENTO AZUL",
+      "DESVIO AZUL",
+      "BLAUVERSCHIEBUNG",
+      "MAVİYE KAYMA",
+      "青方偏移",
+      "蓝移"
+    ],
+    "REACTOR HEART": [
+      "REACTOR HEART",
+      "CORAZÓN DEL REACTOR",
+      "CORAÇÃO DO REATOR",
+      "REAKTORHERZ",
+      "REAKTÖRÜN KALBİ",
+      "原子炉の心臓",
+      "反应堆之心"
+    ],
+    "POLARITY": [
+      "POLARITY",
+      "POLARIDAD",
+      "POLARIDADE",
+      "POLARITÄT",
+      "KUTUPLULUK",
+      "極性",
+      "极性"
+    ],
+    "ESCAPE VELOCITY": [
+      "ESCAPE VELOCITY",
+      "VELOCIDAD DE ESCAPE",
+      "VELOCIDADE DE ESCAPE",
+      "FLUCHTGESCHWINDIGKEIT",
+      "KAÇIŞ HIZI",
+      "脱出速度",
+      "逃逸速度"
+    ],
+    "THE FINAL ASCENT": [
+      "THE FINAL ASCENT",
+      "EL ASCENSO FINAL",
+      "A SUBIDA FINAL",
+      "DER LETZTE AUFSTIEG",
+      "SON TIRMANIŞ",
+      "最後の登頂",
+      "最终攀升"
+    ],
+    "x%d FLOW": [
+      "x%d FLOW",
+      "x%d RACHA",
+      "x%d COMBO",
+      "x%d KOMBO",
+      "x%d KOMBO",
+      "x%d コンボ",
+      "x%d 连击"
+    ],
+    "PAR %.0fs   %d RETRIES": [
+      "PAR %.0fs   %d RETRIES",
+      "META %.0fs   %d REINTENTOS",
+      "META %.0fs   %d TENTATIVAS",
+      "ZIEL %.0fs   %d NEUSTARTS",
+      "HEDEF %.0fs   %d TEKRAR",
+      "目標 %.0f秒   %d回復帰",
+      "目标 %.0f秒   %d次重试"
+    ],
+    "ESC pause   R retry": [
+      "ESC pause   R retry",
+      "ESC pausa   R reiniciar",
+      "ESC pausa   R reiniciar",
+      "ESC Pause   R Neustart",
+      "ESC duraklat   R yeniden",
+      "ESC 一時停止   R やり直す",
+      "ESC 暂停   R 重试"
+    ],
+    "REDUCED MOTION": [
+      "REDUCED MOTION",
+      "MOVIMIENTO REDUCIDO",
+      "MOVIMENTO REDUZIDO",
+      "REDUZIERTE BEWEGUNG",
+      "AZALTILMIŞ HAREKET",
+      "動きを抑える",
+      "减少动态效果"
+    ],
+    "V reduced motion": [
+      "V reduced motion",
+      "V reducir movimiento",
+      "V reduzir movimento",
+      "V Bewegung reduzieren",
+      "V hareketi azalt",
+      "V 動きを抑える",
+      "V 减少动态效果"
+    ],
+    "RECONNECTING AT CHECKPOINT": [
+      "RECONNECTING AT CHECKPOINT",
+      "VOLVIENDO AL PUNTO DE CONTROL",
+      "VOLTANDO AO PONTO DE CONTROLE",
+      "NEUSTART AM KONTROLLPUNKT",
+      "KONTROL NOKTASINA DÖNÜLÜYOR",
+      "チェックポイントから復帰",
+      "从检查点重生"
+    ],
+    "RECONNECTING AT START": [
+      "RECONNECTING AT START",
+      "VOLVIENDO AL INICIO",
+      "VOLTANDO AO INÍCIO",
+      "NEUSTART AM ANFANG",
+      "BAŞLANGICA DÖNÜLÜYOR",
+      "スタートから復帰",
+      "从起点重生"
+    ],
+    "LAVA CLOSE  /  KEEP CLIMBING": [
+      "LAVA CLOSE  /  KEEP CLIMBING",
+      "LAVA CERCA  /  SIGUE SUBIENDO",
+      "LAVA PERTO  /  CONTINUE SUBINDO",
+      "LAVA NAH  /  WEITERKLETTERN",
+      "LAV YAKIN  /  TIRMANMAYA DEVAM",
+      "溶岩が近い！登り続けよう",
+      "熔岩逼近 / 继续攀升"
+    ],
+    "RIVAL FINISHED - TRY AGAIN": [
+      "RIVAL FINISHED - TRY AGAIN",
+      "GANÓ EL RIVAL - REINTENTA",
+      "O RIVAL VENCEU - TENTE DE NOVO",
+      "RIVALE IM ZIEL - NOCHMAL",
+      "RAKİP BİTİRDİ - TEKRAR DENE",
+      "ライバルがゴール！再挑戦",
+      "对手已到达终点，再试一次"
+    ],
+    "RIVAL AHEAD": [
+      "RIVAL AHEAD",
+      "RIVAL ADELANTE",
+      "RIVAL À FRENTE",
+      "RIVALE VORAUS",
+      "RAKİP ÖNDE",
+      "ライバルが先行",
+      "对手领先"
+    ],
+    "YOU ARE AHEAD": [
+      "YOU ARE AHEAD",
+      "VAS ADELANTE",
+      "VOCÊ ESTÁ À FRENTE",
+      "DU LIEGST VORN",
+      "ÖNDESİN",
+      "あなたが先行",
+      "你领先了"
+    ],
+    "W red    S blue    A yellow    D green": [
+      "W red    S blue    A yellow    D green",
+      "W rojo    S azul    A amarillo    D verde",
+      "W vermelho    S azul    A amarelo    D verde",
+      "W Rot    S Blau    A Gelb    D Grün",
+      "W kırmızı    S mavi    A sarı    D yeşil",
+      "W 赤    S 青    A 黄    D 緑",
+      "W 红    S 蓝    A 黄    D 绿"
+    ],
+    "Arrows also work. Escape pauses.": [
+      "Arrows also work. Escape pauses.",
+      "También puedes usar las flechas. Escape pausa.",
+      "As setas também funcionam. Escape pausa.",
+      "Pfeiltasten funktionieren auch. Escape pausiert.",
+      "Ok tuşları da çalışır. Escape duraklatır.",
+      "矢印キーも使えます。Escapeで一時停止。",
+      "也可使用方向键。Escape暂停。"
+    ],
+    "Choose a row; Left/Right or click to change.": [
+      "Choose a row; Left/Right or click to change.",
+      "Elige una fila; usa izquierda/derecha o haz clic para cambiar.",
+      "Escolha uma linha; use esquerda/direita ou clique para mudar.",
+      "Zeile wählen; mit Links/Rechts oder Klick ändern.",
+      "Bir satır seç; Sol/Sağ veya tıklama ile değiştir.",
+      "行を選び、左右キーかクリックで変更。",
+      "选择一行，按左右键或点击更改。"
+    ],
+    "THE ASCENT": [
+      "THE ASCENT",
+      "EL ASCENSO",
+      "A SUBIDA",
+      "DER AUFSTIEG",
+      "TIRMANIŞ",
+      "登頂",
+      "攀升之路"
+    ],
+    "%d / 120 STARS": [
+      "%d / 120 STARS",
+      "%d / 120 ESTRELLAS",
+      "%d / 120 ESTRELAS",
+      "%d / 120 STERNE",
+      "%d / 120 YILDIZ",
+      "%d / 120 星",
+      "%d / 120 星"
+    ],
+    "Arrows / WASD to choose   Enter or click to play   PgUp / PgDn to change page": [
+      "Arrows / WASD to choose   Enter or click to play   PgUp / PgDn to change page",
+      "Flechas / WASD: elegir   Enter o clic: jugar   PgUp / PgDn: página",
+      "Setas / WASD: escolher   Enter ou clique: jogar   PgUp / PgDn: página",
+      "Pfeile / WASD: wählen   Enter oder Klick: spielen   PgUp / PgDn: Seite",
+      "Oklar / WASD: seç   Enter veya tıkla: oyna   PgUp / PgDn: sayfa",
+      "矢印 / WASDで選択   Enterかクリックで開始   PgUp / PgDnでページ切替",
+      "方向键 / WASD选择   Enter或点击开始   PgUp / PgDn翻页"
+    ],
+    "BEST %.2fs   /   PAR %.0fs   /   HIGH SCORE %d": [
+      "BEST %.2fs   /   PAR %.0fs   /   HIGH SCORE %d",
+      "RÉCORD %.2fs   /   META %.0fs   /   PUNTUACIÓN %d",
+      "RECORDE %.2fs   /   META %.0fs   /   PONTUAÇÃO %d",
+      "BESTZEIT %.2fs   /   ZIEL %.0fs   /   REKORD %d",
+      "REKOR %.2fs   /   HEDEF %.0fs   /   EN İYİ PUAN %d",
+      "ベスト %.2f秒   /   目標 %.0f秒   /   最高 %d点",
+      "最佳 %.2f秒   /   目标 %.0f秒   /   最高分 %d"
+    ],
+    "PAR %.0fs   /   %s": [
+      "PAR %.0fs   /   %s",
+      "META %.0fs   /   %s",
+      "META %.0fs   /   %s",
+      "ZIEL %.0fs   /   %s",
+      "HEDEF %.0fs   /   %s",
+      "目標 %.0f秒   /   %s",
+      "目标 %.0f秒   /   %s"
+    ],
+    "ORIGINAL STAGE": [
+      "ORIGINAL STAGE",
+      "NIVEL ORIGINAL",
+      "FASE ORIGINAL",
+      "ORIGINALLEVEL",
+      "ÖZGÜN BÖLÜM",
+      "オリジナルステージ",
+      "原版关卡"
+    ],
+    "NEW STAGE": [
+      "NEW STAGE",
+      "NIVEL NUEVO",
+      "FASE NOVA",
+      "NEUES LEVEL",
+      "YENİ BÖLÜM",
+      "新ステージ",
+      "新关卡"
+    ],
+    "PAGE %d / 2": [
+      "PAGE %d / 2",
+      "PÁGINA %d / 2",
+      "PÁGINA %d / 2",
+      "SEITE %d / 2",
+      "SAYFA %d / 2",
+      "ページ %d / 2",
+      "第 %d / 2 页"
+    ],
+    "ESC back": [
+      "ESC back",
+      "ESC volver",
+      "ESC voltar",
+      "ESC zurück",
+      "ESC geri",
+      "ESC 戻る",
+      "ESC 返回"
+    ],
+    "TAKE A BREATH": [
+      "TAKE A BREATH",
+      "TOMA UN RESPIRO",
+      "RESPIRE UM POUCO",
+      "HOL LUFT",
+      "NEFES AL",
+      "ひと休み",
+      "喘口气"
+    ],
+    "The climb will wait.": [
+      "The climb will wait.",
+      "El ascenso puede esperar.",
+      "A subida pode esperar.",
+      "Der Aufstieg kann warten.",
+      "Tırmanış bekleyebilir.",
+      "登頂は待ってくれる。",
+      "攀升可以等一等。"
+    ],
+    "ESC   Resume": [
+      "ESC   Resume",
+      "ESC   Continuar",
+      "ESC   Continuar",
+      "ESC   Fortsetzen",
+      "ESC   Devam et",
+      "ESC   再開",
+      "ESC   继续"
+    ],
+    "R   Restart level": [
+      "R   Restart level",
+      "R   Reiniciar nivel",
+      "R   Reiniciar fase",
+      "R   Level neu starten",
+      "R   Bölümü yeniden başlat",
+      "R   やり直す",
+      "R   重新开始"
+    ],
+    "M   Sound off": [
+      "M   Sound off",
+      "M   Sonido apagado",
+      "M   Som desligado",
+      "M   Ton aus",
+      "M   Ses kapalı",
+      "M   サウンドOFF",
+      "M   声音关闭"
+    ],
+    "M   Sound on": [
+      "M   Sound on",
+      "M   Sonido encendido",
+      "M   Som ligado",
+      "M   Ton an",
+      "M   Ses açık",
+      "M   サウンドON",
+      "M   声音开启"
+    ],
+    "V   Reduced motion on": [
+      "V   Reduced motion on",
+      "V   Movimiento reducido activado",
+      "V   Movimento reduzido ativado",
+      "V   Weniger Bewegung an",
+      "V   Azaltılmış hareket açık",
+      "V   動きを抑える：ON",
+      "V   减少动态效果：开"
+    ],
+    "V   Reduced motion off": [
+      "V   Reduced motion off",
+      "V   Movimiento reducido desactivado",
+      "V   Movimento reduzido desativado",
+      "V   Weniger Bewegung aus",
+      "V   Azaltılmış hareket kapalı",
+      "V   動きを抑える：OFF",
+      "V   减少动态效果：关"
+    ],
+    "F11   Fullscreen": [
+      "F11   Fullscreen",
+      "F11   Pantalla completa",
+      "F11   Tela cheia",
+      "F11   Vollbild",
+      "F11   Tam ekran",
+      "F11   全画面",
+      "F11   全屏"
+    ],
+    "Q   Level select": [
+      "Q   Level select",
+      "Q   Elegir nivel",
+      "Q   Selecionar fase",
+      "Q   Levelauswahl",
+      "Q   Bölüm seç",
+      "Q   ステージ選択",
+      "Q   选择关卡"
+    ],
+    "F2   Settings": [
+      "F2   Settings",
+      "F2   Ajustes",
+      "F2   Configurações",
+      "F2   Einstellungen",
+      "F2   Ayarlar",
+      "F2   設定",
+      "F2   设置"
+    ],
+    "YOU ROSE ABOVE IT ALL": [
+      "YOU ROSE ABOVE IT ALL",
+      "LO SUPERASTE TODO",
+      "VOCÊ SUPEROU TUDO",
+      "DU HAST ALLES GESCHAFFT",
+      "HER ŞEYİ AŞTIN",
+      "すべてを乗り越えた",
+      "你超越了一切"
+    ],
+    "ASCENT COMPLETE": [
+      "ASCENT COMPLETE",
+      "ASCENSO COMPLETADO",
+      "SUBIDA CONCLUÍDA",
+      "AUFSTIEG GESCHAFFT",
+      "TIRMANIŞ TAMAMLANDI",
+      "登頂成功",
+      "攀升完成"
+    ],
+    "%.2fs  /  PAR %.0fs": [
+      "%.2fs  /  PAR %.0fs",
+      "%.2fs  /  META %.0fs",
+      "%.2fs  /  META %.0fs",
+      "%.2fs  /  ZIEL %.0fs",
+      "%.2fs  /  HEDEF %.0fs",
+      "%.2f秒  /  目標 %.0f秒",
+      "%.2f秒  /  目标 %.0f秒"
+    ],
+    "%d POINTS     %d RETRIES": [
+      "%d POINTS     %d RETRIES",
+      "%d PUNTOS     %d REINTENTOS",
+      "%d PONTOS     %d TENTATIVAS",
+      "%d PUNKTE     %d NEUSTARTS",
+      "%d PUAN     %d TEKRAR",
+      "%d点     %d回復帰",
+      "%d分     %d次重试"
+    ],
+    "PERSONAL BEST": [
+      "PERSONAL BEST",
+      "MEJOR MARCA",
+      "RECORDE PESSOAL",
+      "PERSÖNLICHE BESTZEIT",
+      "KİŞİSEL REKOR",
+      "自己ベスト",
+      "个人最佳"
+    ],
+    "1 star: finish   /   2: beat par   /   3: no deaths": [
+      "1 star: finish   /   2: beat par   /   3: no deaths",
+      "1 estrella: terminar   /   2: superar meta   /   3: sin morir",
+      "1 estrela: terminar   /   2: superar meta   /   3: sem morrer",
+      "1 Stern: abschließen   /   2: unter Zielzeit   /   3: ohne Tod",
+      "1 yıldız: bitir   /   2: hedef süre   /   3: ölmeden",
+      "星1：クリア   /   星2：目標タイム   /   星3：ノーミス",
+      "1星：通关   /   2星：快于目标时间   /   3星：零死亡"
+    ],
+    "ENTER  /  NEXT ASCENT": [
+      "ENTER  /  NEXT ASCENT",
+      "ENTER  /  SIGUIENTE ASCENSO",
+      "ENTER  /  PRÓXIMA SUBIDA",
+      "ENTER  /  NÄCHSTER AUFSTIEG",
+      "ENTER  /  SONRAKİ TIRMANIŞ",
+      "ENTER  /  次のステージ",
+      "ENTER  /  下一关"
+    ],
+    "40 STAGES. ONE UNSTOPPABLE CLIMBER.": [
+      "40 STAGES. ONE UNSTOPPABLE CLIMBER.",
+      "40 NIVELES. UN ESCALADOR IMPARABLE.",
+      "40 FASES. UM ESCALADOR IMPARÁVEL.",
+      "40 LEVEL. EIN UNAUFHALTSAMER KLETTERER.",
+      "40 BÖLÜM. DURDURULAMAZ BİR TIRMANICI.",
+      "40ステージ。一人の止まらない挑戦者。",
+      "40个关卡，一位不可阻挡的攀登者。"
+    ],
+    "R retry   /   ESC level select": [
+      "R retry   /   ESC level select",
+      "R reintentar   /   ESC elegir nivel",
+      "R tentar de novo   /   ESC selecionar fase",
+      "R Neustart   /   ESC Levelauswahl",
+      "R tekrar   /   ESC bölüm seç",
+      "R やり直す   /   ESC ステージ選択",
+      "R 重试   /   ESC 选择关卡"
+    ],
+    "MUTED": [
+      "MUTED",
+      "SILENCIADO",
+      "SEM SOM",
+      "STUMM",
+      "SESSİZ",
+      "ミュート",
+      "静音"
+    ],
+    "LOCKED": [
+      "LOCKED",
+      "Bloqueado",
+      "Bloqueado",
+      "Gesperrt",
+      "Kilitli",
+      "ロック中",
+      "未解锁"
+    ],
+    "CHECKPOINT": [
+      "CHECKPOINT",
+      "Punto de Control",
+      "Checkpoint",
+      "Checkpoint",
+      "Kontrol Noktası",
+      "チェックポイント",
+      "检查点"
+    ],
+    "Sound": [
+      "Sound",
+      "Sonido",
+      "Som",
+      "Ton",
+      "Ses",
+      "サウンド",
+      "声音"
+    ],
+    "Barlow typeface by Jeremy Tribby · SIL Open Font License. See the bundled OFL.txt.": [
+      "Barlow typeface by Jeremy Tribby · SIL Open Font License. See the bundled OFL.txt.",
+      "Tipografía Barlow de Jeremy Tribby · Licencia SIL Open Font. Consulta el archivo OFL.txt incluido.",
+      "Fonte Barlow de Jeremy Tribby · Licença SIL Open Font. Veja o arquivo OFL.txt incluído.",
+      "Schrift Barlow von Jeremy Tribby · SIL Open Font License. Siehe die beiliegende OFL.txt.",
+      "Barlow yazı tipi: Jeremy Tribby · SIL Open Font Lisansı. Birlikte sunulan OFL.txt dosyasına bakın.",
+      "Barlow書体：Jeremy Tribby · SIL Open Font License。同梱のOFL.txtをご覧ください。",
+      "Barlow字体由Jeremy Tribby设计，采用SIL Open Font License。详见随附的OFL.txt。"
+    ]
+  }
+}

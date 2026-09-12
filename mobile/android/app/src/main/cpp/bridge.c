@@ -49,3 +49,16 @@ JNIEXPORT void JNICALL JNI(menuFrame)(JNIEnv *e,jobject o,jfloat time,jfloat asp
     float s[ML_SNAPSHOT_SIZE];ml_menu_snapshot(time,aspect,reduced,s);
     (*e)->SetFloatArrayRegion(e,out,0,ML_SNAPSHOT_SIZE,s);
 }
+
+#include "i18n.h"
+JNIEXPORT jstring JNICALL JNI(text)(JNIEnv *e,jobject o,jstring value) {
+    (void)o; const char *s=(*e)->GetStringUTFChars(e,value,0);
+    jstring result=(*e)->NewStringUTF(e,ml_text(s)); (*e)->ReleaseStringUTFChars(e,value,s); return result;
+}
+JNIEXPORT void JNICALL JNI(language)(JNIEnv *e,jobject o,jstring value) {
+    (void)o; const char *s=(*e)->GetStringUTFChars(e,value,0);ml_set_language(s);(*e)->ReleaseStringUTFChars(e,value,s);
+}
+JNIEXPORT jint JNICALL JNI(languageIndex)(JNIEnv *e,jobject o) {(void)e;(void)o;return ml_language_index();}
+JNIEXPORT jstring JNICALL JNI(languageName)(JNIEnv *e,jobject o,jint i) {(void)o;return (*e)->NewStringUTF(e,ml_language_name(i));}
+JNIEXPORT jstring JNICALL JNI(languageCode)(JNIEnv *e,jobject o,jint i) {(void)o;return (*e)->NewStringUTF(e,ml_language_code(i));}
+JNIEXPORT void JNICALL JNI(lavaRate)(JNIEnv *e,jobject o,jlong h,jfloat rate) {(void)e;(void)o;ml_set_lava_rate(game(h),rate);}

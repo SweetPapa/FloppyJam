@@ -5,6 +5,7 @@
 
 #include "raylib.h"
 #include "maglava.h"
+#include "i18n.h"
 
 /* World scale: game-space pixels -> 3D world units. */
 #define WS 0.02f
@@ -12,6 +13,7 @@
 typedef enum {
     SCR_TITLE = 0,
     SCR_SELECT,
+    SCR_SETTINGS,
     SCR_PLAYING,
     SCR_PAUSED,
     SCR_COMPLETE
@@ -54,6 +56,7 @@ typedef struct {
     GameSim sim;
     SaveData save;
     int level_id;       /* currently selected / playing */
+    int settings_cursor;
     int select_cursor;  /* level-select highlighted index (0-based) */
 
     Camera3D cam;
@@ -136,6 +139,9 @@ void ui_text(const char *text, int x, int y, int size, Color color);
 int ui_text_width(const char *text, int size);
 Rectangle ui_level_cell(int index);
 void ui_hud(App *a);
+Rectangle ui_menu_button(int index);
+Rectangle ui_settings_row(int index);
+void ui_settings(App *a);
 void ui_title(App *a);
 void ui_select(App *a);
 void ui_pause(App *a);

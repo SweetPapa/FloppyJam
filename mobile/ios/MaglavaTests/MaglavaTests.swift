@@ -100,6 +100,14 @@ final class MaglavaTests: XCTestCase {
         try button(controller,"Back").sendActions(for:.touchUpInside)
         try button(controller,"Settings").sendActions(for:.touchUpInside)
         XCTAssertEqual(descendants(controller.view).filter { $0 is UISwitch }.count,4)
+        let selectors=descendants(controller.view).compactMap { $0 as? UIButton }
+        let lava=try XCTUnwrap(selectors.first { $0.accessibilityIdentifier=="settings.lavaRate" })
+        XCTAssertEqual(lava.menu?.children.count,7)
+        XCTAssertEqual(lava.title(for:.normal),"1.5x")
+        let language=try XCTUnwrap(selectors.first { $0.accessibilityIdentifier=="settings.language" })
+        XCTAssertEqual(language.menu?.children.count,8)
+        XCTAssertTrue(language.showsMenuAsPrimaryAction)
+        XCTAssertTrue(language.menu?.children.contains { $0.title=="日本語" } ?? false)
         try button(controller,"Back").sendActions(for:.touchUpInside)
         XCTAssertEqual(controller.debugMusicName,trackBefore)
         for name in ["magLava-game-bg-1","magLava-game-bg-2","magLava-game-bg-3","magLava-main-theme"] {

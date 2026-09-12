@@ -12,6 +12,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 
 add_executable(maglava
+  src/i18n.c
   src/main.c
   src/sim.c
   src/levels.c
@@ -20,6 +21,9 @@ add_executable(maglava
   src/music.c
   src/ui.c
   src/save.c)
+if(MSVC)
+  target_compile_options(maglava PRIVATE /utf-8)
+endif()
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 file(GLOB LEVEL_JSON CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/levels/*.json)
 add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/levels_gen.h
@@ -31,12 +35,12 @@ add_dependencies(maglava maglava_levels)
 add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/fonts_gen.h
   COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/embed_fonts.py
     ${CMAKE_CURRENT_BINARY_DIR}/fonts_gen.h
-  DEPENDS tools/embed_fonts.py assets/fonts/Barlow-Medium.ttf assets/fonts/Barlow-SemiBold.ttf
+  DEPENDS tools/embed_fonts.py assets/fonts/Barlow-Medium.ttf assets/fonts/Barlow-SemiBold.ttf assets/fonts/MagLavaSansJapanese.otf assets/fonts/MagLavaSansChinese.otf
   VERBATIM)
 target_sources(maglava PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/fonts_gen.h)
 target_include_directories(maglava PRIVATE src ${CMAKE_CURRENT_BINARY_DIR})
 install(TARGETS maglava RUNTIME DESTINATION .)
-install(FILES assets/fonts/OFL.txt DESTINATION licenses)
+install(FILES assets/fonts/OFL.txt assets/fonts/Noto-OFL.txt DESTINATION licenses)
 
 # Prefer a static raylib archive so the result is standalone (no shared dep).
 find_path(RAYLIB_INCLUDE_DIR raylib.h REQUIRED)
@@ -82,6 +86,8 @@ endif()
 # Headless simulation tests (no raylib).
 include(CTest)
 if(BUILD_TESTING)
+  add_test(NAME locale_catalog COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/gen_i18n.py --check)
+  add_test(NAME faster_lava_campaign COMMAND maglava_campaign_audit --strict --lava-rate 1.5)
   add_test(NAME level_data COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/gen_levels.py --check)
   add_executable(maglava_sim_test tests/test_sim.c src/sim.c src/levels.c)
   target_include_directories(maglava_sim_test PRIVATE src)

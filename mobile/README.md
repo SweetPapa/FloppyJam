@@ -26,6 +26,24 @@ interpolation. Menus suspend gameplay while music continues; app inactivity
 suspends gameplay, rendering and audio. Reduced motion also follows the OS
 preference and removes camera roll and the trail.
 
+## Difficulty, language and Exit
+
+Settings stores a **lava rise rate** of 0.5x, 0.75x, 1x, 1.25x, 1.5x, 2x or 3x.
+The new default is **1.5x**. It multiplies the current level's authored speed,
+including backtracking surges, without changing the level data or game clock.
+Changes apply immediately (a paused game stays paused) and survive restart,
+checkpoints, level changes and app relaunch. 1x restores the original pace.
+
+Language defaults to the system language and can be changed in Settings:
+English, Latin American Spanish, Brazilian Portuguese, German, Turkish,
+Japanese and Simplified Chinese. Menus, controls, accessibility descriptions,
+gameplay messages, stage names and hints use the shared `v4/i18n` catalog.
+Existing progress remains keyed by stable level IDs, independent of language.
+
+Home includes Exit on Mac Catalyst and Android. Desktop Exit stops the app;
+Android closes its task. iPhone/iPad keep the system Home gesture rather than
+forcing process termination. No save data is cleared by Exit.
+
 ## Open and run
 
 The home screen has **Play / Continue**, **Level Select**, **How to Play**, and

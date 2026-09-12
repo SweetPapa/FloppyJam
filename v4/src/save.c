@@ -7,7 +7,7 @@
 #include <stdint.h>
 
 #define SAVE_MAGIC 0x4D4C4756u
-#define SAVE_VER 2u
+#define SAVE_VER 3u
 #define KEY_SIZE 48
 
 static void save_path(char *buf, size_t n, int legacy) {
@@ -24,14 +24,14 @@ static void save_path(char *buf, size_t n, int legacy) {
 
 void save_load(SaveData *s) {
     memset(s, 0, sizeof *s);
-    s->unlocked = 1;
+    s->unlocked = 1; s->lava_rate=LAVA_RATE_DEFAULT;
     char path[1024]; save_path(path, sizeof path, 0);
     FILE *fp = fopen(path, "rb");
     if (!fp && !getenv("MAGLAVA_SAVE_PATH")) {
         save_path(path, sizeof path, 1); fp = fopen(path, "rb");
     }
     if (!fp) return;
-    SaveData tmp = {0}; tmp.unlocked = 1;
+    SaveData tmp = {0}; tmp.unlocked = 1; tmp.lava_rate=LAVA_RATE_DEFAULT;
     uint32_t magic, ver;
     if (fread(&magic, 4, 1, fp) != 1 || magic != SAVE_MAGIC ||
         fread(&ver, 4, 1, fp) != 1) goto done;
@@ -47,7 +47,7 @@ void save_load(SaveData *s) {
                 if (old <= unlocked) tmp.unlocked = i + 1;
             }
         }
-    } else if (ver == SAVE_VER) {
+    } else if (ver == 2 || ver == SAVE_VER) {
         uint32_t count, flags;
         if (fread(&count, 4, 1, fp) != 1 || count > 256 ||
             fread(&flags, 4, 1, fp) != 1) goto done;
@@ -65,6 +65,11 @@ void save_load(SaveData *s) {
             }
         }
     } else goto done;
+    if (ver == 3) {
+        if (fread(&tmp.lava_rate,4,1,fp)!=1 || fread(tmp.language,1,sizeof tmp.language,fp)!=sizeof tmp.language ||
+            !isfinite(tmp.lava_rate) || tmp.lava_rate<LAVA_RATE_MIN || tmp.lava_rate>LAVA_RATE_MAX ||
+            !memchr(tmp.language,0,sizeof tmp.language)) goto done;
+    }
     *s = tmp; /* truncated or invalid files never partially overwrite defaults */
 done:
     fclose(fp);
@@ -87,6 +92,8 @@ void save_store(const SaveData *s) {
              fwrite(&unlocked,1,1,fp)==1 && fwrite(&s->best_time[i],4,1,fp)==1 &&
              fwrite(&score,4,1,fp)==1;
     }
+    float rate=sim_valid_lava_rate(s->lava_rate);
+    if (ok) ok=fwrite(&rate,4,1,fp)==1 && fwrite(s->language,1,sizeof s->language,fp)==sizeof s->language;
     if (fclose(fp) != 0) ok = 0;
 #ifdef _WIN32
     /* The Windows CRT cannot replace an existing path with rename. */

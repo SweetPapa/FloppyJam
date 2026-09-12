@@ -2,6 +2,8 @@ import UIKit
 import MetalKit
 import AVFoundation
 
+private func T(_ text:String)->String { String(cString:ml_text(text)) }
+
 @main
 final class AppDelegate: UIResponder, UIApplicationDelegate {
     var window: UIWindow?
@@ -30,6 +32,8 @@ final class Progress {
         if time.isFinite && time>0 && (old<=0 || time<old) { defaults.set(time,forKey:"time.\(k)") }
         defaults.set(max(defaults.integer(forKey:"score.\(k)"),Int(s[6])),forKey:"score.\(k)")
     }
+    var lavaRate: Float { get { defaults.object(forKey:"lavaRate") == nil ? 1.5 : defaults.float(forKey:"lavaRate") } set { defaults.set(newValue,forKey:"lavaRate") } }
+    var language: String { get { defaults.string(forKey:"language") ?? "" } set { defaults.set(newValue,forKey:"language") } }
     var muted: Bool { get { defaults.bool(forKey:"muted") } set { defaults.set(newValue,forKey:"muted") } }
     var musicMuted: Bool { get { defaults.object(forKey:"musicMuted") as? Bool ?? muted } set { defaults.set(newValue,forKey:"musicMuted") } }
     var reduced: Bool { get { defaults.bool(forKey:"reduced") } set { defaults.set(newValue,forKey:"reduced") } }
@@ -62,6 +66,8 @@ final class GameController: UIViewController {
     deinit { ml_destroy(core) }
     override func viewDidLoad() {
         super.viewDidLoad()
+        ml_set_language(progress.language.isEmpty ? Locale.preferredLanguages.first ?? "en" : progress.language)
+        ml_set_lava_rate(core,progress.lavaRate)
         view.backgroundColor=UIColor(rgb:0x090F19)
         sk.translatesAutoresizingMaskIntoConstraints=false; view.addSubview(sk)
         header.axis = .vertical; header.spacing=7; header.translatesAutoresizingMaskIntoConstraints=false; view.addSubview(header)
@@ -70,7 +76,7 @@ final class GameController: UIViewController {
         hud.adjustsFontSizeToFitWidth=true; hud.minimumScaleFactor=0.6
         row.addArrangedSubview(hud)
         let pause=button("Ⅱ", color:UIColor(rgb:0x23374C)) { [weak self] in self?.pauseGame() }
-        pause.accessibilityLabel="Pause game"; pause.widthAnchor.constraint(equalToConstant:48).isActive=true; pause.heightAnchor.constraint(equalToConstant:48).isActive=true
+        pause.accessibilityLabel=T("Pause game"); pause.tag=771; pause.widthAnchor.constraint(equalToConstant:48).isActive=true; pause.heightAnchor.constraint(equalToConstant:48).isActive=true
         row.addArrangedSubview(pause); header.addArrangedSubview(row)
         subhud.numberOfLines=2
         subhud.heightAnchor.constraint(equalToConstant:34).isActive=true
@@ -78,12 +84,13 @@ final class GameController: UIViewController {
         header.addArrangedSubview(subhud); bar.progressTintColor=UIColor(rgb:0x65E0B1); bar.trackTintColor=UIColor(rgb:0x203145); bar.heightAnchor.constraint(equalToConstant:3).isActive=true; header.addArrangedSubview(bar)
         controls.translatesAutoresizingMaskIntoConstraints=false; view.addSubview(controls)
         for i in 0..<4 {
-            let b=button(["R\nRED","B\nBLUE","Y\nYELLOW","G\nGREEN"][i],color:magneticColors[i].withAlphaComponent(0.18),onDown:true) { [weak self] in
+            let b=button(["R","B","Y","G"][i]+"\n"+T(["RED","BLUE","YELLOW","GREEN"][i]),color:magneticColors[i].withAlphaComponent(0.18),onDown:true) { [weak self] in
                 guard let self=self, self.playing else { return }; ml_input(self.core,Int32(i))
             }
             b.contentEdgeInsets=UIEdgeInsets(top:8,left:4,bottom:8,right:4); b.titleLabel?.font=UIFont(name:"Barlow-SemiBold",size:14)
             b.setTitleColor(magneticColors[i],for:.normal); b.titleLabel?.numberOfLines=2; b.titleLabel?.textAlignment = .center
-            b.accessibilityLabel="Tether to \(["red","blue","yellow","green"][i]) magnet"
+            b.titleLabel?.adjustsFontSizeToFitWidth=true; b.titleLabel?.minimumScaleFactor=0.65
+            b.accessibilityLabel=T("Tether to \(["red","blue","yellow","green"][i]) magnet")
             b.layer.borderColor=magneticColors[i].withAlphaComponent(0.75).cgColor; b.layer.borderWidth=1.5
             b.layer.shadowColor=magneticColors[i].cgColor; b.layer.shadowOpacity=0.22; b.layer.shadowRadius=10; b.layer.shadowOffset = .zero
             controls.addSubview(b); colorButtons.append(b)
@@ -140,15 +147,16 @@ final class GameController: UIViewController {
     }
     @objc private func motionChanged() { scene.reducedMotion=progress.reduced || UIAccessibility.isReduceMotionEnabled }
     private func button(_ title:String,color:UIColor=UIColor(rgb:0x263D52),onDown:Bool=false,action:@escaping ()->Void)->UIButton {
-        let b=TouchButton(type:.system); b.setTitle(title,for:.normal); b.setTitleColor(.white,for:.normal)
+        let b=TouchButton(type:.system); b.setTitle(T(title),for:.normal); b.setTitleColor(.white,for:.normal)
         b.titleLabel?.font=UIFont(name:"Barlow-SemiBold",size:17) ?? .boldSystemFont(ofSize:17)
+        b.titleLabel?.numberOfLines=0; b.titleLabel?.textAlignment = .center
         b.backgroundColor=color; b.layer.cornerRadius=14; b.contentEdgeInsets=UIEdgeInsets(top:14,left:16,bottom:14,right:16)
         b.addAction(UIAction { _ in action() },for:onDown ? .touchDown : .touchUpInside)
         if onDown { b.accessibleAction=action }
         return b
     }
     private func label(_ text:String,size:CGFloat=17,color:UIColor=UIColor(rgb:0xA0B4C7))->UILabel {
-        let l=UILabel(); l.text=text; l.textColor=color; l.numberOfLines=0
+        let l=UILabel(); l.text=T(text); l.textColor=color; l.numberOfLines=0
         l.font=UIFont(name:"Barlow-Medium",size:size) ?? .systemFont(ofSize:size); return l
     }
     private func panel(_ eyebrow:String,_ title:String,_ detail:String, back:Bool=false)->UIStackView {
@@ -164,7 +172,7 @@ final class GameController: UIViewController {
         if back {
             let nav=button("Back") { [weak self] in self?.menuBack?() }
             nav.translatesAutoresizingMaskIntoConstraints=false; cover.addSubview(nav)
-            NSLayoutConstraint.activate([nav.leadingAnchor.constraint(equalTo:scroll.leadingAnchor),nav.topAnchor.constraint(equalTo:cover.safeAreaLayoutGuide.topAnchor,constant:16),nav.widthAnchor.constraint(equalToConstant:96),nav.heightAnchor.constraint(equalToConstant:50)])
+            NSLayoutConstraint.activate([nav.leadingAnchor.constraint(equalTo:scroll.leadingAnchor),nav.topAnchor.constraint(equalTo:cover.safeAreaLayoutGuide.topAnchor,constant:16),nav.widthAnchor.constraint(greaterThanOrEqualToConstant:96),nav.heightAnchor.constraint(equalToConstant:50)])
         }
         if !eyebrow.isEmpty { stack.addArrangedSubview(label(eyebrow,size:12,color:UIColor(rgb:0x65E0B1))) }
         stack.addArrangedSubview(label(title,size:title=="MAGLAVA" ? 48 : 44,color:title=="MAGLAVA" ? UIColor(rgb:0xFF8756) : .white))
@@ -190,15 +198,18 @@ final class GameController: UIViewController {
         stack.addArrangedSubview(button("Level Select") { [weak self] in self?.showLevels() })
         stack.addArrangedSubview(button("How to Play") { [weak self] in self?.howToPlay() })
         stack.addArrangedSubview(button("Settings") { [weak self] in self?.settings() })
+        #if targetEnvironment(macCatalyst)
+        stack.addArrangedSubview(button("Exit") { [weak self] in self?.suspend(); exit(EXIT_SUCCESS) })
+        #endif
     }
     private func returnToMenu(_ fromPause:Bool) { if fromPause { showPause() } else { showMenu() } }
     private func showLevels(fromPause:Bool=false) {
         menuBack={ [weak self] in self?.returnToMenu(fromPause) }
         let stack=panel("", "Level Select", "", back:true)
         for i in 1...Int(ml_level_count()) {
-            if (i-1)%4==0 { stack.addArrangedSubview(label(String(format:"%02d  /  ",(i-1)/4+1)+String(cString:ml_chapter_name(Int32(i))),size:12,color:UIColor(rgb:Int(ml_accent_color(Int32(i)))))) }
+            if (i-1)%4==0 { stack.addArrangedSubview(label(String(format:"%02d  /  ",(i-1)/4+1)+T(String(cString:ml_chapter_name(Int32(i)))),size:12,color:UIColor(rgb:Int(ml_accent_color(Int32(i)))))) }
             let unlocked=progress.unlocked(i), stars=progress.stars(i), time=progress.best(i)
-            let title=String(format:"%02d",i)+"   "+String(cString:ml_level_name(Int32(i)))+"\n"+(unlocked ? String(repeating:"★",count:stars)+String(repeating:"☆",count:3-stars)+(time>0 ? String(format:"   %.1fs",time) : "") : "Locked")
+            let title=String(format:"%02d",i)+"   "+String(cString:ml_level_name(Int32(i)))+"\n"+(unlocked ? String(repeating:"★",count:stars)+String(repeating:"☆",count:3-stars)+(time>0 ? String(format:"   %.1fs",time) : "") : T("Locked"))
             let b=button(title,color:UIColor(rgb:unlocked ? 0x182A3B : 0x111B27)) { [weak self] in self?.start(i) }
             b.accessibilityIdentifier="level.\(i)"
             b.isEnabled=unlocked; b.titleLabel?.numberOfLines=2; b.contentHorizontalAlignment = .left
@@ -259,7 +270,7 @@ final class GameController: UIViewController {
         let stack=panel("", "Settings", "", back:true)
         func toggle(_ title:String,_ value:Bool,_ set:@escaping (Bool)->Void) {
             let row=UIStackView(); row.addArrangedSubview(label(title,color:.white)); let control=UISwitch(); control.isOn=value
-            control.accessibilityLabel=title; control.addAction(UIAction { _ in set(control.isOn) },for:.valueChanged); row.addArrangedSubview(control); stack.addArrangedSubview(row)
+            control.accessibilityLabel=T(title); control.addAction(UIAction { _ in set(control.isOn) },for:.valueChanged); row.addArrangedSubview(control); stack.addArrangedSubview(row)
         }
         toggle("Music",!progress.musicMuted) { [weak self] in
             guard let self=self else{return}; self.progress.musicMuted = !$0
@@ -268,6 +279,33 @@ final class GameController: UIViewController {
         toggle("Sound effects",!progress.muted) { [weak self] in self?.progress.muted = !$0 }
         toggle("Haptics",progress.haptics) { [weak self] in self?.progress.haptics = $0 }
         toggle("Reduced motion",progress.reduced) { [weak self] in self?.progress.reduced=$0; self?.motionChanged() }
+        stack.addArrangedSubview(label("Lava rise rate",color:.white))
+        let rateButton=button(String(format:"%.3gx",ml_lava_rate(core))) {}
+        rateButton.accessibilityIdentifier="settings.lavaRate"
+        rateButton.menu=UIMenu(children:[Float(0.5),0.75,1,1.25,1.5,2,3].map { rate in
+            UIAction(title:String(format:"%.3gx",rate),state:abs(ml_lava_rate(core)-rate)<0.001 ? .on : .off) { [weak self] _ in
+                guard let self=self else{return}; self.progress.lavaRate=rate; ml_set_lava_rate(self.core,rate); self.settings(fromPause:fromPause)
+            }
+        }); rateButton.showsMenuAsPrimaryAction=true; stack.addArrangedSubview(rateButton)
+        stack.addArrangedSubview(label("Multiplies each level's lava speed. 1x is the original rate; default is 1.5x.",size:14))
+        stack.addArrangedSubview(label("Language",color:.white))
+        let languageButton=button(progress.language.isEmpty ? T("System language") : String(cString:ml_language_name(ml_language_index()))) {}
+        languageButton.accessibilityIdentifier="settings.language"
+        languageButton.menu=UIMenu(children:(-1..<Int(ml_language_count())).map { index in
+            let code=index<0 ? "" : String(cString:ml_language_code(Int32(index)))
+            return UIAction(title:index<0 ? T("System language") : String(cString:ml_language_name(Int32(index))),state:progress.language==code ? .on : .off) { [weak self] _ in
+                guard let self=self else{return}; self.progress.language=code
+                ml_set_language(code.isEmpty ? Locale.preferredLanguages.first ?? "en" : code)
+                for (i,b) in self.colorButtons.enumerated() {
+                    b.setTitle(["R","B","Y","G"][i]+"\n"+T(["RED","BLUE","YELLOW","GREEN"][i]),for:.normal)
+                    b.accessibilityLabel=T("Tether to \(["red","blue","yellow","green"][i]) magnet")
+                }
+                (self.view.viewWithTag(771) as? UIButton)?.accessibilityLabel=T("Pause game")
+                self.hud.text=String(format:"%02d  ",self.level)+String(cString:ml_level_name(Int32(self.level))); self.hudTick = -1
+                self.settings(fromPause:fromPause)
+            }
+        }); languageButton.showsMenuAsPrimaryAction=true; stack.addArrangedSubview(languageButton)
+        stack.addArrangedSubview(label("Changes apply immediately and are saved.",size:14))
         stack.addArrangedSubview(label("Barlow typeface by Jeremy Tribby · SIL Open Font License. See the bundled OFL.txt.",size:12))
     }
     private func howToPlay(fromPause:Bool=false) {
@@ -275,7 +313,7 @@ final class GameController: UIViewController {
         let stack=panel("", "How to Play", "Reach the top before the lava catches you.", back:true)
         let guide=ColorControls(); guide.heightAnchor.constraint(equalToConstant:144).isActive=true
         for i in 0..<4 {
-            let badge=button(["R\nRED","B\nBLUE","Y\nYELLOW","G\nGREEN"][i],color:magneticColors[i].withAlphaComponent(0.18)) {}
+            let badge=button(["R","B","Y","G"][i]+"\n"+T(["RED","BLUE","YELLOW","GREEN"][i]),color:magneticColors[i].withAlphaComponent(0.18)) {}
             badge.isUserInteractionEnabled=false; badge.accessibilityTraits = .staticText
             badge.contentEdgeInsets=UIEdgeInsets(top:4,left:4,bottom:4,right:4)
             badge.titleLabel?.font=UIFont(name:"Barlow-SemiBold",size:14)
@@ -305,9 +343,9 @@ final class GameController: UIViewController {
         #endif
         if s[9]-hudTick>0.1 || hudTick<0 {
             hudTick=s[9]; bar.progress=s[26]
-            subhud.text=s[4]==3 ? (s[21]>0 ? "Rival wins. Try again." : "Respawning…") : s[9]<7 ? String(cString:ml_level_hint(Int32(level))) : String(format:"%.1fs / %.0fs   ·   %d pts   ·   %d retries",s[9],s[27],Int(s[6]),Int(s[8]))
+            subhud.text=s[4]==3 ? (s[21]>0 ? T("Rival wins. Try again.") : T("Respawning…")) : s[9]<7 ? String(cString:ml_level_hint(Int32(level))) : String(format:T("%.1fs / %.0fs   ·   %d pts   ·   %d retries"),s[9],s[27],Int(s[6]),Int(s[8]))
             subhud.textColor=UIColor(rgb:s[29]<200 ? 0xFFAF75 : 0xA0B4C7)
-            for c in 0..<4 { colorButtons[c].alpha=s[30+c]>=0 ? 1 : 0.65; colorButtons[c].accessibilityValue=s[30+c]>=0 ? "Target in range" : "No target in range" }
+            for c in 0..<4 { colorButtons[c].alpha=s[30+c]>=0 ? 1 : 0.65; colorButtons[c].accessibilityValue=s[30+c]>=0 ? T("Target in range") : T("No target in range") }
         }
         let events=Int(s[22])
         let effect=events & 16 != 0 ? "complete" : events & 8 != 0 ? "death" : events & 2 != 0 ? "checkpoint" : events & 1 != 0 ? "attach" : events & 4 != 0 ? "swing" : nil
@@ -321,7 +359,7 @@ final class GameController: UIViewController {
         if s[5]>0 && !completed {
             menuBack={ [weak self] in self?.showMenu() }
             completed=true; playing=false; scene.running=false; sk.isPaused=true; UIApplication.shared.isIdleTimerDisabled=false; ml_pause(core,1); progress.record(level,s)
-            let stack=panel("LEVEL COMPLETE",String(repeating:"★",count:Int(s[16]))+String(repeating:"☆",count:3-Int(s[16])),String(format:"%.1f seconds · %d points · %d retries\nPersonal best: %.1fs",s[9],Int(s[6]),Int(s[8]),progress.best(level)))
+            let stack=panel("LEVEL COMPLETE",String(repeating:"★",count:Int(s[16]))+String(repeating:"☆",count:3-Int(s[16])),String(format:T("%.1f seconds · %d points · %d retries\nPersonal best: %.1fs"),s[9],Int(s[6]),Int(s[8]),progress.best(level)))
             if level<Int(ml_level_count()) { stack.addArrangedSubview(button("Next Level",color:UIColor(rgb:0x346858)) { [weak self] in guard let self=self else{return}; self.start(self.level+1) }) }
             else { stack.addArrangedSubview(label("All 40 levels complete!",color:.white)) }
             stack.addArrangedSubview(button("Play Again") { [weak self] in guard let self=self else{return}; self.start(self.level) })
