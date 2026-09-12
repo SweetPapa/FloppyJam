@@ -60,6 +60,9 @@
 /* Lava */
 #define LAVA_START_OFFSET   500.0f  /* lava starts this far below player start */
 #define LAVA_WARNING_DIST   200.0f
+#define LAVA_RATE_DEFAULT   1.5f
+#define LAVA_RATE_MIN       0.5f
+#define LAVA_RATE_MAX       3.0f
 #define LAVA_DESTROY_BUFFER 50.0f
 #define BACKTRACK_THRESHOLD 50.0f
 #define BACKTRACK_MULT      1.5f
@@ -216,6 +219,7 @@ typedef struct {
     /* lava */
     float lava_y;
     float normal_lava_speed;
+    float lava_rate; /* user multiplier on the authored speed and temporary surge */
     float lava_speed;          /* current effective */
     int lava_stopped;          /* level complete */
     float backtrack_timer;     /* seconds remaining of 1.5x */
@@ -257,6 +261,8 @@ typedef struct {
 
 /* Sim API (sim.c) — pure, no raylib. */
 void  sim_init(GameSim *g, int level_id);
+void  sim_set_lava_rate(GameSim *g, float rate);
+float sim_valid_lava_rate(float rate);
 /* color_pressed: 0..3 for a color just-pressed this frame, or -1 for none. */
 void  sim_update(GameSim *g, float dt, int color_pressed);
 float sim_height(const GameSim *g); /* climbed height for HUD */
@@ -272,6 +278,8 @@ typedef struct {
     int best_score[LEVEL_COUNT];
     int unlocked;
     int reduced_motion, muted;
+    float lava_rate;
+    char language[16]; /* empty = system language */
 } SaveData;
 void save_load(SaveData *s);
 void save_store(const SaveData *s);

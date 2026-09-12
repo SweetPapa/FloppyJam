@@ -104,6 +104,7 @@ void sim_init(GameSim *g, int level_id) {
     orbit_rest(g, 0);
 
     /* lava */
+    g->lava_rate = 1.0f;
     g->normal_lava_speed = lv->lava_speed;
     g->lava_speed = lv->lava_speed;
     g->lava_y = lv->mag[0].y + LAVA_START_OFFSET;
@@ -640,7 +641,7 @@ void sim_update(GameSim *g, float dt, int color_pressed) {
 
     /* --- lava rise --- */
     if (!g->lava_stopped) {
-        g->lava_y -= g->lava_speed * dt;
+        g->lava_y -= g->lava_speed * g->lava_rate * dt;
         consume_below(g);
     }
 
@@ -665,4 +666,11 @@ int sim_stars(const GameSim *g) {
     if (g->deaths == 0) return 3;
     if (g->elapsed <= g->lv->par_time) return 2;
     return 1;
+}
+
+float sim_valid_lava_rate(float rate) {
+    return isfinite(rate) ? fmaxf(LAVA_RATE_MIN, fminf(LAVA_RATE_MAX, rate)) : LAVA_RATE_DEFAULT;
+}
+void sim_set_lava_rate(GameSim *g, float rate) {
+    if (g) g->lava_rate = sim_valid_lava_rate(rate);
 }

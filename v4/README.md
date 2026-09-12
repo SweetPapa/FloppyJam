@@ -45,6 +45,8 @@ ctest --test-dir v4/build-debug --output-on-failure
 | Sound on / off | M |
 | Reduced motion on / off | V |
 | Borderless fullscreen | F11 |
+| Settings | Home button or F2 while paused |
+| Exit | Home button or window close |
 | Choose stage | Arrows / WASD; Enter or click a card |
 | Switch campaign page | Page Up / Page Down; arrows also cross pages |
 | Return to stage selection | Q while paused; Escape after completion |
@@ -66,6 +68,23 @@ for a deathless finish (even if slower than par). Times measure active simulatio
 time, excluding pause and respawn countdowns. Original-stage par times were recalibrated against the desktop simulation.
 The 15 new stages allow at least 1.5 seconds per main-route landing plus six
 seconds. Magnetic Subspace has a targeted 50-second par.
+
+## Saved settings and languages
+
+Home and Pause provide Settings. The lava rise rate defaults to **1.5x** the
+level's authored speed; choose 0.5x, 0.75x, 1x, 1.25x, 1.5x, 2x or 3x. The rate
+also multiplies temporary backtracking surges and survives retries/checkpoints.
+Use 1x for the original pace. Difficulty does not change magnet movement or time.
+
+Language follows the system by default. Choose English, Latin American Spanish,
+Brazilian Portuguese, German, Turkish, Japanese or Simplified Chinese. Use
+Up/Down to select a settings row and Left/Right or click its left/right half to
+change it. Changes save immediately; Escape returns to the previous screen.
+Home's Exit button closes the game through normal audio/graphics cleanup.
+
+Version 3 saves preserve existing progress from versions 1 and 2 and add the lava
+multiplier and language. Changing language never changes campaign/progress keys.
+The shared catalog and font regeneration instructions are in `i18n/README.md`.
 
 ## Desktop improvements
 

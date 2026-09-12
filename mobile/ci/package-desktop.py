@@ -25,7 +25,7 @@ if windows:
  print('Windows dependencies:',', '.join(dlls))
  subprocess.run(['pwsh','-NoProfile','-Command',f"$ErrorActionPreference='Stop'; if ((Get-AuthenticodeSignature -LiteralPath '{exe}').Status -ne 'Valid') {{ throw 'Invalid MagLava signature' }}"],check=True)
  with zipfile.ZipFile(out/'MagLava-Windows-x64.zip','w',zipfile.ZIP_DEFLATED) as z:
-  z.write(exe,'MagLava/maglava.exe');z.write(license,'MagLava/licenses/OFL.txt')
+  z.write(exe,'MagLava/maglava.exe');z.write(license,'MagLava/licenses/OFL.txt');z.write(root/'v4/assets/fonts/Noto-OFL.txt','MagLava/licenses/Noto-OFL.txt')
 else:
  with tarfile.open(out/'MagLava-Linux-x64.tar.gz','w:gz') as z:
-  z.add(exe,arcname='MagLava/maglava');z.add(license,arcname='MagLava/licenses/OFL.txt')
+  z.add(exe,arcname='MagLava/maglava');z.add(license,arcname='MagLava/licenses/OFL.txt');z.add(root/'v4/assets/fonts/Noto-OFL.txt',arcname='MagLava/licenses/Noto-OFL.txt')

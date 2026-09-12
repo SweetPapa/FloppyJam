@@ -7,6 +7,10 @@
 #include <math.h>
 #include <string.h>
 #include <stdio.h>
+#include <locale.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
 #ifdef _WIN32
 #include <direct.h>
 #define chdir _chdir
@@ -25,6 +29,36 @@ static int compare_frame(const void *a, const void *b) {
     return (x>y)-(x<y);
 }
 
+static void apply_language(void) {
+    const char *code=app.save.language;
+    if(!*code) {
+#ifdef _WIN32
+        static char tag[LOCALE_NAME_MAX_LENGTH]; wchar_t wide[LOCALE_NAME_MAX_LENGTH];
+        if(GetUserDefaultLocaleName(wide,LOCALE_NAME_MAX_LENGTH))
+            WideCharToMultiByte(CP_UTF8,0,wide,-1,tag,sizeof tag,NULL,NULL);
+        code=tag;
+#else
+        code=getenv("LC_ALL");
+        if(!code || !*code)code=getenv("LC_MESSAGES");
+        if(!code || !*code)code=getenv("LANG");
+#endif
+    }
+    ml_set_language(code);
+}
+static void change_setting(int row,int delta) {
+    static const float rates[]={.5f,.75f,1,1.25f,1.5f,2,3};
+    if(row==0) {
+        int i=4;for(int n=0;n<7;n++)if(fabsf(app.save.lava_rate-rates[n])<.001f)i=n;
+        i=(i+delta+7)%7;app.save.lava_rate=rates[i];sim_set_lava_rate(&app.sim,rates[i]);
+    } else if(row==1) {
+        int i=*app.save.language ? ml_language_index()+1 : 0;i=(i+delta+8)%8;
+        snprintf(app.save.language,sizeof app.save.language,"%s",i ? ml_language_code(i-1) : "");apply_language();
+    } else if(row==2) {
+        app.muted=!app.muted;app.save.muted=app.muted;audio_music_volume(&app,app.muted?0:.60f);
+    } else if(row==3) app.save.reduced_motion=!app.save.reduced_motion;
+    else if(row==4)app.screen=app.prev_screen;
+    if(!app.demo)save_store(&app.save);
+}
 /* edge-triggered color input, original priority up>down>left>right */
 static int poll_color(void) {
     if (IsKeyPressed(KEY_W) || IsKeyPressed(KEY_UP))    return COL_RED;
@@ -56,6 +90,7 @@ static void start_level(int id) {
     if (id > LEVEL_COUNT) id = LEVEL_COUNT;
     app.level_id = id;
     sim_init(&app.sim, id);
+    sim_set_lava_rate(&app.sim,app.save.lava_rate);
     render_reset_fx(&app);
     app.cam_shake = 0;
     app.lava_flash = 0;
@@ -266,6 +301,7 @@ int main(void) {
     SetExitKey(0); /* we handle ESC ourselves */
 
     save_load(&app.save);
+    apply_language();
     app.demo = demo || shot || g_shots;
     app.muted = app.save.muted;
     audio_init(&app);
@@ -284,6 +320,9 @@ int main(void) {
     const char *capture = getenv("MAGLAVA_SCREEN");
     if (capture && shot) {
         app.demo = 1;
+        if(getenv("MAGLAVA_LANGUAGE"))ml_set_language(getenv("MAGLAVA_LANGUAGE"));
+        if(!strcmp(capture,"settings"))app.screen=SCR_SETTINGS;
+        if(!strcmp(capture,"pause"))app.screen=SCR_PAUSED;
         if (!strcmp(capture,"select")) {
             app.screen = SCR_SELECT;
             app.select_cursor = getenv("MAGLAVA_CURSOR") ? atoi(getenv("MAGLAVA_CURSOR")) : 0;
@@ -312,11 +351,31 @@ int main(void) {
         }
 
         switch (app.screen) {
-        case SCR_TITLE:
-            if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE) || IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-                audio_play(&app, SFX_UI); app.screen = SCR_SELECT;
+        case SCR_TITLE: {
+            int clicked=-1;
+            if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT))for(int i=0;i<3;i++)
+                if(CheckCollisionPointRec(GetMousePosition(),ui_menu_button(i)))clicked=i;
+            if(clicked==0 || IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE)) {
+                audio_play(&app,SFX_UI);app.screen=SCR_SELECT;
+            }
+            if(clicked==1 || IsKeyPressed(KEY_F2)) { app.prev_screen=SCR_TITLE;app.screen=SCR_SETTINGS;app.settings_cursor=0; }
+            if(clicked==2)goto done;
+            break;
+        }
+        case SCR_SETTINGS: {
+            if(IsKeyPressed(KEY_ESCAPE))app.screen=app.prev_screen;
+            if(IsKeyPressed(KEY_UP))app.settings_cursor=(app.settings_cursor+4)%5;
+            if(IsKeyPressed(KEY_DOWN))app.settings_cursor=(app.settings_cursor+1)%5;
+            if(IsKeyPressed(KEY_LEFT))change_setting(app.settings_cursor,-1);
+            if(IsKeyPressed(KEY_RIGHT)||IsKeyPressed(KEY_ENTER))change_setting(app.settings_cursor,1);
+            if(IsMouseButtonPressed(MOUSE_BUTTON_LEFT))for(int i=0;i<5;i++) {
+                Rectangle rect=ui_settings_row(i);
+                if(CheckCollisionPointRec(GetMousePosition(),rect)) {
+                    app.settings_cursor=i;change_setting(i,GetMouseX()<GetScreenWidth()/2 ? -1 : 1);break;
+                }
             }
             break;
+        }
         case SCR_SELECT: {
             if (capture && shot) break;
             int c = app.select_cursor;
@@ -353,6 +412,7 @@ int main(void) {
             }
             break;
         case SCR_PAUSED:
+            if(IsKeyPressed(KEY_F2) || (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(GetMousePosition(),ui_settings_row(4)))) { app.prev_screen=SCR_PAUSED;app.screen=SCR_SETTINGS;app.settings_cursor=0; }
             if (IsKeyPressed(KEY_ESCAPE)) { app.pending_color = -1; app.screen = SCR_PLAYING; }
             if (IsKeyPressed(KEY_R)) { audio_play(&app, SFX_UI); start_level(app.level_id); }
             if (IsKeyPressed(KEY_Q)) { app.select_cursor = app.level_id - 1; app.screen = SCR_SELECT; }
@@ -387,6 +447,8 @@ int main(void) {
             DrawRectangleGradientV(0, 0, GetScreenWidth(), GetScreenHeight(),
                                    (Color){14, 8, 20, 255}, (Color){40, 14, 10, 255});
             ui_title(&app);
+        } else if (app.screen == SCR_SETTINGS) {
+            ui_settings(&app);
         } else {
             DrawRectangleGradientV(0, 0, GetScreenWidth(), GetScreenHeight(),
                                    (Color){10, 10, 22, 255}, (Color){20, 16, 34, 255});

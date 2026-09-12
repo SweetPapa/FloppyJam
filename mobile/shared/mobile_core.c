@@ -1,5 +1,6 @@
 #include "mobile_core.h"
 #include "maglava.h"
+#include "i18n.h"
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,7 +15,9 @@ MLGame *ml_create(void) { MLGame *g = calloc(1, sizeof(*g)); if (g) ml_start(g, 
 void ml_destroy(MLGame *g) { free(g); }
 void ml_start(MLGame *g, int level) {
     if (!g) return;
+    float rate=g->sim.lava_rate>0 ? g->sim.lava_rate : LAVA_RATE_DEFAULT;
     memset(g, 0, sizeof(*g)); sim_init(&g->sim, level);
+    sim_set_lava_rate(&g->sim,rate);
     g->hit_age = -1;
     g->previous = g->sim;
     g->camera = g->old_camera = g->sim.py - 150;
@@ -96,5 +99,8 @@ void ml_snapshot(const MLGame *g, float *o) {
 int ml_level_count(void) { return LEVEL_COUNT; }
 static int valid(int n) { return n>=1 && n<=LEVEL_COUNT; }
 const char *ml_level_key(int n) { return valid(n)?LEVELS[n-1].key:""; }
-const char *ml_level_name(int n) { return valid(n)?LEVELS[n-1].name:""; }
-const char *ml_level_hint(int n) { return valid(n)?LEVELS[n-1].hint:""; }
+const char *ml_level_name(int n) { return valid(n)?ml_text(LEVELS[n-1].name):""; }
+const char *ml_level_hint(int n) { return valid(n)?ml_text(LEVELS[n-1].hint):""; }
+
+void ml_set_lava_rate(MLGame *g, float rate) { if(g) { sim_set_lava_rate(&g->sim,rate); g->previous=g->sim; } }
+float ml_lava_rate(const MLGame *g) { return g ? g->sim.lava_rate : LAVA_RATE_DEFAULT; }

@@ -1,6 +1,12 @@
 package dev.fofo.maglava
 
 object Native {
+    external fun text(english:String):String
+    external fun language(code:String)
+    external fun languageIndex():Int
+    external fun languageName(index:Int):String
+    external fun languageCode(index:Int):String
+    external fun lavaRate(handle:Long,rate:Float)
     init { System.loadLibrary("maglava") }
     external fun create(): Long
     external fun destroy(handle: Long)

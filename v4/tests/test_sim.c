@@ -192,8 +192,22 @@ static int test_subspace_rest_points(void) {
     return 1;
 }
 
+static int test_lava_rate(void) {
+    GameSim g;sim_init(&g,1);sim_set_lava_rate(&g,2);
+    g.backtrack_active=1;g.backtrack_timer=.5f;g.lava_speed=g.normal_lava_speed*BACKTRACK_MULT;
+    float y=g.lava_y;sim_update(&g,DT,-1);
+    if(fabsf((y-g.lava_y)-g.normal_lava_speed*BACKTRACK_MULT*2*DT)>.001f)return 0;
+    for(int i=0;i<40;i++)sim_update(&g,DT,-1);
+    if(g.backtrack_active || g.lava_rate!=2 || g.lava_speed!=g.normal_lava_speed)return 0;
+    g.state=PS_DEAD;g.respawn_timer=DT;sim_update(&g,DT,-1);
+    if(g.lava_rate!=2 || g.lava_speed!=g.normal_lava_speed)return 0;
+    g.lava_stopped=1;y=g.lava_y;sim_update(&g,DT,-1);if(g.lava_y!=y)return 0;
+    return 1;
+}
+
 int main(void) {
     int fails = 0;
+    if(!test_lava_rate()) { puts("FAIL lava multiplier/surge/respawn");fails++; }
     printf("== MagLava sim tests ==\n");
 
     printf("[completability]\n");

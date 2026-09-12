@@ -16,6 +16,8 @@ typedef struct MLGame MLGame;
 MLGame *ml_create(void);
 void ml_destroy(MLGame *game);
 void ml_start(MLGame *game, int level);
+void ml_set_lava_rate(MLGame *game, float rate);
+float ml_lava_rate(const MLGame *game);
 void ml_pause(MLGame *game, int paused);
 void ml_input(MLGame *game, int color);
 void ml_advance(MLGame *game, double seconds);

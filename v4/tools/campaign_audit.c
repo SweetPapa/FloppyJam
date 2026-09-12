@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
+#include <stdlib.h>
 #define DT (1.0f/60)
 
 static int choose(const GameSim *g,int careful,int nearest) {
@@ -26,8 +27,10 @@ static int choose(const GameSim *g,int careful,int nearest) {
 int main(int argc,char **argv) {
     int strict=0,relaxed=0,deathless=0,fails=0;
     const char *level_key=NULL;
+    float lava_rate=1;
     for(int i=1;i<argc;i++) {
-        if(!strcmp(argv[i],"--strict"))strict=1;
+        if(!strcmp(argv[i],"--lava-rate") && i+1<argc)lava_rate=sim_valid_lava_rate(strtof(argv[++i],NULL));
+        else if(!strcmp(argv[i],"--strict"))strict=1;
         if(!strcmp(argv[i],"--deathless"))deathless=1;
         if(!strcmp(argv[i],"--new-relaxed"))relaxed=1;
         if(!strcmp(argv[i],"--level-key")&&i+1<argc)level_key=argv[++i];
@@ -42,7 +45,7 @@ int main(int argc,char **argv) {
             if(level_key) { if(strcmp(LEVELS[id-1].key,level_key))continue; }
             else if(relaxed&&LEVELS[id-1].legacy_id)continue;
             total++;
-            GameSim g;sim_init(&g,id);int wait=0;
+            GameSim g;sim_init(&g,id);sim_set_lava_rate(&g,lava_rate);int wait=0;
             for(int f=0;f<60*180&&!g.won&&g.deaths<12;f++) {
                 int input=-1;
                 if(g.state==PS_ATTACHED) {
