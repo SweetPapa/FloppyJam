@@ -30,6 +30,20 @@ store delivery: [run 34773171518](https://github.com/SweetPapa/FloppyJam/actions
   Videos use the original soundtrack with no narration. Captured game UI is
   English; screenshot captions and store copy are localized.
 
+The [launch website](https://maglava.io) is deployed from website PRs 3 and 4.
+It removes itch.io links, obsolete concept artwork and the old roadmap, and adds
+six current gameplay screenshots, a music-only trailer, localized controls and a
+press-kit download. Browser checks pass across all seven languages and three
+viewport sizes, including legacy redirects, downloads and video playback.
+The deployed gallery, hero, poster and trailer hashes match the reviewed files;
+external desktop, community, feedback and support links return successfully.
+
+Capture correction PR 27 replays short levels through the normal restart path
+in debug media tours only. Release gameplay is unchanged. Native Android and
+both Apple device integration checks passed; 30 sampled video frames contain
+active gameplay rather than completion menus. The Apple screenshot guard now
+rejects completion menus and accepts intentionally dark neon scenes.
+
 The public [desktop release 1016](https://github.com/SweetPapa/FloppyJam/releases/tag/maglava-uat-1016)
 contains signed macOS/Windows downloads and Linux. Its launch media refresh keeps
 those binaries unchanged and adds a multilingual press kit with revised media

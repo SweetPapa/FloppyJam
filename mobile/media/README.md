@@ -14,9 +14,11 @@ Current media uses **music and gameplay only, with no narration**:
 - A downloadable press kit containing these assets, localized store/social copy,
   credits and SHA-256 checksums.
 
-Screenshots and clips cover stages 1, 6, 12, 20, 30 and 38. Short stages are trimmed
-before lengthy completion screens. Capture stage 20's still early for the same
-reason. Screenshot headlines are localized; the source game UI is English.
+Screenshots and clips cover stages 1, 6, 12, 20, 30 and 38. Debug capture tours
+replay short stages through the normal restart path so recorder startup cannot
+leave footage on the completion menu. Apple screenshot validation rejects
+completion menus while allowing intentionally dark neon stages. Screenshot
+headlines are localized; the source game UI is English.
 
 ```sh
 python3 mobile/media/prepare.py
