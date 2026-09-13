@@ -56,11 +56,13 @@ media, beta uploads and versioned desktop prereleases; it never promotes PROD.
   `.build/uat/` directories.
 
 The `maglava-uat` environment permits only the `uat` deployment branch. Existing
-macOS signing secrets and Windows Azure OIDC credentials are reused. Automatic
-approval review rejected exporting local mobile signing/publisher credentials
-to GitHub because that specific sensitive transfer needs explicit user approval.
-**No new mobile credentials have been transferred.** The user approval question
-is pending. Local store uploads keep keys on this Mac.
+macOS signing secrets and Windows Azure OIDC credentials are reused. On September
+13, the user explicitly approved uploading the mobile signing and publisher
+credentials. All ten `MAGLAVA_*` secrets listed by `configure-secrets.py` are now
+configured in that encrypted GitHub environment. Private values were not printed
+or committed, and temporary export files were removed. The iOS distribution
+identity is valid and the MagLava App Store profile expires June 7, 2027.
+Local signing remains available as a fallback.
 
 See [CI operations](../ci/README.md) for exact commands, secret names, local
 signing fallback and rerun behavior. The existing Google tester group and country settings were found and preserved.
