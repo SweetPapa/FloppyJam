@@ -31,7 +31,7 @@ for(const v of versions){
  }
 }
 const groups=(await apple(`apps/${appId}/betaGroups`)).data;
-for(const [name,internal] of [['MagLava Playtest',true],['MagLava Closed Beta',false]]){
+for(const [name,internal] of [['MagLava Playtest',true],['MagLava Public Beta',false]]){
  if(!groups.some(g=>g.attributes.name===name)) await apple('betaGroups','POST',{data:{type:'betaGroups',attributes:{name,isInternalGroup:internal,publicLinkEnabled:false},relationships:{app:{data:{type:'apps',id:appId}}}}});
 }
 const beta=(await apple(`apps/${appId}/betaAppLocalizations`)).data;

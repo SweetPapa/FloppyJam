@@ -1,32 +1,39 @@
-# MagLava UAT release — September 11, 2026
+# MagLava beta release — September 13, 2026
 
 Bundle/package identifier: **dev.fofo.maglava**. Marketing version: **1.0**.
 Production promotion remains manual. This document supersedes the September 7–9
 preparation notes: source delivery to the existing repository is now authorized,
 the Apple review phone is saved, and Xcode 26 archives have been built and uploaded.
 
-## Executed store delivery
+## Public beta and launch refresh — September 13, 2026
 
-| Destination | Verified state |
-| --- | --- |
-| [TestFlight](https://appstoreconnect.apple.com/apps/6809634261/testflight/ios) | Build **1010** uploaded with no warnings, processed **VALID**, and assigned to MagLava Playtest and MagLava Closed Beta. Build 1001 is already waiting for external beta review; Apple requires that review to finish before accepting the next build for review. |
-| [External beta link](https://testflight.apple.com/join/syeM6ybj) | Enabled with a 1,000-person limit; external installation depends on Apple's beta review. |
-| [Google Play closed testing](https://play.google.com/console/u/1/developers/5087831544540862809/app/4974240038269953473/app-dashboard) | Build **1010** accepted on `alpha` with status **completed**. Verified tester group `fofo-testers@googlegroups.com` and configured countries/rest-of-world availability. |
-| Store media | Final native iPhone/iPad/Android cards, Android feature graphic and an actual gameplay preview uploaded. The final artwork/video uses stages 1, 6 and 38. |
+Build **1016** from UAT commit `7d7ba40a6032e48079cc0cb581489b6721cbde7b`
+completed the entire hosted pipeline, including unattended signing and mobile
+store delivery: [run 34773171518](https://github.com/SweetPapa/FloppyJam/actions/runs/34773171518).
 
-Matching iOS and Android build **1010** came from UAT merge
-`24a66780ae6cfdd9622e848ecaace95b9a01d4b7`. Both were signed and uploaded locally
-from the passing hosted artifacts. Google rollout is complete; Apple processing
-is valid and external review remains queued behind build 1001.
+- Apple build `3284c70c-8172-4212-9c08-ab7bcf2a7ad3` is **VALID** and
+  **BETA_APPROVED**. The external group is **MagLava Public Beta** with its public
+  [TestFlight link](https://testflight.apple.com/join/syeM6ybj) enabled and no custom
+  tester cap. Apple still limits external testing to 10,000 testers per app.
+- Google Play build **1016** is **completed** on closed testing (`alpha`). The
+  requested promotion to open testing (`beta`) was rejected with **Release in
+  track targeting no countries**. Beta currently inherits an empty production
+  country list. Country selection must be saved in Play Console before running
+  `node mobile/ci/promote-open-testing.mjs --build 1016 --apply`.
+- Store information and beta/release notes are saved in all seven game languages.
+  Apple uses `es-MX` for Latin American Spanish and `zh-Hans` for Simplified Chinese;
+  Google uses `es-419` and `zh-CN`. Other locale mappings are in
+  `mobile/store/localizations.json`.
+- Launch media includes six-stage screenshot cards for iPhone, iPad and Android
+  in seven languages (126 cards), seven feature graphics, a 36-second landscape
+  gameplay video, a 36-second portrait video and a 28-second App Store preview.
+  Videos use the original soundtrack with no narration. Captured game UI is
+  English; screenshot captions and store copy are localized.
 
-English descriptions, categories, age declarations, beta and draft store review contacts, and
-support/privacy URLs are saved. There are no ads, purchases, chat, accounts or
-analytics SDKs in the native game. Console privacy declarations must match those
-facts. Mild fantasy/cartoon violence covers lava and hazard deaths.
-
-Support: https://sweetpapa-games.web.app/maglava/support
-
-Privacy: https://sweetpapa-games.web.app/maglava/privacy
+The public [desktop release 1016](https://github.com/SweetPapa/FloppyJam/releases/tag/maglava-uat-1016)
+contains signed macOS/Windows downloads and Linux. Its launch media refresh keeps
+those binaries unchanged and adds a multilingual press kit with revised media
+checksums. Production store release remains a separate manual decision.
 
 ## UAT automation
 
@@ -66,54 +73,20 @@ Local signing remains available as a fallback.
 
 See [CI operations](../ci/README.md) for exact commands, secret names, local
 signing fallback and rerun behavior. The existing Google tester group and country settings were found and preserved.
-The previous draft-only blocker no longer applies. TestFlight groups currently
-have no individual testers; the public link becomes usable after external review.
+The previous draft-only blocker no longer applies. TestFlight external review
+has approved build 1016; Google open-test country targeting is the remaining access blocker.
 Chrome scripting is disabled and the available UI tool lacks Accessibility
 permission; direct store API verification was used instead.
 
 ## Evidence and media
 
-Ignored `mobile/.build/uat/` contains signed files, per-store receipts, native test
-logs, recordings and upload logs. `mobile/.build/uat/local-1010/media/` contains
-the original build 1010 media, including the 28-second App Preview and store cards.
-The approved Charon rerender is in `mobile/media/out/`, with publication receipts
-in `.build/uat/approved-voice-release/`.
-Narration now uses the user-approved AssetForge Gemini 3.1 Flash TTS / Charon
-take, committed losslessly with request/audio hashes. Original game music is AAC: the complete four-song
-playlist is **7,792,904 bytes**, identical in both native apps.
+Ignored `mobile/.build/uat/launch/` contains before-state store snapshots, upload
+logs and release checksum records. `launch-1016/` contains the original successful
+hosted receipts and captures; `captures/` contains the additional six-stage native
+recordings. `mobile/media/out/` contains the current launch media and press kit.
+The former narrated media and build 1010 remain historical artifacts, superseded
+by the music-only launch refresh for website and current marketing use.
 
-Temporary local capture emulators/simulators are closed. Physical-device frame
-time, thermal behavior, haptics and touch comfort remain beta playtest work.
-Windows/Linux use the v4 desktop presentation and procedural music; iOS, Android
-and Mac Catalyst share the mobile 3D presentation and original playlist.
-
-## Published downloads and website
-
-[Desktop release 1010](https://github.com/SweetPapa/FloppyJam/releases/tag/maglava-uat-1010)
-contains the signed macOS and Windows packages, Linux, trailer and App Preview.
-App packages and App Preview retain their verified hosted digests. The trailer
-was rerendered with approved Charon narration over the same verified 1010 footage;
-`SHA256SUMS.txt` now records its revised digest.
-
-[maglava.io](https://maglava.io) now links to those downloads, both beta programs
-and the approved Charon gameplay trailer. SweetPapa/magLava PRs **1 and 2** are
-merged; the existing Firebase `maglava` site is deployed. PR 2 repairs five denied
-artwork URLs using optimized bundled images, the YouTube handle, tester-group
-landing page, locale routes, cross-page anchors and tablet navigation. Production
-and live browser checks pass across all 14 localized routes and desktop/tablet/phone
-layouts, including images, canonical/alternate links, downloads, trailer playback,
-Escape, audio shutdown and focus restoration. The live 4.28 MB trailer SHA-256 is
-`b2b149d5772026b8fdf7ef21dd50501296c18a728a9932cf154b731ad357cb78`.
-Original local website/game edits were preserved by using an isolated checkout.
-
-AssetForge billing was restored to the user-selected Side Projects account.
-The user approved the complete 31.44-second Gemini 3.1 Flash TTS / Charon take;
-it now replaces the earlier WARLOCK narration in release media sources.
-The App Preview contains music and gameplay captions, with no TTS.
-
-Build 1011 was cancelled before publication after visual review found two blank
-iPhone launch-screen captures despite passing native tests. PR **19**, merged
-into UAT, waits for visible scene content and rejects blank captures. The compiled
-validator accepts all 14 visible screenshots from builds 1010/1011 and rejects
-both blank ones. Follow-up run **34616899286** tests this capture safeguard;
-its artifacts have not replaced the verified 1010 store builds or website media.
+Temporary capture emulators and simulators are closed. The four original AAC
+music files total **7,792,904 bytes**, identical in both native apps. Windows and
+Linux retain procedural music; iOS, Android and macOS use the original playlist.

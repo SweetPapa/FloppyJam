@@ -3,7 +3,7 @@
 import argparse,json,os,re,shutil,signal,subprocess,time
 from pathlib import Path
 root=Path(__file__).resolve().parents[2];os.chdir(root)
-p=argparse.ArgumentParser();p.add_argument('--stages',type=int,nargs='+',default=[1,6,38]);p.add_argument('--reuse-tested-build',action='store_true');a=p.parse_args()
+p=argparse.ArgumentParser();p.add_argument('--stages',type=int,nargs='+',default=[1,6,12,20,30,38]);p.add_argument('--reuse-tested-build',action='store_true');a=p.parse_args()
 assert not (a.reuse_tested_build and os.environ.get('CI')), 'CI must run native integration tests.'
 out=root/'mobile/.build/uat/captures/android';out.mkdir(parents=True,exist_ok=True)
 adb=shutil.which('adb') or str(Path.home()/'Library/Android/sdk/platform-tools/adb')
@@ -68,7 +68,7 @@ for level in a.stages:
  (out/f'stage-{level}-ready.log').write_text(log)
  remote=f'/sdcard/maglava-stage-{level}.mp4'
  record=subprocess.Popen([adb,'shell','screenrecord','--bit-rate','12000000','--time-limit','12',remote],stdout=subprocess.DEVNULL)
- time.sleep(4)
+ time.sleep(1 if level==20 else 4)
  with (out/f'stage-{level}.png').open('wb') as f:run('exec-out','screencap','-p',stdout=f)
  record.wait(timeout=30);run('pull',remote,str(out/f'stage-{level}.mp4'));run('shell','rm',remote)
 (out/'capture.json').write_text(json.dumps({'source':os.environ.get('GITHUB_SHA','local'),'platform':'Android','stages':a.stages,'method':'Native GLES screen recording; debug bot selects actual color inputs.'},indent=2)+'\n')

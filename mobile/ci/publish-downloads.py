@@ -3,7 +3,7 @@ import argparse,hashlib,json,os,subprocess
 from pathlib import Path
 p=argparse.ArgumentParser();p.add_argument('--build',required=True,type=int);a=p.parse_args()
 root=Path(__file__).resolve().parents[2];incoming=root/'mobile/.build/uat/incoming';out=root/'mobile/.build/uat/publish';out.mkdir(parents=True,exist_ok=True)
-names=['MagLava-macOS.dmg','MagLava-macOS.zip','MagLava-Windows-x64.zip','MagLava-Linux-x64.tar.gz','MagLava-Trailer.mp4','MagLava-AppPreview.mp4']
+names=['MagLava-macOS.dmg','MagLava-macOS.zip','MagLava-Windows-x64.zip','MagLava-Linux-x64.tar.gz','MagLava-Trailer.mp4','MagLava-AppPreview.mp4','MagLava-Gameplay-Portrait.mp4',f'MagLava-Press-Kit-{a.build}.zip']
 files=[]
 for name in names:
  found=list(incoming.rglob(name));assert len(found)==1,(name,found);files.append(found[0])

@@ -22,11 +22,11 @@ if(existing)await apple(`betaBuildLocalizations/${existing.id}`,'PATCH',{data:{t
 else await apple('betaBuildLocalizations','POST',{data:{type:'betaBuildLocalizations',attributes:{locale:'en-US',whatsNew},relationships:{build:{data:{type:'builds',id:build.id}}}}});
 const groups=(await apple(`apps/${appId}/betaGroups`)).data;
 let publicLink=null;
-for(const group of groups.filter(g=>['MagLava Playtest','MagLava Closed Beta'].includes(g.attributes.name))) {
+for(const group of groups.filter(g=>['MagLava Playtest','MagLava Public Beta'].includes(g.attributes.name))) {
  const members=(await apple(`betaGroups/${group.id}/builds`)).data;
  if(!members.some(b=>b.id===build.id))await apple(`betaGroups/${group.id}/relationships/builds`,'POST',{data:[{type:'builds',id:build.id}]});
  if(!group.attributes.isInternalGroup) {
-  const updated=(await apple(`betaGroups/${group.id}`,'PATCH',{data:{type:'betaGroups',id:group.id,attributes:{publicLinkEnabled:true,publicLinkLimitEnabled:true,publicLinkLimit:1000}}})).data;
+  const updated=(await apple(`betaGroups/${group.id}`,'PATCH',{data:{type:'betaGroups',id:group.id,attributes:{publicLinkEnabled:true,publicLinkLimitEnabled:false}}})).data;
   publicLink=updated.attributes.publicLink;
  }
 }

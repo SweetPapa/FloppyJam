@@ -11,18 +11,20 @@ requires the **Shared game and release checks** status before merging.
    `versionCode` and Apple `CFBundleVersion`: `1000 + GITHUB_RUN_NUMBER`.
    Marketing version remains 1.0 until explicitly changed on both platforms.
 2. Build Android APK/AAB and unsigned iOS archives with current store SDKs.
-   Run native integration on Android, iPhone and iPad, then capture real stages.
+   Run native integration on Android, iPhone and iPad, then capture six real stages.
 3. Build and sign Windows using the existing Azure Trusted Signing identity;
    build Linux; sign and notarize universal Mac Catalyst using the existing
    Developer ID identity. Windows/Linux use the original v4 desktop presentation
    and procedural music. Apple/Android use the shared native presentation and
    original four-song playlist.
 4. Render current store cards and gameplay videos with Remotion and FFmpeg.
-   WARLOCK narration is committed losslessly with request/audio hashes; hosted
-   runners need no connection to the homelab.
+   Videos use only gameplay and the original music. Store descriptions and six
+   screenshot captions are localized into all seven game languages. The press kit
+   includes portrait/landscape video, localized graphics and ready-to-use copy.
 5. Sign and deliver mobile betas using the `maglava-uat` environment. TestFlight
    internal/external groups are updated and external beta review is requested.
-   Google Play uses `alpha` (closed testing), never production. If Console setup
+   Google Play uses `alpha` and updates `beta` after its first authorized open-test
+   promotion, never production. If Console setup
    prevents rollout, save a draft and record the exact blocker.
 6. Publish signed desktop downloads, videos and SHA-256 checksums as a GitHub
    **prerelease**. Desktop publication is independent of mobile store approval.
@@ -47,6 +49,20 @@ approval. `configure-secrets.py --apply` performs that transfer only after
 approval; it never writes keys into the repository or prints their values. Until
 configured, the mobile publisher fails with an actionable message. Build,
 media and desktop-download jobs remain available.
+
+## Public beta access
+
+The external TestFlight group is **MagLava Public Beta**. Its public invitation
+link is enabled with no custom tester limit; Apple beta review still applies.
+Google requires country availability to be configured for open testing in Console.
+Promote a verified closed-test build using:
+
+```sh
+node mobile/ci/promote-open-testing.mjs --build BUILD_NUMBER --apply
+```
+
+The command refuses empty country targeting, a missing closed-test build or a
+rollback. Later successful UAT deliveries keep the active public beta up to date.
 
 ## Local mobile delivery
 
