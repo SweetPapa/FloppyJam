@@ -13,6 +13,7 @@ for row in json.loads((root/'mobile/assets/Audio/soundtrack.json').read_text()):
 voice=json.loads((root/'mobile/media/assets/narration.json').read_text())
 assert hashlib.sha256((root/'mobile/media/narration.json').read_bytes()).hexdigest()==voice['request_sha256']
 assert hashlib.sha256((root/'mobile/media/assets/narration.flac').read_bytes()).hexdigest()==voice['audio_sha256']
+subprocess.run(['node','--input-type=module','-e',"import './mobile/ci/store-localizations.mjs'"],cwd=root,check=True)
 for path in (root/'mobile/ci').glob('*.py'):compile(path.read_text(),str(path),'exec')
 for path in (root/'mobile/ci').glob('*.mjs'):subprocess.run(['node','--check',str(path)],check=True)
 with tempfile.TemporaryDirectory() as tmp:
