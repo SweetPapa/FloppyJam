@@ -2,7 +2,11 @@ import UIKit
 import MetalKit
 import AVFoundation
 
-private func T(_ text:String)->String { String(cString:ml_text(text)) }
+func T(_ text:String)->String {
+    // An unknown catalog key is returned unchanged by C. Keep its UTF-8 buffer
+    // alive until Swift has copied the result, including dynamic button labels.
+    text.withCString { String(cString:ml_text($0)) }
+}
 
 @main
 final class AppDelegate: UIResponder, UIApplicationDelegate {

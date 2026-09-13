@@ -3,6 +3,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+/* Borrowed result: unknown keys return english itself. Keep the input alive
+ * while reading/copying the result across a language bridge. */
 const char *ml_text(const char *english);
 void ml_set_language(const char *code);
 int ml_language_index(void);

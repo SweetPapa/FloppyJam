@@ -9,6 +9,14 @@ final class MaglavaTests: XCTestCase {
         try XCTUnwrap(descendants(controller.view).compactMap { $0 as? UIButton }.first { $0.accessibilityLabel==name || $0.title(for:.normal)==name })
     }
     private func wait(_ seconds: Double) async throws { try await Task.sleep(nanoseconds:UInt64(seconds*1_000_000_000)) }
+    func testLocalizationFallbackPreservesDynamicText() {
+        for rate:Float in [0.5,0.75,1,1.25,1.5,2,3] {
+            let title=String(format:"%.3gx",rate)
+            XCTAssertEqual(T(title),title)
+        }
+        let title="Dynamic label \(UUID().uuidString) · 日本語"
+        XCTAssertEqual(T(title),title)
+    }
     func testNativeTouchCompletionProgressAndPause() async throws {
         let app=try XCTUnwrap(UIApplication.shared.delegate as? AppDelegate)
         let controller=try XCTUnwrap(app.window?.rootViewController as? GameController)
@@ -107,6 +115,7 @@ final class MaglavaTests: XCTestCase {
         let language=try XCTUnwrap(selectors.first { $0.accessibilityIdentifier=="settings.language" })
         XCTAssertEqual(language.menu?.children.count,8)
         XCTAssertTrue(language.showsMenuAsPrimaryAction)
+        XCTAssertEqual(language.title(for:.normal),"System language")
         XCTAssertTrue(language.menu?.children.contains { $0.title=="日本語" } ?? false)
         try button(controller,"Back").sendActions(for:.touchUpInside)
         XCTAssertEqual(controller.debugMusicName,trackBefore)

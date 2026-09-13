@@ -9,6 +9,10 @@
 #include <stdio.h>
 #include <locale.h>
 #ifdef _WIN32
+/* Locale APIs only: USER/GDI declare names also used by raylib. */
+#define WIN32_LEAN_AND_MEAN
+#define NOGDI
+#define NOUSER
 #include <windows.h>
 #endif
 #ifdef _WIN32
