@@ -3,7 +3,7 @@
 import json,re,sys
 from pathlib import Path
 root=Path(__file__).resolve().parents[1]
-d=json.loads((root/'i18n/catalog.json').read_text())
+d=json.loads((root/'i18n/catalog.json').read_text(encoding='utf-8'))
 quote=lambda s:json.dumps(s,ensure_ascii=False)
 rows=d['strings']
 fmt=re.compile(r'%(?:\d+\$)?[-+ #0]*\d*(?:\.\d+)?[a-zA-Z%]')
@@ -19,6 +19,6 @@ lines.append('};')
 characters=''.join(sorted(set(''.join(x for row in rows.values() for x in row)+''.join(d['names'])+'0123456789×←↑→↓')))
 lines.append('static const char locale_characters[]='+quote(characters)+';')
 result='\n'.join(lines)+'\n';out=root/'src/i18n_gen.h'
-if '--check' in sys.argv:assert out.read_text()==result,'Regenerate localization header'
-else:out.write_text(result)
+if '--check' in sys.argv:assert out.read_text(encoding='utf-8')==result,'Regenerate localization header'
+else:out.write_text(result,encoding='utf-8')
 print(f'{len(rows)} complete messages across seven languages; format signatures match.')

@@ -9,7 +9,7 @@ from pathlib import Path
 from fontTools import subset
 from fontTools.ttLib import TTFont
 root=Path(__file__).resolve().parents[1]
-d=json.loads((root/'i18n/catalog.json').read_text())
+d=json.loads((root/'i18n/catalog.json').read_text(encoding='utf-8'))
 text=''.join(v for row in d['strings'].values() for v in row)+''.join(d['names'])+''.join(chr(c) for c in range(32,127))+'×←↑→↓'
 for name in ['Japanese','Chinese']:
  font=TTFont(Path(sys.argv[1])/(name+'.otf'))
