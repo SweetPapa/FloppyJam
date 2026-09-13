@@ -2,6 +2,7 @@
 import Foundation
 import CoreGraphics
 import ImageIO
+import Vision
 
 guard CommandLine.arguments.count == 2,
       let source = CGImageSourceCreateWithURL(URL(fileURLWithPath: CommandLine.arguments[1]) as CFURL, nil),
@@ -27,6 +28,16 @@ let fraction = pixels.withUnsafeMutableBytes { bytes -> Double in
     }
     return Double(colorful) / Double(side * side)
 }
-// Known-good iPhone/iPad captures have 13–48%; blank launch screens have 0%.
+// Dark neon stages can have only 2–3% colorful pixels; launch blanks have 0%.
 print("Visible scene color fraction: \(fraction)")
-exit(fraction >= 0.03 ? 0 : 1)
+if CommandLine.arguments[1].contains("-stage-") {
+    let request = VNRecognizeTextRequest()
+    request.recognitionLevel = .fast
+    try VNImageRequestHandler(cgImage: image).perform([request])
+    let words = (request.results ?? []).compactMap { $0.topCandidates(1).first?.string.uppercased() }.joined(separator: " ")
+    if words.contains("LEVEL COMPLETE") || words.contains("PLAY AGAIN") {
+        print("Rejected completion-menu capture; active gameplay is required.")
+        exit(1)
+    }
+}
+exit(fraction >= 0.01 ? 0 : 1)

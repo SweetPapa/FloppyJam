@@ -339,6 +339,12 @@ final class GameController: UIViewController {
     }
     private func frame(_ s:[Float]) {
         #if DEBUG
+        // Capture tours replay finished stages using the normal restart path.
+        // Short levels can finish while simctl is still attaching its recorder.
+        if ProcessInfo.processInfo.arguments.contains("--media-tour") && playing && s[5]>0 {
+            start(level)
+            return
+        }
         if ProcessInfo.processInfo.arguments.contains("--media-tour") && playing && s[4]==0 {
             var color:Int32 = -1, y=s[1]
             for c in 0..<4 { let i=Int(s[30+c]); if i>=0 && s[40+i*6+1]<y {y=s[40+i*6+1];color=Int32(c)} }

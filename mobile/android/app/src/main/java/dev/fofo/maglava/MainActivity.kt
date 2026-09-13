@@ -272,6 +272,12 @@ class MainActivity : Activity() {
         add(stack,label("Stars: finish the level, beat the target time, and finish without a death.",15))
     }
     private fun frame(s:FloatArray) {
+        // Replay via the normal restart path so recorder startup cannot leave
+        // short-stage marketing captures sitting on the completion menu.
+        if(applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE!=0 && intent.getBooleanExtra("media_tour",false) && playing && s[5]>0) {
+            start(level)
+            return
+        }
         if(!mediaReady && applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE!=0 && intent.getBooleanExtra("media_tour",false) && hasWindowFocus() && game.renderedFrames>=3) {
             mediaReady=true
             android.util.Log.i("MagLavaCapture","READY stage=$level")
