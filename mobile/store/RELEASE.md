@@ -15,12 +15,15 @@ store delivery: [run 34773171518](https://github.com/SweetPapa/FloppyJam/actions
   **BETA_APPROVED**. The external group is **MagLava Public Beta** with its public
   [TestFlight link](https://testflight.apple.com/join/syeM6ybj) enabled and no custom
   tester cap. Apple still limits external testing to 10,000 testers per app.
-- Google Play build **1016** is **completed** on open testing (`beta`) as
-  **MagLava 1.0 (1016) Public Beta**. After the owner saved country settings,
-  promotion succeeded for 177 countries with rest-of-world availability enabled.
-  The [public opt-in link](https://play.google.com/apps/testing/dev.fofo.maglava)
-  no longer requires membership in the closed tester group. Closed testing is
-  retained, and production was not changed. Receipt: `open-testing-verified.json`.
+- Google Play build **1016** is configured on open testing (`beta`) as
+  **MagLava 1.0 (1016) Public Beta** with API release status `completed`.
+  Track persistence and 177 countries/rest-of-world were verified, but the owner
+  reports that Play Console and public opt-in still show closed-test access.
+  **Public availability is not confirmed.** Beta has no Google Group restriction;
+  only alpha has `fofo-testers`. Check the `dev.fofo.maglava` app's Publishing
+  overview for review/publishing state before describing public testing as live.
+  The `open-testing-verified.json` receipt proves API persistence, not tester access.
+  Production was not changed.
 - Store information and beta/release notes are saved in all seven game languages.
   Apple uses `es-MX` for Latin American Spanish and `zh-Hans` for Simplified Chinese;
   Google uses `es-419` and `zh-CN`. Other locale mappings are in
@@ -89,7 +92,7 @@ Local signing remains available as a fallback.
 See [CI operations](../ci/README.md) for exact commands, secret names, local
 signing fallback and rerun behavior. The existing Google tester group and country settings were found and preserved.
 The previous draft-only blocker no longer applies. TestFlight external review
-has approved build 1016; Google open testing is now configured and build 1016 is promoted.
+has approved build 1016; Google beta is configured but public availability remains unverified.
 Chrome scripting is disabled and the available UI tool lacks Accessibility
 permission; direct store API verification was used instead.
 
