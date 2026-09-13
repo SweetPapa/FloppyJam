@@ -6,6 +6,9 @@ root=Path(__file__).resolve().parents[2];media=root/'mobile/media'
 p=argparse.ArgumentParser();p.add_argument('--platform',choices=['iphone','ipad','android','all'],default='all');p.add_argument('--locales',nargs='+');p.add_argument('--workers',type=int,default=2);a=p.parse_args()
 rows=json.loads((root/'mobile/store/localizations.json').read_text(encoding='utf-8'));stages=[1,6,12,20,30,38]
 bundle=root/'mobile/.build/media-bundle'
+# Install the shared browser once before concurrent still workers can race
+# downloading/extracting/removing the same archive on a fresh CI runner.
+subprocess.run(['npx','remotion','browser','ensure'],cwd=media,check=True)
 subprocess.run(['npx','remotion','bundle','src/index.tsx','--out-dir',str(bundle)],cwd=media,check=True)
 jobs=[]
 for locale,r in rows.items():

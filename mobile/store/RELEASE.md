@@ -15,11 +15,12 @@ store delivery: [run 34773171518](https://github.com/SweetPapa/FloppyJam/actions
   **BETA_APPROVED**. The external group is **MagLava Public Beta** with its public
   [TestFlight link](https://testflight.apple.com/join/syeM6ybj) enabled and no custom
   tester cap. Apple still limits external testing to 10,000 testers per app.
-- Google Play build **1016** is **completed** on closed testing (`alpha`). The
-  requested promotion to open testing (`beta`) was rejected with **Release in
-  track targeting no countries**. Beta currently inherits an empty production
-  country list. Country selection must be saved in Play Console before running
-  `node mobile/ci/promote-open-testing.mjs --build 1016 --apply`.
+- Google Play build **1016** is **completed** on open testing (`beta`) as
+  **MagLava 1.0 (1016) Public Beta**. After the owner saved country settings,
+  promotion succeeded for 177 countries with rest-of-world availability enabled.
+  The [public opt-in link](https://play.google.com/apps/testing/dev.fofo.maglava)
+  no longer requires membership in the closed tester group. Closed testing is
+  retained, and production was not changed. Receipt: `open-testing-verified.json`.
 - Store information and beta/release notes are saved in all seven game languages.
   Apple uses `es-MX` for Latin American Spanish and `zh-Hans` for Simplified Chinese;
   Google uses `es-419` and `zh-CN`. Other locale mappings are in
@@ -88,7 +89,7 @@ Local signing remains available as a fallback.
 See [CI operations](../ci/README.md) for exact commands, secret names, local
 signing fallback and rerun behavior. The existing Google tester group and country settings were found and preserved.
 The previous draft-only blocker no longer applies. TestFlight external review
-has approved build 1016; Google open-test country targeting is the remaining access blocker.
+has approved build 1016; Google open testing is now configured and build 1016 is promoted.
 Chrome scripting is disabled and the available UI tool lacks Accessibility
 permission; direct store API verification was used instead.
 
